@@ -25,10 +25,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [cameras, setCameras] = useState<any[]>([]);
 
-    // Mount Key to force DOM recreation (Safest cleanup)
-    const [mountKey, setMountKey] = useState(0);
-
-    // NUCLEAR OPTION: Track requested facing mode explicitly
+    // Track requested facing mode explicitly
     const [requestedFacingMode, setRequestedFacingMode] = useState<"environment" | "user">("environment");
     const [isSwitching, setIsSwitching] = useState(false);
 
@@ -41,8 +38,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     // Capabilities
     const [capabilities, setCapabilities] = useState<MediaTrackCapabilities | null>(null);
-    const [torchOn, setTorchOn] = useState(false);
-    const [zoom, setZoom] = useState(1);
     const [debugLog, setDebugLog] = useState<string[]>([]);
 
     const addLog = (msg: string) => {
@@ -70,7 +65,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         setError(null);
         addLog(`Req Start: ${mode}`);
 
-        // 1. CLEANUP (Using strict stop)
+        // 1. CLEANUP
         if (scannerRef.current) {
             try {
                 if ((scannerRef.current as any).isScanning) {
@@ -80,10 +75,16 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             } catch (ignore) { }
         }
 
-        // 2. DELAY
-        // We do this by updating the key, but we need to wait for effect.
-        // Actually, for this function, we just wait a bit.
+        // 2. DELAY & PREPARE DOM
         await new Promise(r => setTimeout(r, 300));
+
+        const regionEl = document.getElementById(regionId);
+        if (!regionEl) {
+            setError("Scanner DOM element missing. Please reload.");
+            return;
+        }
+        // CRITICAL FIX: Manually clear the container to prevent "Element already in use" errors
+        regionEl.innerHTML = "";
 
         // Base Config
         const html5QrCode = new Html5Qrcode(regionId, { verbose: true } as any);
@@ -137,12 +138,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         // LOGIC: CYCLING ID vs FACING MODE
         try {
             // A. Cycle Logic
-            if (mode === "cycle" && cameras.length > 1) {
-                const nextIndex = (camIndex + 1) % cameras.length;
-                setCamIndex(nextIndex); // Update state for next time
-                const nextCam = cameras[nextIndex];
+            if (mode === "cycle") {
+                let nextIndex = 0;
+                if (cameras.length > 0) {
+                    nextIndex = (camIndex + 1) % cameras.length;
+                }
+                setCamIndex(nextIndex);
 
-                if (await tryStart(`ID: ${nextCam.label}`, { deviceId: { exact: nextCam.id } })) return;
+                // If we have cameras, try the specific ID
+                if (cameras.length > 0) {
+                    const nextCam = cameras[nextIndex];
+                    if (await tryStart(`ID: ${nextCam.label}`, { deviceId: { exact: nextCam.id } })) return;
+                }
             }
 
             // B. Specific Mode
@@ -153,31 +160,55 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
             // C. Fallbacks
             if (cameras.length > 0) {
-                // Try current index just in case
                 if (await tryStart(`Fallback ID ${camIndex}`, { deviceId: { exact: cameras[camIndex].id } })) return;
             }
-
             if (await tryStart("Any Camera", { facingMode: undefined })) return;
 
-            throw new Error("Gagal membuka kamera. Coba refresh halaman.");
+            throw new Error("Gagal membuka kamera. Pastikan izin kamera aktif.");
 
         } catch (finalErr: any) {
-            setError(finalErr.message || "Camera Error");
+            setError(finalErr.message || "Unknown Camera Error");
         }
     };
 
     // Initial Start
     useEffect(() => {
-        // 0. SECURE CONTEXT CHECK
-        if (typeof window !== "undefined" && window.isSecureContext === false) {
-            setError("HTTPS / Secure Context Required");
-            return;
-        }
+        const init = async () => {
+            if (typeof window !== "undefined" && window.isSecureContext === false) {
+                setError("HTTPS Required");
+                return;
+            }
 
-        // Enumerate just for debug info
-        Html5Qrcode.getCameras().then(setCameras).catch(() => { });
-        // Start blindly with environment
-        startScanning("environment");
+            try {
+                const cams = await Html5Qrcode.getCameras();
+                setCameras(cams);
+                // Start with environment AFTER we know cameras
+                // We pass 'environment' but now startScanning will have access to 'cameras' state 
+                // Wait, 'cameras' state update might not be reflected immediately in closure.
+                // We pass current cams to a specialized start if needed, 
+                // but standard React state update batching means 'cameras' might be empty in first run of startScanning logic?
+                // Actually startScanning uses the 'cameras' from closure.
+                // Hack: we need to trigger startScanning only after cameras are set? 
+                // No, just let it try "environment" blindly which doesn't need ID.
+
+                // If we want to use ID on first load (better reliability), we can pass specific ID.
+                /*
+                if (cams && cams.length > 0) {
+                    // Try to find back camera
+                    const back = cams.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('belakang'));
+                    if (back) {
+                         // We can force start with ID if we wanted, but environment is usually fine.
+                    }
+                }
+                */
+            } catch (e) {
+                console.warn("GetCameras failed", e);
+            }
+
+            await startScanning("environment");
+        };
+
+        init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -198,7 +229,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 <>
                     <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-black/5">
                         {/* KEY ADDED HERE TO FORCE REMOUNT */}
-                        <div key={mountKey} id={regionId} className="w-full min-h-[300px]" />
+                        <div id={regionId} className="w-full min-h-[300px]" />
 
                         {/* Control Overlay */}
                         {/* Manual Switchers */}
@@ -207,18 +238,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                                 onClick={async () => {
                                     if (isSwitching) return;
                                     setIsSwitching(true);
-
-                                    // FORCE REMOUNT
-                                    setMountKey(prev => prev + 1);
-
-                                    // Wait for remount then start
-                                    setTimeout(async () => {
-                                        try {
-                                            await startScanning("cycle");
-                                        } finally {
-                                            setIsSwitching(false);
-                                        }
-                                    }, 100);
+                                    try {
+                                        await startScanning("cycle");
+                                    } finally {
+                                        setIsSwitching(false);
+                                    }
                                 }}
                                 className={`h-9 px-4 text-xs font-bold border shadow-sm transition-all ${isSwitching ? "bg-gray-100 text-gray-400" : "bg-white text-navy border-gray-200"}`}
                                 title="Switch Camera"
