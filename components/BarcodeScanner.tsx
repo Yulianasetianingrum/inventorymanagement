@@ -31,7 +31,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.stop().catch(console.error).finally(() => {
-                    scannerRef.current?.clear().catch(console.error);
+                    // clear() returns void in some versions/types
+                    if (scannerRef.current) {
+                        try {
+                            scannerRef.current.clear();
+                        } catch (e) {
+                            console.error("Failed to clear scanner", e);
+                        }
+                    }
                 });
             }
         };
