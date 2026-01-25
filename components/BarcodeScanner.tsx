@@ -19,7 +19,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     qrbox = { width: 250, height: 250 },
     disableFlip = false,
 }) => {
-    // ...
     const [focusStatus, setFocusStatus] = useState<"idle" | "focusing">("idle");
     const [error, setError] = useState<string | null>(null);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -95,22 +94,26 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             // Simplified Camera Config
             // 1. Remove "focusMode" from here (it causes startup crashes on some devices)
             // 2. Use "ideal" not "exact" for resolution
-            const cameraConfig = cameraId
-                ? {
-                    deviceId: { exact: cameraId },
+            // 1. First Argument: Camera Identifier (STRICTLY ONE KEY)
+            const cameraIdentifier = cameraId
+                ? { deviceId: { exact: cameraId } }
+                : { facingMode: "environment" };
+
+            // 2. Second Argument: Configuration & Video Constraints
+            const currentConfig = {
+                ...config,
+                videoConstraints: {
                     width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    height: { ideal: 720 },
+                    // focusMode is experimental, cast to any to avoid TS error
+                    advanced: [{ focusMode: "continuous" }] as any,
                 }
-                : {
-                    facingMode: "environment",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                };
+            };
 
             try {
                 await html5QrCode.start(
-                    cameraConfig,
-                    config,
+                    cameraIdentifier,
+                    currentConfig,
                     (decodedText, decodedResult) => {
                         onScanSuccess(decodedText, decodedResult);
                     },
@@ -123,14 +126,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             } catch (err: any) {
                 console.error("Camera HQ start failed, retrying generic...", err);
 
-                // IMPORTANT: Stop any partial stream before retrying
-                await html5QrCode.stop().catch(() => { });
+                // Suppress "not running" error specifically
+                try {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                } catch (stopErr) { /* ignore */ }
 
-                // Final Last Resort: Try without ANY constraints
+                // Fallback: Safe Mode (No extra constraints)
                 try {
                     await html5QrCode.start(
                         { facingMode: "environment" },
-                        config,
+                        config, // Use base config without videoConstraints
                         (t, r) => onScanSuccess(t, r),
                         (e) => onScanFailure?.(e)
                     );
