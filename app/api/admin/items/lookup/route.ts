@@ -124,10 +124,13 @@ export async function GET(req: Request) {
         // 2. High Success Rate Lookup: Google Search Scraping
         // Intelligent "Top 5" Analysis
         try {
-            const googleUrl = `https://www.google.com/search?q=${code}`;
+            const googleUrl = `https://www.google.com/search?q=${code}&hl=id&gl=id`; // Force ID locale
             const googleRes = await fetch(googleUrl, {
                 headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Cookie": "CONSENT=YES+; SOCS=CAESHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiAo_CmBg;", // Bypass Consent Page
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7"
                 }
             });
             const html = await googleRes.text();
@@ -138,7 +141,7 @@ export async function GET(req: Request) {
             let candidates: any[] = [];
 
             // Loop through first 5 results (h3 usually contains the title)
-            $("h3").each((i, el) => {
+            $("h3, .BNeawe.vvjwJb.AP7Wnd, .BNeawe.deIvCb.AP7Wnd").each((i, el) => { // Added standard and Lite selectors
                 if (i >= 5) return false; // Limit to top 5
 
                 let rawTitle = $(el).text().trim();
@@ -340,6 +343,8 @@ export async function GET(req: Request) {
                     if (lower.includes("maps") || lower.includes("images") || lower.includes("news")) return;
                     if (lower.includes("privacy") || lower.includes("terms") || lower.includes("settings")) return;
                     if (lower.includes("shopping") || lower.includes("belanja")) return;
+                    if (lower.includes("click here") || lower.includes("klik di sini") || lower.includes("read more") || lower.includes("baca selengkapnya")) return;
+                    if (lower.includes("cookie") || lower.includes("kebijakan")) return;
                     if (text.includes(code)) return; // Probably just the barcode itself
 
                     candidates.push(text);
