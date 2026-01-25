@@ -62,11 +62,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         };
     }, []);
 
-    const startScanning = async (mode: "environment" | "user" | "any") => {
+    // Track current index for cycling
+    const [camIndex, setCamIndex] = useState(0);
+
+    const startScanning = async (mode: "environment" | "user" | "any" | "cycle") => {
         setError(null);
         addLog(`Req Start: ${mode}`);
 
-        // 1. STOP & CLEAR (Critical for Mobile Switch)
+        // 1. STOP & CLEAR
         if (scannerRef.current) {
             try {
                 if ((scannerRef.current as any).isScanning) {
@@ -76,11 +79,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             } catch (ignore) { }
         }
 
-        // 2. DELAY (Give hardware time to release)
+        // 2. DELAY
         await new Promise(r => setTimeout(r, 300));
 
-        // 3. FORCE DOM CLEAR (Fix "Multiple Cameras" bug)
-        // If html5-qrcode doesn't clean up fast enough, we wipe the container manually.
+        // 3. FORCE DOM CLEAR
         const regionEl = document.getElementById(regionId);
         if (regionEl) regionEl.innerHTML = "";
 
@@ -92,15 +94,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             fps: fps,
             // RESPONSIVE QR BOX (Fixes oversized box on mobile)
             qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
-                // Use 80% of the visible width
                 let w = Math.floor(viewfinderWidth * 0.8);
-                // Cap max width for desktop stability
                 if (w > 450) w = 450;
-
-                // Make it rectangular (Wide/Landscape aspect)
                 let h = Math.floor(w * 0.5);
                 if (h < 150) h = 150;
-
                 return { width: w, height: h };
             },
             enableScanning: true,
@@ -108,27 +105,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             experimentalFeatures: { useBarCodeDetectorIfSupported: true }
         };
 
-        // Helper to try a specific config
+        // Helper
         const tryStart = async (label: string, camConfig: any): Promise<boolean> => {
             try {
                 addLog(`Trying ${label}...`);
                 await html5QrCode.start(camConfig, baseConfig, onScanSuccess, () => { });
                 addLog(`${label} Success!`);
 
-                // POST-START FIXES
+                // Keep-alive focus loop
                 try {
                     const track = (html5QrCode as any).getRunningTrack();
                     if (track) {
                         setCapabilities(track.getCapabilities());
-
-                        // AGGRESSIVE FOCUS LOOP
-                        // Many devices lose focus. We force it every 2.5s to keep it sharp.
                         const activeTrack = track;
                         if (activeTrack.applyConstraints) {
                             activeTrack.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => { });
-
-                            // Clear previous interval if any (not easily tracked here without ref, but okay for now)
-                            // Set new interval attached to this closure
                             const intervalId = setInterval(() => {
                                 if (!scannerRef.current) clearInterval(intervalId);
                                 activeTrack.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => { });
@@ -144,41 +135,35 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             }
         };
 
-        // CASCADE OF DESPERATION
+        // LOGIC: CYCLING ID vs FACING MODE
         try {
-            // Priority 1: Requested Mode (Exact) - CRITICAL FOR SWITCHING
-            if (mode !== "any") {
-                // Try exact first (Force Back/Front)
-                if (await tryStart(`Exact ${mode}`, { facingMode: { exact: mode } })) return;
+            // A. If "cycle" requested and we have cameras, pick next index
+            if (mode === "cycle" && cameras.length > 1) {
+                const nextIndex = (camIndex + 1) % cameras.length;
+                setCamIndex(nextIndex); // Update state for next time
+                const nextCam = cameras[nextIndex];
 
-                // If exact fails, try just label (Relaxed)
+                if (await tryStart(`ID: ${nextCam.label}`, { deviceId: { exact: nextCam.id } })) return;
+            }
+
+            // B. If specific mode requested, try exact
+            if (mode !== "cycle" && mode !== "any") {
+                if (await tryStart(`Exact ${mode}`, { facingMode: { exact: mode } })) return;
                 if (await tryStart(`Relaxed ${mode}`, { facingMode: mode })) return;
             }
 
-            // Priority 2: ID-based (If we found cameras and have a preference)
-            // Note: This often helps if facingMode fails but we have IDs
-            /*
+            // C. Fallbacks
             if (cameras.length > 0) {
-                 const targetLabel = mode === "environment" ? "back" : "front";
-                 const match = cameras.find(c => c.label.toLowerCase().includes(targetLabel));
-                 if (match) {
-                     if (await tryStart("Smart ID Match", { deviceId: match.id })) return;
-                 }
+                // Try current index just in case
+                if (await tryStart(`Fallback ID ${camIndex}`, { deviceId: { exact: cameras[camIndex].id } })) return;
             }
-            */
 
-            // Priority 3: The "Other" Mode (Flip it)
-            const alternate = mode === "environment" ? "user" : "environment";
-            if (await tryStart(`Alternate (Fallback to ${alternate})`, { facingMode: alternate })) return;
+            if (await tryStart("Any Camera", { facingMode: undefined })) return;
 
-            // Priority 4: ANY CAMERA (No constraints)
-            if (await tryStart("Generic/Any", { facingMode: undefined })) return;
-
-            throw new Error("Semua metode gagal. Browser menolak akses kamera.");
+            throw new Error("Gagal membuka kamera. Coba refresh halaman.");
 
         } catch (finalErr: any) {
-            setError(finalErr.message || "Gagal membuka kamera.");
-            setHasPermission(false);
+            setError(finalErr.message || "Camera Error");
         }
     };
 
@@ -228,10 +213,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                                 onClick={async () => {
                                     if (isSwitching) return;
                                     setIsSwitching(true);
-                                    const newMode = requestedFacingMode === "environment" ? "user" : "environment";
-                                    setRequestedFacingMode(newMode);
+                                    // Use new cycling logic
                                     try {
-                                        await startScanning(newMode);
+                                        await startScanning("cycle");
                                     } finally {
                                         setIsSwitching(false);
                                     }

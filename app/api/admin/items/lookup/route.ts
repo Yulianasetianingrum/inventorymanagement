@@ -68,6 +68,7 @@ export async function GET(req: Request) {
                 }
             });
             const html = await googleRes.text();
+            fallbackHtml = html; // Save for fallback
             const $ = cheerio.load(html);
 
             // Analyzed candidates
@@ -162,6 +163,7 @@ export async function GET(req: Request) {
                 }
             });
             const html = await ddgRes.text();
+            fallbackHtml = html; // Save for fallback
             const $ = cheerio.load(html);
 
             let candidates: any[] = [];
@@ -230,7 +232,54 @@ export async function GET(req: Request) {
             console.warn("DDG scrape failed", e);
         }
 
-        // 3. Fallback: Google Search Link (We cannot scrape Google directly safely)
+        // 4. LAST RESORT: PAGE TITLE FALLBACK
+        // If everything else fails, just grab the page title.
+        // Google/DDG titles are usually "Query - Google Search" or "Query at DuckDuckGo".
+        // Using shared 'fallbackHtml' (with structured extraction)
+        try {
+            if (fallbackHtml) {
+                const $ = cheerio.load(fallbackHtml);
+                const pageTitle = $("title").text().trim();
+
+                if (pageTitle && pageTitle.length > 5) {
+                    let cleanName = pageTitle
+                        .replace(/ - Google Search/gi, "")
+                        .replace(/ at DuckDuckGo/gi, "")
+                        .replace(/ \| Tokopedia/gi, "")
+                        .replace(/ \| Shopee/gi, "")
+                        .trim();
+
+                    if (cleanName && cleanName !== "DuckDuckGo" && cleanName !== "Google") {
+
+                        // Apply Regex Extraction to Title to satisfy User Requirement
+                        const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
+                        const sizeMatch = cleanName.match(sizeRegex);
+                        let detectedSize = (sizeMatch) ? `${sizeMatch[1]} ${sizeMatch[2]}` : "";
+
+                        let detectedBrand = "";
+                        if (cleanName.includes("-")) {
+                            const parts = cleanName.split("-");
+                            if (parts[0].trim().length < 15) detectedBrand = parts[0].trim();
+                            else if (parts[parts.length - 1].trim().length < 15) detectedBrand = parts[parts.length - 1].trim();
+                        }
+
+                        return NextResponse.json({
+                            ok: true,
+                            source: "TitleFallback_Smart",
+                            data: {
+                                name: cleanName,
+                                brand: detectedBrand,
+                                category: "",
+                                image: "",
+                                size: detectedSize
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (e) { }
+
+        // 5. Fallback: Google Search Link (We cannot scrape Google directly safely)
         return NextResponse.json({
             ok: false,
             error: "Product not found automatically",
