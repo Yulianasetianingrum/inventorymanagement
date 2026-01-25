@@ -19,6 +19,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     qrbox = { width: 250, height: 250 },
     disableFlip = false,
 }) => {
+    // ...
+    const [focusStatus, setFocusStatus] = useState<"idle" | "focusing">("idle");
     const [error, setError] = useState<string | null>(null);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [cameras, setCameras] = useState<any[]>([]);
@@ -76,7 +78,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             // Config with Native Detector support
             const config = {
                 fps: fps,
-                qrbox: qrbox,
+                // Make the scan region rectangular (wider) by default to fit Barcodes better.
+                // A square box cuts off long EAN-13 barcodes unless you are very far away (low res).
+                // width: 80% of min dimension, height: 250px max
+                qrbox: { width: 320, height: 150 },
+                enableScanning: true,
                 disableFlip: disableFlip,
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true
@@ -84,9 +90,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             };
 
             // Simplified Camera Config (Let Browser Decide Resolution)
+            // Sweet Spot: 720p is supported by almost all cameras and is sharp enough for Barcodes.
+            // Avoid "exact" constraints as they cause failures.
             const cameraConfig = cameraId
-                ? { deviceId: { exact: cameraId } }
-                : { facingMode: "environment" };
+                ? {
+                    deviceId: { exact: cameraId },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    focusMode: "continuous"
+                }
+                : {
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    focusMode: "continuous"
+                };
 
             try {
                 await html5QrCode.start(
@@ -182,6 +200,33 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         {/* CONTROLS OVERLAY */}
                         <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-2 px-4 pointer-events-none">
                             <div className="pointer-events-auto flex gap-4">
+                                {/* Focus Button (New) */}
+                                <Button
+                                    onClick={() => {
+                                        if (scannerRef.current) {
+                                            setFocusStatus("focusing");
+                                            // Aggressive Focus Hack: Toggle mode or re-apply
+                                            // Cast to any because getRunningTrack might be missing in type defs
+                                            const track = (scannerRef.current as any).getRunningTrack();
+                                            if (track) {
+                                                // Try to force "single-shot" then back to "continuous"
+                                                track.applyConstraints({ advanced: [{ focusMode: "manual" as any }] })
+                                                    .then(() => new Promise(r => setTimeout(r, 200)))
+                                                    .then(() => track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }))
+                                                    .catch((e: any) => {
+                                                        console.warn("Focus force failed", e);
+                                                        // Fallback just re-apply continuous
+                                                        track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+                                                    })
+                                                    .finally(() => setTimeout(() => setFocusStatus("idle"), 1000));
+                                            }
+                                        }
+                                    }}
+                                    className="h-10 px-4 rounded-full shadow-lg bg-white text-navy font-bold text-xs"
+                                >
+                                    {focusStatus === "focusing" ? "Fokus..." : "🎯 Fokus"}
+                                </Button>
+
                                 {/* Torch Toggle */}
                                 {(capabilities as any)?.torch && (
                                     <Button
