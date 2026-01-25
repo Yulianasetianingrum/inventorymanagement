@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState, Suspense } from "reac
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./items.module.css";
 import { Button } from "@/components/ui/button";
+import BarcodeScanner from "@/components/BarcodeScanner";
 import { Html5Qrcode } from "html5-qrcode";
 
 type FilterOption = "priority" | "all" | "low" | "empty";
@@ -460,103 +461,25 @@ function AdminItemsContent() {
     }
   }, [scanning]);
 
-  const startCamera = async () => {
-    // 1. Strict HTTPS Check
-    if (window.location.hostname !== 'localhost' && window.location.protocol !== 'https:') {
-      showToast("⚠️ WAJIB HTTPS! Ganti URL ke https://...", true);
-      window.location.href = window.location.href.replace('http:', 'https:');
-      return;
-    }
 
-    setCameraActive(true);
-    try {
-      const { Html5Qrcode } = await import("html5-qrcode");
+  /* --- REFACTORED SCANNER LOGIC --- */
 
-      // 2. Safe Cleanup of any ghost instance
-      if (scannerRef.current) {
-        try { await scannerRef.current.stop(); } catch (e) { }
-        try { await scannerRef.current.clear(); } catch (e) { }
-        scannerRef.current = null;
-      }
+  const handleScanSuccess = async (decodedText: string) => {
+    console.log("Scan Success:", decodedText);
+    const code = decodedText.trim();
 
-      // Wait a bit to ensure DOM is ready
-      await new Promise(r => setTimeout(r, 300));
+    // Stop scanning immediately after successful scan
+    setScanning(false);
+    setCameraActive(false);
 
-      // 3. Get Cameras (Optional but good for selection)
-      if (cameras.length === 0) {
-        try {
-          const devices = await Html5Qrcode.getCameras();
-          if (devices && devices.length) {
-            setCameras(devices);
-            if (!selectedCameraId) setSelectedCameraId(devices[devices.length - 1].id);
-          }
-        } catch (e) {
-          console.warn("Get cameras warning (ignorable if start works):", e);
-        }
-      }
-
-      if (!document.getElementById("reader")) throw new Error("Area kamera tidak siap. Coba lagi.");
-
-      const html5QrCode = new Html5Qrcode("reader");
-      scannerRef.current = html5QrCode;
-
-      const config = selectedCameraId ? { deviceId: { exact: selectedCameraId } } : { facingMode: "environment" };
-
-      await html5QrCode.start(
-        config,
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        async (decodedText: string) => {
-          console.log("Scanned:", decodedText);
-
-          // Success! Stop camera immediately
-          try { await html5QrCode.stop(); } catch (e) { }
-          try { await html5QrCode.clear(); } catch (e) { }
-          scannerRef.current = null;
-
-          setScanning(false);
-          setCameraActive(false);
-
-          const code = decodedText.trim();
-          if (itemMode === 'single') {
-            setItemForm(prev => ({ ...prev, barcode: code }));
-            await handleLookup(code);
-          } else {
-            showToast("Scan sukses: " + code);
-          }
-        },
-        () => { }
-      );
-
-    } catch (err: any) {
-      console.error("Failed to start scanner", err);
-      setCameraActive(false);
-
-      const msg = err?.message || err?.toString() || "";
-
-      // Smart Error Messages
-      if (msg.includes("Permission") || msg.includes("Access") || msg.includes("denied")) {
-        showToast("⚠️ Izin Kamera Ditolak Browser. Silakan Reset Permission (Gembok URL).", true);
-      } else if (msg.includes("Secure Context")) {
-        showToast("⚠️ Wajib HTTPS! Web ini tidak aman untuk kamera.", true);
-      } else if (msg.includes("Starting video failed")) {
-        showToast("⚠️ Kamera sedang dipakai aplikasi lain / Error Hardware.", true);
-      } else {
-        showToast("Gagal akses kamera. Gunakan Upload Foto saja.", true);
-      }
+    if (itemMode === 'single') {
+      setItemForm(prev => ({ ...prev, barcode: code }));
+      await handleLookup(code);
+    } else {
+      showToast("Scan sukses: " + code);
     }
   };
 
-  // Handle camera switch
-  useEffect(() => {
-    if (cameraActive && selectedCameraId && scannerRef.current) {
-      // Restart with new camera
-      const s = scannerRef.current;
-      s.stop().catch(() => { }).then(() => {
-        s.clear().catch(() => { });
-        startCamera();
-      });
-    }
-  }, [selectedCameraId]);
 
   const handleLookup = async (code: string) => {
     if (!code) return;
@@ -826,33 +749,18 @@ function AdminItemsContent() {
             </button>
             <h3 className="text-lg font-black text-navy mb-4 text-center">Scan Barcode / QR</h3>
 
-            {/* Camera Control */}
-            <div className="flex flex-col gap-3 mb-4">
-              {!cameraActive ? (
-                <button onClick={startCamera} className="bg-navy text-white font-bold py-3 rounded-xl shadow-lg hover:bg-navy/90 transition-all flex items-center justify-center gap-2">
-                  <span>📷</span> MULAI KAMERA
-                </button>
-              ) : (
-                <div className="flex gap-2">
-                  {cameras.length > 0 && (
-                    <select
-                      className={styles.formInput + " !h-10 !text-xs bg-white border-gold flex-1"}
-                      value={selectedCameraId}
-                      onChange={(e) => setSelectedCameraId(e.target.value)}
-                    >
-                      {cameras.map((cam) => (
-                        <option key={cam.id} value={cam.id}>{cam.label || `Camera ${cam.id.substr(0, 5)}...`}</option>
-                      ))}
-                    </select>
-                  )}
-                  <button onClick={() => setScanning(false)} className="px-4 bg-red-100 text-red-600 font-bold rounded-lg text-xs hover:bg-red-200">
-                    STOP
-                  </button>
-                </div>
-              )}
+
+            {/* Camera Control - Replaced with BarcodeScanner Component */}
+            <div className="mb-4">
+              <BarcodeScanner
+                onScanSuccess={handleScanSuccess}
+                onScanFailure={(err) => {
+                  // Optional: Log benign errors or just ignore as they happen every frame
+                }}
+              />
             </div>
 
-            <div id="reader" className="w-full overflow-hidden rounded-xl bg-black/5 min-h-[250px]" />
+            {/* <div id="reader" className="w-full overflow-hidden rounded-xl bg-black/5 min-h-[250px]" /> */}
 
             <div className="mt-4 flex flex-col items-center gap-2">
               <p className="text-center text-xs text-gray-400">Arahkan kamera ke kode produk</p>
