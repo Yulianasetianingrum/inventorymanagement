@@ -155,86 +155,6 @@ export async function GET(req: Request) {
             console.warn("Google scrape failed", e);
         }
 
-        // 3. Fallback: DuckDuckGo HTML (Easier to scrape, less CAPTCHA)
-        // 3. Fallback: DuckDuckGo HTML (Easier to scrape, less CAPTCHA)
-        // SMART DDG SCRAPER
-        try {
-            const ddgUrl = `https://html.duckduckgo.com/html/?q=${code}`;
-            const ddgRes = await fetch(ddgUrl, {
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                }
-            });
-            const html = await ddgRes.text();
-            fallbackHtml = html; // Save for fallback
-            const $ = cheerio.load(html);
-
-            let candidates: any[] = [];
-
-            // Loop through first 5 results (.result__title)
-            $(".result__title").each((i, el) => {
-                if (i >= 5) return false;
-
-                let rawTitle = $(el).text().trim();
-
-                // Aggressive cleaning
-                let cleanName = rawTitle
-                    .replace(/ - Google Search/gi, "")
-                    // DDG specific noise
-                    .replace(/ at DuckDuckGo/gi, "")
-                    .replace(/ \| Tokopedia/gi, "")
-                    .replace(/ \| Shopee/gi, "")
-                    .replace(/Jual /gi, "")
-                    .trim();
-
-                if (!cleanName || cleanName.length < 5) return;
-
-                // 1. Size Extraction
-                const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
-                const sizeMatch = cleanName.match(sizeRegex);
-                let detectedSize = "";
-                if (sizeMatch) detectedSize = `${sizeMatch[1]} ${sizeMatch[2]}`;
-
-                // 2. Brand Heuristics
-                let detectedBrand = "";
-                if (cleanName.includes("-")) {
-                    const parts = cleanName.split("-");
-                    if (parts[0].trim().length < 15) detectedBrand = parts[0].trim();
-                    else if (parts[parts.length - 1].trim().length < 15) detectedBrand = parts[parts.length - 1].trim();
-                }
-
-                candidates.push({
-                    name: cleanName,
-                    brand: detectedBrand,
-                    size: detectedSize,
-                    score: (detectedSize ? 2 : 0) + (detectedBrand ? 1 : 0)
-                });
-            });
-
-            // Sort by score
-            candidates.sort((a, b) => {
-                if (b.score !== a.score) return b.score - a.score;
-                return b.name.length - a.name.length;
-            });
-
-            if (candidates.length > 0) {
-                const best = candidates[0];
-                return NextResponse.json({
-                    ok: true,
-                    source: "DDGScrape_Smart",
-                    data: {
-                        name: best.name,
-                        brand: best.brand,
-                        category: "",
-                        image: "",
-                        size: best.size
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn("DDG scrape failed", e);
-        }
-
         // 4. LAST RESORT: PAGE TITLE FALLBACK
         // If everything else fails, just grab the page title.
         // Google/DDG titles are usually "Query - Google Search" or "Query at DuckDuckGo".
@@ -247,12 +167,16 @@ export async function GET(req: Request) {
                 if (pageTitle && pageTitle.length > 5) {
                     let cleanName = pageTitle
                         .replace(/ - Google Search/gi, "")
+                        .replace(/ – Google Search/gi, "") // En dash
                         .replace(/ at DuckDuckGo/gi, "")
                         .replace(/ \| Tokopedia/gi, "")
                         .replace(/ \| Shopee/gi, "")
                         .trim();
 
-                    if (cleanName && cleanName !== "DuckDuckGo" && cleanName !== "Google") {
+                    const lowerName = cleanName.toLowerCase();
+                    const invalidNames = ["google search", "google", "duckduckgo", "search", "penelusuran google"];
+
+                    if (cleanName && !invalidNames.includes(lowerName)) {
 
                         // Apply Regex Extraction to Title to satisfy User Requirement
                         const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
