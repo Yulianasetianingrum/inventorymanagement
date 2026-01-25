@@ -47,53 +47,70 @@ async function main() {
     raks.push(loc);
   }
 
-  const hinge = await prisma.item.upsert({
-    where: { name_brand_size: { name: "Engsel Soft Close", brand: "Blum", size: "" } },
-    update: {},
-    create: {
-      name: "Engsel Soft Close",
-      brand: "Blum",
-      category: "Hardware",
-      storageLocation: { connect: { id: raks[0].id } },
-      size: "",
-      unit: "pcs",
-      minStock: 20,
-      stockNew: 45,
-      stockUsed: 10,
-    },
+  // Manual upsert for Items to avoid Type Error with composite keys
+
+  // 1. Hinge
+  let hinge = await prisma.item.findFirst({
+    where: { name: "Engsel Soft Close", brand: "Blum", size: "" }
   });
 
-  const paint = await prisma.item.upsert({
-    where: { name_brand_size: { name: "Cat Duco Putih", brand: "Avian", size: "" } },
-    update: {},
-    create: {
-      name: "Cat Duco Putih",
-      brand: "Avian",
-      category: "Finishing",
-      storageLocation: { connect: { id: raks[1].id } },
-      size: "",
-      unit: "liter",
-      minStock: 5,
-      stockNew: 18,
-      stockUsed: 2,
-    },
+  if (!hinge) {
+    hinge = await prisma.item.create({
+      data: {
+        name: "Engsel Soft Close",
+        brand: "Blum",
+        category: "Hardware",
+        storageLocation: { connect: { id: raks[0].id } },
+        size: "",
+        unit: "pcs",
+        minStock: 20,
+        stockNew: 45,
+        stockUsed: 10,
+      },
+    });
+  }
+
+  // 2. Paint
+  let paint = await prisma.item.findFirst({
+    where: { name: "Cat Duco Putih", brand: "Avian", size: "" }
   });
 
-  await prisma.item.upsert({
-    where: { name_brand_size: { name: "Amplas 120", brand: "Bosch", size: "120" } },
-    update: {},
-    create: {
-      name: "Amplas 120",
-      brand: "Bosch",
-      category: "Consumable",
-      storageLocation: { connect: { id: raks[1].id } },
-      size: "120",
-      unit: "lembar",
-      minStock: 50,
-      stockNew: 80,
-      stockUsed: 0,
-    },
+  if (!paint) {
+    paint = await prisma.item.create({
+      data: {
+        name: "Cat Duco Putih",
+        brand: "Avian",
+        category: "Finishing",
+        storageLocation: { connect: { id: raks[1].id } },
+        size: "",
+        unit: "liter",
+        minStock: 5,
+        stockNew: 18,
+        stockUsed: 2,
+      },
+    });
+  }
+
+  // 3. Sandpaper
+  let sandpaper = await prisma.item.findFirst({
+    where: { name: "Amplas 120", brand: "Bosch", size: "120" }
   });
+
+  if (!sandpaper) {
+    await prisma.item.create({
+      data: {
+        name: "Amplas 120",
+        brand: "Bosch",
+        category: "Consumable",
+        storageLocation: { connect: { id: raks[1].id } },
+        size: "120",
+        unit: "lembar",
+        minStock: 50,
+        stockNew: 80,
+        stockUsed: 0,
+      },
+    });
+  }
 
   console.log("Seed data created successfully.");
 }

@@ -14,6 +14,9 @@ export async function GET(req: Request) {
     if (!code) return NextResponse.json({ error: "No code provided" }, { status: 400 });
 
     try {
+        // SHARED HTML CONTENT for Fallback
+        let fallbackHtml = "";
+
         // 0. PRIORITY: Check Local Database
         const localItem = await prisma.item.findUnique({
             // @ts-ignore - Prisma client out of sync with schema
