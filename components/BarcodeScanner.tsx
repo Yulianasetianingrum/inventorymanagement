@@ -27,6 +27,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     // NUCLEAR OPTION: Track requested facing mode explicitly
     const [requestedFacingMode, setRequestedFacingMode] = useState<"environment" | "user">("environment");
+    const [isSwitching, setIsSwitching] = useState(false);
 
     // Refs
     const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -78,14 +79,30 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         // 2. DELAY (Give hardware time to release)
         await new Promise(r => setTimeout(r, 300));
 
+        // 3. FORCE DOM CLEAR (Fix "Multiple Cameras" bug)
+        // If html5-qrcode doesn't clean up fast enough, we wipe the container manually.
+        const regionEl = document.getElementById(regionId);
+        if (regionEl) regionEl.innerHTML = "";
+
         // Base Config
         const html5QrCode = new Html5Qrcode(regionId, { verbose: true } as any);
         scannerRef.current = html5QrCode;
 
         const baseConfig = {
             fps: fps,
-            // LANDSCAPE BOX (Widened for desktop/User request)
-            qrbox: { width: 450, height: 200 },
+            // RESPONSIVE QR BOX (Fixes oversized box on mobile)
+            qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
+                // Use 80% of the visible width
+                let w = Math.floor(viewfinderWidth * 0.8);
+                // Cap max width for desktop stability
+                if (w > 450) w = 450;
+
+                // Make it rectangular (Wide/Landscape aspect)
+                let h = Math.floor(w * 0.5);
+                if (h < 150) h = 150;
+
+                return { width: w, height: h };
+            },
             enableScanning: true,
             disableFlip: disableFlip,
             experimentalFeatures: { useBarCodeDetectorIfSupported: true }
@@ -205,83 +222,36 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         <div id={regionId} className="w-full min-h-[300px]" />
 
                         {/* Control Overlay */}
-                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 pointer-events-none">
-                            {/* ... (Buttons) ... */}
-                            {/* Manual Switchers */}
-                            <div className="pointer-events-auto flex gap-2">
-                                <Button
-                                    onClick={() => {
-                                        const newMode = requestedFacingMode === "environment" ? "user" : "environment";
-                                        setRequestedFacingMode(newMode);
-                                        startScanning(newMode);
-                                    }}
-                                    className="h-8 bg-white text-navy border border-gray-200 shadow-sm"
-                                    title="Switch Camera"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        {/* Manual Switchers */}
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
+                            <Button
+                                onClick={async () => {
+                                    if (isSwitching) return;
+                                    setIsSwitching(true);
+                                    const newMode = requestedFacingMode === "environment" ? "user" : "environment";
+                                    setRequestedFacingMode(newMode);
+                                    try {
+                                        await startScanning(newMode);
+                                    } finally {
+                                        setIsSwitching(false);
+                                    }
+                                }}
+                                className={`h-9 px-4 text-xs font-bold border shadow-sm transition-all ${isSwitching ? "bg-gray-100 text-gray-400" : "bg-white text-navy border-gray-200"}`}
+                                title="Switch Camera"
+                                disabled={isSwitching}
+                            >
+                                {isSwitching ? (
+                                    <span className="animate-spin mr-2">⏳</span>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
                                         <path d="M20 10c0-6-8-6-8-6s-8 0-8 6h3l-5 5-5-5h3c0-10 12-10 12-10s12 0 12 10h-3l5 5 5-5z" />
                                     </svg>
-                                    <span className="ml-2 text-[10px] font-bold">Switch</span>
-                                </Button>
-                            </div>
-
-                            <div className="flex flex-col gap-2 pointer-events-auto">
-                                <div className="flex gap-2">
-                                    <Button
-                                        className="h-8 bg-white text-navy text-[10px]"
-                                        onClick={() => {
-                                            if (scannerRef.current) {
-                                                setFocusStatus("focusing");
-                                                const scannerAny = scannerRef.current as any;
-                                                let track = null;
-                                                if (typeof scannerAny.getRunningTrack === "function") track = scannerAny.getRunningTrack();
-                                                else if (scannerAny.mediaStream?.getVideoTracks) track = scannerAny.mediaStream.getVideoTracks()[0];
-
-                                                if (track?.applyConstraints) {
-                                                    track.applyConstraints({ advanced: [{ focusMode: "manual" as any }] })
-                                                        .catch(() => { })
-                                                        .finally(() => {
-                                                            setTimeout(() => {
-                                                                track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => { });
-                                                                setFocusStatus("idle");
-                                                            }, 300);
-                                                        });
-                                                } else {
-                                                    setTimeout(() => setFocusStatus("idle"), 500);
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        {focusStatus === "focusing" ? "Fokus..." : "Fokus"}
-                                    </Button>
-
-                                    {/* ZOOM SLIDER (Restored) */}
-                                    <div className="flex items-center bg-black/40 rounded px-2">
-                                        <span className="text-[10px] text-white mr-1 font-bold">Zoom</span>
-                                        <input
-                                            type="range"
-                                            min="1" max="3" step="0.1"
-                                            defaultValue="1"
-                                            className="w-20 h-1 accent-white"
-                                            onChange={(e) => {
-                                                const val = Number(e.target.value);
-                                                if (scannerRef.current) {
-                                                    const scannerAny = scannerRef.current as any;
-                                                    let track = null;
-                                                    if (typeof scannerAny.getRunningTrack === "function") track = scannerAny.getRunningTrack();
-                                                    else if (scannerAny.mediaStream?.getVideoTracks) track = scannerAny.mediaStream.getVideoTracks()[0];
-
-                                                    if (track?.applyConstraints) {
-                                                        track.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => { });
-                                                    }
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                )}
+                                {isSwitching ? "Switching..." : "Switch Camera"}
+                            </Button>
                         </div>
                     </div>
+
 
                     <div className="flex flex-col items-center gap-1">
                         <div className="flex items-center gap-2">
