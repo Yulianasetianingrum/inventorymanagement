@@ -32,7 +32,7 @@ export function middleware(req: NextRequest) {
     res.headers.set("X-Frame-Options", "SAMEORIGIN");
     res.headers.set("X-Content-Type-Options", "nosniff");
     res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.headers.set("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+    res.headers.set("Permissions-Policy", "geolocation=(), camera=(self), microphone=()");
     return res;
   }
 
@@ -45,7 +45,7 @@ export function middleware(req: NextRequest) {
       res.headers.set("X-Frame-Options", "SAMEORIGIN");
       res.headers.set("X-Content-Type-Options", "nosniff");
       res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-      res.headers.set("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+      res.headers.set("Permissions-Policy", "geolocation=(), camera=(self), microphone=()");
       return res;
     }
   } else if (isWorkerPath(pathname)) {
@@ -54,7 +54,7 @@ export function middleware(req: NextRequest) {
       res.headers.set("X-Frame-Options", "SAMEORIGIN");
       res.headers.set("X-Content-Type-Options", "nosniff");
       res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-      res.headers.set("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+      res.headers.set("Permissions-Policy", "geolocation=(), camera=(self), microphone=()");
       return res;
     }
   }
@@ -63,7 +63,7 @@ export function middleware(req: NextRequest) {
   res.headers.set("X-Frame-Options", "SAMEORIGIN");
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.headers.set("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+  res.headers.set("Permissions-Policy", "geolocation=(), camera=(self), microphone=()");
   return res;
 }
 
