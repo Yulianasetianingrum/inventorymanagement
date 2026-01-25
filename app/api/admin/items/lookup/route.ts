@@ -252,6 +252,71 @@ export async function GET(req: Request) {
             console.warn("Bing failed", e);
         }
 
+        // 3.5. Try DuckDuckGo JSON API (Official)
+        console.log("[LOOKUP] Trying DDG API...");
+        try {
+            const ddgApiRes = await fetch(`https://api.duckduckgo.com/?q=${code}&format=json&t=inventoryApp`, {
+                headers: { "User-Agent": USER_AGENT }
+            });
+            const ddgJson = await ddgApiRes.json();
+            if (ddgJson.Heading && ddgJson.Heading.length > 3) {
+                console.log(`[LOOKUP] Found in DDG API (${ddgJson.Heading})`);
+                return NextResponse.json({
+                    ok: true,
+                    source: "DDG_API",
+                    data: {
+                        name: ddgJson.Heading,
+                        brand: "",
+                        category: ddgJson.AbstractSource || "",
+                        image: ddgJson.Image || "",
+                        size: ""
+                    }
+                });
+            }
+        } catch (e) { }
+
+        // 3.6. Try Google Images (Alt Text Strategy)
+        // Images often bypass the strict text search filters or provide clean Alt text
+        console.log("[LOOKUP] Trying Google Images...");
+        try {
+            const imgUrl = `https://www.google.com/search?tbm=isch&q=${code}`;
+            const imgRes = await fetch(imgUrl, {
+                headers: { "User-Agent": USER_AGENT }
+            });
+            const html = await imgRes.text();
+            // Google Images (Lite) uses specific structure. Look for alt text in images.
+            // Simplified regex for alt="Product Name"
+            const altRegex = /alt="([^"]+)"/g;
+            let match;
+            const candidates: string[] = [];
+
+            while ((match = altRegex.exec(html)) !== null) {
+                const text = match[1];
+                if (text.length > 5 && !text.includes("Google") && !text.includes("Image result")) {
+                    candidates.push(text);
+                }
+                if (candidates.length >= 5) break;
+            }
+
+            if (candidates.length > 0) {
+                // Heuristic: Picking the longest one usually gives the full product title including variant
+                candidates.sort((a, b) => b.length - a.length);
+                const best = candidates[0];
+                console.log(`[LOOKUP] Found in Google Images (${best})`);
+                return NextResponse.json({
+                    ok: true,
+                    source: "GoogleImages",
+                    data: {
+                        name: best,
+                        brand: "",
+                        category: "",
+                        image: "",
+                        size: ""
+                    }
+                });
+            }
+        } catch (e) { }
+
         // 4. LAST RESORT: BODY TEXT FALLBACK (Desperate Search)
         // The previous Page Title fallback was useless for SERPs (it just returned the barcode).
         // Instead, we look for ANY widely used title tag (h3, h4, or valid anchors) that looks like a product name.
@@ -269,7 +334,7 @@ export async function GET(req: Request) {
                     const lower = text.toLowerCase();
 
                     // Filter out navigation/junk
-                    if (text.length < 10 || text.length > 100) return;
+                    if (text.length < 5 || text.length > 150) return;
                     if (lower.includes("google") || lower.includes("duckduckgo")) return;
                     if (lower.includes("login") || lower.includes("sign in") || lower.includes("masuk")) return;
                     if (lower.includes("maps") || lower.includes("images") || lower.includes("news")) return;

@@ -495,17 +495,25 @@ function AdminItemsContent() {
           brand: d.brand || prev.brand,
           category: d.category || prev.category,
           size: d.size || prev.size,
-          // If image found, strictly we assume user needs to upload it manually or we handle it later.
-          // For now we auto-fill text fields.
         }));
         showToast("Data ditemukan: " + d.name);
       } else {
-        // If not found, we just let the user fill it manually.
-        // We already set the barcode in handleScanSuccess/handleLookup start.
-        showToast("Data tidak ditemukan. Silakan isi manual.");
+        // Fallback: If server returns OK false or no data
+        showToast("Data tidak ditemukan. Mode Input Manual.");
+        setItemForm(prev => ({
+          ...prev,
+          barcode: code,
+          name: `Item ${code}`, // Force auto-input
+        }));
       }
     } catch (e) {
-      showToast("Gagal lookup otomatis", true);
+      showToast("Gagal lookup otomatis. Mode Input Manual.", true);
+      // Even on crash, force auto-input
+      setItemForm(prev => ({
+        ...prev,
+        barcode: code,
+        name: `Item ${code}`,
+      }));
     }
   };
 
