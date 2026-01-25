@@ -49,8 +49,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         };
     }, []);
 
-
-
     const startScanning = async (cameraId?: string) => {
         setError(null);
         try {
@@ -181,14 +179,54 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         }
     };
 
-    // ... (useEffect remains same)
+    useEffect(() => {
+        Html5Qrcode.getCameras()
+            .then((devices) => {
+                if (devices && devices.length) {
+                    setCameras(devices);
+                    // 1. Try to find explicit "back" or "environment" camera
+                    const backCamera = devices.find(d =>
+                        d.label.toLowerCase().includes('back') ||
+                        d.label.toLowerCase().includes('belakang') ||
+                        d.label.toLowerCase().includes('environment')
+                    );
 
-    // ... (handleCameraChange remains same)
+                    if (backCamera) {
+                        // Found it! Use this specific ID.
+                        setActiveCameraId(backCamera.id);
+                        startScanning(backCamera.id);
+                    } else if (devices.length > 0 && devices[0].label) {
+                        // If labels exist but no "back" found, default to first one (better than nothing)
+                        setActiveCameraId(devices[0].id);
+                        startScanning(devices[0].id);
+                    } else {
+                        // Labels are empty (privacy issue) or ambiguous. 
+                        // DO NOT PRE-SELECT ID. Let startScanning() use { facingMode: "environment" }
+                        console.warn("No labeled back camera found, defaulting to generic environment config.");
+                        setActiveCameraId(null);
+                        startScanning(); // No ID passed -> defaults to facingMode: "environment"
+                    }
+                } else {
+                    console.warn("No cameras found via enumeration, trying generic start...");
+                    startScanning();
+                }
+            })
+            .catch((err) => {
+                console.error("Camera listing failed, forcing generic start:", err);
+                startScanning();
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const id = e.target.value;
+        setActiveCameraId(id);
+        startScanning(id);
+    };
 
     return (
         <div className="w-full flex flex-col gap-4">
             {error ? (
-                // ... (Error UI remains same)
                 <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 text-center text-sm font-bold">
                     {error}
                     <div className="mt-2">
@@ -204,7 +242,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
                         {/* CONTROLS OVERLAY */}
                         <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-2 px-4 pointer-events-none">
-                            {/* ... (Controls remain same) ... */}
                             <div className="pointer-events-auto flex gap-4">
                                 {/* Focus Button (New) */}
                                 <Button
