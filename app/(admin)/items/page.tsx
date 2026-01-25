@@ -489,14 +489,39 @@ function AdminItemsContent() {
       if (res.ok && res.data) {
         const d = res.data;
 
-        // If found in LocalDB, switch to EDIT mode
+        // If found in LocalDB, switch to STOCK IN mode
         if (res.source === "LocalDB" && d.id) {
-          setEditTargetId(d.id);
-          showToast("Item ditemukan di database. Beralih ke mode Edit.", false);
+          // Set selected item for stock modal
+          const itemData = {
+            id: d.id,
+            name: d.name,
+            brand: d.brand,
+            category: d.category,
+            size: d.size,
+            unit: d.unit,
+            stockNew: d.stockNew ?? 0,
+            stockUsed: d.stockUsed ?? 0,
+            stockTotal: (d.stockNew ?? 0) + (d.stockUsed ?? 0),
+            // other fields not strictly needed for stock modal but good for completeness
+            location: d.location,
+            minStock: d.minStock ?? 0,
+            statusRefill: "Aman", // dummy val
+            nilaiStok: 0, // dummy
+            updatedAt: "",
+          } as ItemRow;
+
+          setSelectedItem(itemData);
+          setStockModalOpen(true); // Open stock modal instead of edit form
+          setStockSupplierQuery(d.name); // Pre-fill supplier search
+
+          showToast(`Item terdaftar: ${d.name}. Mode Tambah Stok aktif.`, false);
+          return; // Stop here, don't open item form
         } else if (res.source !== "Placeholder") {
           showToast("Data ditemukan di internet: " + d.name);
+          setItemFormOpen(true); // Open form for new item
         } else {
           showToast("✓ Mode Manual Aktif. Silakan lengkapi nama.");
+          setItemFormOpen(true); // Open form for new item
         }
 
         setItemForm({
