@@ -589,14 +589,15 @@ function AdminItemsContent() {
       <div className={styles['premium-container']}>
         {/* Header Section */}
         <header className={styles.headerCard}>
-          <div className="flex justify-between items-start relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start relative z-10 gap-6">
             <div>
               <p className={styles.headerSubtitle}>Master Data Management</p>
               <h1 className={styles.headerTitle}>Inventory Items</h1>
             </div>
-            <div className="flex gap-4">
-              <Button onClick={() => setDropAllModalOpen(true)} className="bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 !h-12 !px-4 border-none font-bold">
-                ⚠️ DROP ALL PRODUK!
+            <div className="grid grid-cols-2 sm:flex gap-3 w-full md:w-auto">
+              {/* Drop All - Full Width on Mobile */}
+              <Button onClick={() => setDropAllModalOpen(true)} className="col-span-2 sm:col-span-1 bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 !h-12 !px-4 border-none font-bold">
+                ⚠️ DROP ALL
               </Button>
               <Button onClick={() => {
                 setItemForm({ name: "", brand: "", category: "", location: "", size: "", unit: "pcs", minStock: "0", barcode: "" });
@@ -604,7 +605,7 @@ function AdminItemsContent() {
                 setItemMode("single");
                 setItemFormOpen(true);
               }} className="btn-gold !h-12 !px-6">
-                + Item Baru
+                + Baru
               </Button>
               <Button onClick={() => {
                 setItemForm({ name: "", brand: "", category: "", location: "", size: "", unit: "pcs", minStock: "0", barcode: "" });
@@ -614,9 +615,9 @@ function AdminItemsContent() {
                 // Delayed start to ensure modal render
                 setTimeout(() => setScanning(true), 100);
               }} className="bg-navy/10 text-navy hover:bg-navy hover:text-white !h-12 !px-4 border border-navy/20 font-bold transition-all">
-                📷 Scan & Add
+                📷 Scan
               </Button>
-              <Button onClick={() => router.push("/dashboard")} className="btn-primary !bg-white/10 !backdrop-blur !h-12 !px-6 border-white/20">
+              <Button onClick={() => router.push("/dashboard")} className="col-span-2 sm:col-span-1 btn-primary !bg-white/10 !backdrop-blur !h-12 !px-6 border-white/20">
                 Dashboard
               </Button>
             </div>
@@ -629,17 +630,17 @@ function AdminItemsContent() {
             <span className={styles.searchIcon}>🔍</span>
             <input
               className={styles.searchInput}
-              placeholder="Cari item, brand, atau kategori..."
+              placeholder="Cari item..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
 
-          <div className={styles.filterGroup}>
+          <div className={styles.filterGroup + " overflow-x-auto pb-2 md:pb-0"}>
             {(["all", "priority", "low", "empty"] as FilterOption[]).map(f => (
               <button
                 key={f}
-                className={`${styles.filterPill} ${filter === f ? styles.filterPillActive : ""}`}
+                className={`${styles.filterPill} ${filter === f ? styles.filterPillActive : ""} whitespace-nowrap`}
                 onClick={() => {
                   setFilter(f);
                   const q = new URLSearchParams(window.location.search);
@@ -688,23 +689,23 @@ function AdminItemsContent() {
               ) : (
                 items.map(item => (
                   <tr key={item.id} onClick={() => router.push(`/items/${item.id}/riwayat`)} className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <td>
+                    <td data-label="Item">
                       <div className={styles.itemName}>{item.name}</div>
                       <div className={styles.itemMeta}>{item.brand} • {item.category} • {item.size}</div>
                     </td>
-                    <td>
+                    <td data-label="Lokasi">
                       <span className="font-black text-navy/40 uppercase text-[11px] tracking-widest bg-navy/5 px-2 py-1 rounded-md">
                         {item.location || "N/A"}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`${styles.statusBadge} ${item.statusRefill === 'Aman' ? styles.statusAman :
                         item.statusRefill === 'Habis' ? styles.statusHabis : styles.statusWajib
                         }`}>
                         {item.statusRefill}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Stok">
                       <div className={styles.stockGrid}>
                         <div className={styles.stockBox}>
                           <span className={styles.stockLabel}>Baru</span>
@@ -716,11 +717,10 @@ function AdminItemsContent() {
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Nilai Aset">
                       <div className="font-black text-navy">{formatCurrency(item.nilaiStok)}</div>
-                      <div className="text-[10px] font-bold text-navy/30 uppercase tracking-tighter">Inventory Valuation</div>
                     </td>
-                    <td className="text-right">
+                    <td className="text-right flex justify-end md:table-cell" data-label="Aksi">
                       <button className={styles.actionTrigger} onClick={(e) => toggleActionMenu(e, item)}>
                         ⋮
                       </button>

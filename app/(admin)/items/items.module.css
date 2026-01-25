@@ -427,6 +427,54 @@
   .formFull {
     grid-column: span 1;
   }
+
+  /* Responsive Table as Cards */
+  .premiumTable thead {
+    display: none;
+  }
+
+  .premiumTable tr {
+    display: block;
+    background: white;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(11, 27, 58, 0.05);
+    border-radius: 1.5rem;
+    padding: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  }
+
+  .premiumTable td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+    text-align: right;
+  }
+
+  .premiumTable td:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid rgba(0, 0, 0, 0.03);
+  }
+
+  .premiumTable td::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: rgba(11, 27, 58, 0.4);
+    letter-spacing: 0.05em;
+    margin-right: 1rem;
+    text-align: left;
+  }
+
+  /* Adjustments for specific cells in card mode */
+  .itemName {
+    font-size: 1.1rem;
+  }
 }
 
 .toast {
