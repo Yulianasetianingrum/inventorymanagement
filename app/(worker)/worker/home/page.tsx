@@ -28,13 +28,26 @@ export default function WorkerHome() {
   useEffect(() => {
     const load = async () => {
       try {
-        const userRes = await fetch("/api/worker/me");
-        if (userRes.ok) setMe((await userRes.json()).data);
-        const res = await fetch("/api/worker/picklists?tab=active");
-        if (res.ok) {
-          const data = (await res.json()).data || [];
+        const [userRes, listRes] = await Promise.all([
+          fetch("/api/worker/me"),
+          fetch("/api/worker/picklists?tab=active") // Fetch both active and picked for home
+        ]);
 
-          // Filter for tasks that are strictly active (READY or PICKING)
+        if (userRes.status === 401) {
+          window.location.href = "/worker/login";
+          return;
+        }
+
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setMe(userData.data);
+        }
+
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          const data = listData.data || [];
+
+          // Server now provides progress and active items
           const activeTasks = data.filter((d: PicklistCard) =>
             d.status === "READY" || d.status === "PICKING"
           );
@@ -44,8 +57,8 @@ export default function WorkerHome() {
           // Handover needed (PICKED)
           setHandoverNeeded(data.filter((d: PicklistCard) => d.status === "PICKED"));
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.error("Home Load Error:", err);
       }
     };
     load();

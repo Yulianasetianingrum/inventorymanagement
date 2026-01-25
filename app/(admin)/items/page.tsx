@@ -488,31 +488,34 @@ function AdminItemsContent() {
       const res = await fetchJson(`/api/admin/items/lookup?code=${code}`);
       if (res.ok && res.data) {
         const d = res.data;
-        setItemForm(prev => ({
-          ...prev,
+
+        // If found in LocalDB, switch to EDIT mode
+        if (res.source === "LocalDB" && d.id) {
+          setEditTargetId(d.id);
+          showToast("Item ditemukan di database. Beralih ke mode Edit.", false);
+        } else if (res.source !== "Placeholder") {
+          showToast("Data ditemukan di internet: " + d.name);
+        } else {
+          showToast("✓ Mode Manual Aktif. Silakan lengkapi nama.");
+        }
+
+        setItemForm({
           barcode: code,
-          name: d.name || prev.name,
-          brand: d.brand || prev.brand,
-          category: d.category || prev.category,
-          size: d.size || prev.size,
-        }));
-        showToast("Data ditemukan: " + d.name);
-      } else {
-        // Fallback: If server returns OK false or no data
-        showToast("Data tidak ditemukan. Mode Input Manual.");
-        setItemForm(prev => ({
-          ...prev,
-          barcode: code,
-          name: `Item ${code}`, // Force auto-input
-        }));
+          name: d.name || "",
+          brand: d.brand || "",
+          category: d.category || "",
+          location: d.location || "",
+          size: d.size || "",
+          unit: d.unit || "pcs",
+          minStock: String(d.minStock ?? 0)
+        });
       }
     } catch (e) {
       showToast("Gagal lookup otomatis. Mode Input Manual.", true);
-      // Even on crash, force auto-input
       setItemForm(prev => ({
         ...prev,
         barcode: code,
-        name: `Item ${code}`,
+        ...(!editTargetId ? { name: `Item ${code}` } : {})
       }));
     }
   };
@@ -605,6 +608,7 @@ function AdminItemsContent() {
             <thead>
               <tr>
                 <th>Item & Spesifikasi</th>
+                <th>Barcode</th>
                 <th>Lokasi Rak</th>
                 <th>Status Refill</th>
                 <th>Detail Stok</th>
@@ -615,11 +619,11 @@ function AdminItemsContent() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-20 opacity-40 font-bold">Mengambil data dari server...</td>
+                  <td colSpan={7} className="text-center py-20 opacity-40 font-bold">Mengambil data dari server...</td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-20">
+                  <td colSpan={7} className="text-center py-20">
                     <div className="font-bold text-navy/40 mb-4">Tidak ada item yang ditemukan.</div>
                     {search && (
                       <button
@@ -637,6 +641,11 @@ function AdminItemsContent() {
                     <td data-label="Item">
                       <div className={styles.itemName}>{item.name}</div>
                       <div className={styles.itemMeta}>{item.brand} • {item.category} • {item.size}</div>
+                    </td>
+                    <td data-label="Barcode">
+                      <code className="bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono text-[11px] font-bold">
+                        {item.barcode || "-"}
+                      </code>
                     </td>
                     <td data-label="Lokasi">
                       <span className="font-black text-navy/40 uppercase text-[11px] tracking-widest bg-navy/5 px-2 py-1 rounded-md">
@@ -1082,8 +1091,8 @@ function AdminItemsContent() {
               </>)}
 
               <div className="mt-8">
-                <Button onClick={handleItemSubmit} className="btn-gold w-full !h-14 shadow-xl">
-                  {itemMode === 'bulk' ? 'PROSES BULK ITEMS' : 'SIMPAN DATA'}
+                <Button onClick={handleItemSubmit} disabled={loading} className="btn-gold w-full !h-14 shadow-xl">
+                  {loading ? 'MEMPROSES...' : itemMode === 'bulk' ? 'PROSES BULK ITEMS' : 'SIMPAN DATA'}
                 </Button>
               </div>
             </div>

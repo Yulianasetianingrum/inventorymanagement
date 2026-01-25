@@ -21,7 +21,6 @@ export async function GET(req: Request) {
 
         // 0. PRIORITY: Check Local Database
         const localItem = await prisma.item.findUnique({
-            // @ts-ignore - Prisma client out of sync with schema
             where: { barcode: code }
         });
 
@@ -31,12 +30,15 @@ export async function GET(req: Request) {
                 ok: true,
                 source: "LocalDB",
                 data: {
+                    id: localItem.id,
                     name: localItem.name,
                     brand: localItem.brand || "",
                     category: localItem.category || "",
+                    location: localItem.locationLegacy || "",
                     size: localItem.size || "",
                     unit: localItem.unit,
-                    // We don't need stock info for just auto-filling the form identity
+                    minStock: localItem.minStock,
+                    barcode: localItem.barcode
                 }
             });
         }

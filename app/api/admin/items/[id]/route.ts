@@ -69,7 +69,6 @@ export async function PUT(
   pickString("name");
   pickString("brand");
   pickString("category");
-  pickString("category");
   // pickString("location"); // Map manually below
   pickString("barcode");
   pickString("size");
@@ -85,10 +84,29 @@ export async function PUT(
   }
 
   try {
-    const updated = await prisma.item.update({
+    // 1. Separate barcode from standard Prisma data to avoid "Unknown argument" errors
+    // if the client is out of sync.
+    const barcodeToUpdate = data.barcode;
+    delete data.barcode;
+
+    // 2. Perform standard update
+    let updated = await prisma.item.update({
       where: { id: itemId },
-      data,
+      data: data as any,
     });
+
+    // 3. Update barcode using raw SQL as a robust fallback
+    if (barcodeToUpdate !== undefined) {
+      await prisma.$executeRawUnsafe(
+        `UPDATE items SET barcode = ? WHERE id = ?`,
+        barcodeToUpdate,
+        itemId
+      );
+      // Re-fetch to return complete object
+      const refreshed = await prisma.item.findUnique({ where: { id: itemId } });
+      if (refreshed) updated = refreshed;
+    }
+
     return NextResponse.json({ data: updated });
   } catch (err: any) {
     if (err?.code === "P2002") {

@@ -142,15 +142,31 @@ export async function POST(req: Request) {
             size: size || null,
             brand: brand || null
           },
-          // @ts-ignore: Prisma type glitched locally
           (barcode ? { barcode } : { name: "IMPOSSIBLE_MATCH_PLACEHOLDER" }) as any
         ]
       }
     });
 
     if (existing) {
-      // Correct match found -> Reuse ID (Merge)
-      return NextResponse.json({ data: existing });
+      // If item exists by Name + Brand + Size, but we provided a NEW barcode, update it.
+      // Or if any other metadata changed (category, location, unit, minStock)
+      const dataToUpdate: any = {};
+      const ex = existing as any;
+      if (barcode && ex.barcode !== barcode) dataToUpdate.barcode = barcode;
+      if (category && ex.category !== category) dataToUpdate.category = category;
+      if (location && ex.locationLegacy !== location) dataToUpdate.locationLegacy = location;
+      if (unit && ex.unit !== unit) dataToUpdate.unit = unit;
+      if (!Number.isNaN(minStock) && ex.minStock !== minStock) dataToUpdate.minStock = minStock;
+
+      if (Object.keys(dataToUpdate).length > 0) {
+        await prisma.item.update({
+          where: { id: existing.id },
+          data: dataToUpdate,
+        });
+      }
+
+      const updated = await prisma.item.findUnique({ where: { id: existing.id } });
+      return NextResponse.json({ data: updated });
     }
 
     const item = await prisma.item.create({
@@ -164,12 +180,13 @@ export async function POST(req: Request) {
         stockNew,
         stockUsed,
         minStock,
-        // @ts-ignore: Prisma local type glitch
         barcode,
       },
     });
 
-    return NextResponse.json({ data: item });
+    // Refresh
+    const finalItem = await prisma.item.findUnique({ where: { id: item.id } });
+    return NextResponse.json({ data: finalItem });
   } catch (error) {
     console.error("Failed to create item", error);
     return NextResponse.json({ error: "Failed to create item" }, { status: 500 });

@@ -9,12 +9,21 @@ export default function WorkerPicklistsPage() {
 
   useEffect(() => {
     fetch("/api/worker/picklists")
-      .then(res => res.json())
+      .then(res => {
+        if (res.status === 401) {
+          window.location.href = "/worker/login";
+          throw new Error("Unauthorized");
+        }
+        return res.json();
+      })
       .then(json => {
         setTasks(json.data || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -72,7 +81,7 @@ export default function WorkerPicklistsPage() {
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[9px] font-black text-navy/30 uppercase">Items</span>
-                            <span className="text-[10px] font-black text-navy">{t._count?.lines || 0}</span>
+                            <span className="text-[10px] font-black text-navy">{t.progressDone}/{t.progressTotal}</span>
                           </div>
                         </div>
                         <div className="text-navy/20">

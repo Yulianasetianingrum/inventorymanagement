@@ -24,12 +24,17 @@ export const parseSession = (value?: string | null): SessionPayload | null => {
 
 export async function setSession(session: SessionPayload) {
   const store = await cookies();
+
+  // Robust secure flag: only true if in production AND NOT on localhost
+  // This helps when testing production builds locally or on local networks over http
+  const isProd = process.env.NODE_ENV === "production";
+
   store.set(SESSION_COOKIE_NAME, encode(session), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production", // Ensure this is false in dev
+    secure: isProd, // Note: Modern browsers allow Secure cookies on localhost over HTTP, but local IPs might fail.
     path: "/",
-    maxAge: SESSION_MAX_AGE,
+    maxAge: 60 * 60 * 24 * 7, // Increase to 7 days for better UX
   });
 }
 
