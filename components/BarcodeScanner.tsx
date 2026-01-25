@@ -25,9 +25,15 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [cameras, setCameras] = useState<any[]>([]);
 
+    // Mount Key to force DOM recreation (Safest cleanup)
+    const [mountKey, setMountKey] = useState(0);
+
     // NUCLEAR OPTION: Track requested facing mode explicitly
     const [requestedFacingMode, setRequestedFacingMode] = useState<"environment" | "user">("environment");
     const [isSwitching, setIsSwitching] = useState(false);
+
+    // Track current index for cycling
+    const [camIndex, setCamIndex] = useState(0);
 
     // Refs
     const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -50,26 +56,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             // Safe cleanup: Only stop if it's actually running
             if (scannerRef.current) {
                 try {
-                    // Check undocumented 'isScanning' flag if available to avoid error
+                    // Force stop on unmount
                     if ((scannerRef.current as any).isScanning) {
-                        scannerRef.current.stop().catch((err) => console.warn("Cleanup stop warn:", err));
+                        scannerRef.current.stop().catch(() => { });
                     }
                     scannerRef.current.clear();
-                } catch (e) {
-                    console.warn("Cleanup error", e);
-                }
+                } catch (e) { }
             }
         };
     }, []);
-
-    // Track current index for cycling
-    const [camIndex, setCamIndex] = useState(0);
 
     const startScanning = async (mode: "environment" | "user" | "any" | "cycle") => {
         setError(null);
         addLog(`Req Start: ${mode}`);
 
-        // 1. STOP & CLEAR
+        // 1. CLEANUP (Using strict stop)
         if (scannerRef.current) {
             try {
                 if ((scannerRef.current as any).isScanning) {
@@ -80,11 +81,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         }
 
         // 2. DELAY
+        // We do this by updating the key, but we need to wait for effect.
+        // Actually, for this function, we just wait a bit.
         await new Promise(r => setTimeout(r, 300));
-
-        // 3. FORCE DOM CLEAR
-        const regionEl = document.getElementById(regionId);
-        if (regionEl) regionEl.innerHTML = "";
 
         // Base Config
         const html5QrCode = new Html5Qrcode(regionId, { verbose: true } as any);
@@ -112,7 +111,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 await html5QrCode.start(camConfig, baseConfig, onScanSuccess, () => { });
                 addLog(`${label} Success!`);
 
-                // Keep-alive focus loop
+                // Post-start fixes (Focus)
                 try {
                     const track = (html5QrCode as any).getRunningTrack();
                     if (track) {
@@ -137,7 +136,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         // LOGIC: CYCLING ID vs FACING MODE
         try {
-            // A. If "cycle" requested and we have cameras, pick next index
+            // A. Cycle Logic
             if (mode === "cycle" && cameras.length > 1) {
                 const nextIndex = (camIndex + 1) % cameras.length;
                 setCamIndex(nextIndex); // Update state for next time
@@ -146,7 +145,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 if (await tryStart(`ID: ${nextCam.label}`, { deviceId: { exact: nextCam.id } })) return;
             }
 
-            // B. If specific mode requested, try exact
+            // B. Specific Mode
             if (mode !== "cycle" && mode !== "any") {
                 if (await tryStart(`Exact ${mode}`, { facingMode: { exact: mode } })) return;
                 if (await tryStart(`Relaxed ${mode}`, { facingMode: mode })) return;
@@ -171,7 +170,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     useEffect(() => {
         // 0. SECURE CONTEXT CHECK
         if (typeof window !== "undefined" && window.isSecureContext === false) {
-            setError("CRITICAL: Camera requires HTTPS or Localhost. Current connection is insecure (HTTP). Cannot access camera hardware.");
+            setError("HTTPS / Secure Context Required");
             return;
         }
 
@@ -191,12 +190,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 <div className="bg-red-50 text-red-600 p-4 rounded text-center text-xs break-words border border-red-200 shadow-sm">
                     <strong className="block mb-2 text-sm">Camera Error</strong>
                     {error} <br />
-                    <div className="mt-3 text-[10px] text-gray-500 font-mono">
-                        Troubleshooting: <br />
-                        1. Check Permission (Allow Camera) <br />
-                        2. Check HTTPS (Must be secure) <br />
-                        3. Close other apps using camera
-                    </div>
                     <Button onClick={() => window.location.reload()} className="mt-4 h-8 px-4 text-xs bg-white border border-red-200 text-red-600 hover:bg-red-50">
                         Try Reloading
                     </Button>
@@ -204,7 +197,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             ) : (
                 <>
                     <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-black/5">
-                        <div id={regionId} className="w-full min-h-[300px]" />
+                        {/* KEY ADDED HERE TO FORCE REMOUNT */}
+                        <div key={mountKey} id={regionId} className="w-full min-h-[300px]" />
 
                         {/* Control Overlay */}
                         {/* Manual Switchers */}
@@ -213,12 +207,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                                 onClick={async () => {
                                     if (isSwitching) return;
                                     setIsSwitching(true);
-                                    // Use new cycling logic
-                                    try {
-                                        await startScanning("cycle");
-                                    } finally {
-                                        setIsSwitching(false);
-                                    }
+
+                                    // FORCE REMOUNT
+                                    setMountKey(prev => prev + 1);
+
+                                    // Wait for remount then start
+                                    setTimeout(async () => {
+                                        try {
+                                            await startScanning("cycle");
+                                        } finally {
+                                            setIsSwitching(false);
+                                        }
+                                    }, 100);
                                 }}
                                 className={`h-9 px-4 text-xs font-bold border shadow-sm transition-all ${isSwitching ? "bg-gray-100 text-gray-400" : "bg-white text-navy border-gray-200"}`}
                                 title="Switch Camera"
@@ -252,9 +252,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         </div>
                     </div>
                 </>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 };
 
