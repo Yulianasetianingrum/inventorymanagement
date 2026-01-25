@@ -1,0 +1,67 @@
+﻿Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+node.exe : Error: 
+Prisma schema 
+validation - 
+(get-dmmf wasm)
+At line:1 char:1
++ & "C:\Program Files
+\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Error:    
+ Prisma s...(get-    
+dmmf wasm):Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+Error code: P1012
+[1;91merror[0m: 
+[1mError validating 
+field `item` in 
+model `ReturnLine`: 
+The relation field 
+`item` on model 
+`ReturnLine` is 
+missing an opposite 
+relation field on 
+the model 
+`InventoryItem`. 
+Either run `prisma 
+format` or add it 
+manually.[0m
+  [1;94m-->[0m  [4
+mprisma\schema.prisma
+:292[0m
+[1;94m   | [0m
+[1;94m291 | [0m  
+return   Return 
+@relation(fields: 
+[returnId], 
+references: [id], 
+onDelete: Cascade)
+[1;94m292 | [0m  
+[1;91mitem     
+InventoryItem 
+@relation(fields: 
+[itemId], 
+references: [id])[0m
+[1;94m293 | [0m}
+[1;94m   | [0m
+
+Validation Error 
+Count: 1
+[Context: getDmmf]
+
+Prisma CLI Version : 
+5.22.0

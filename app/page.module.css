@@ -1,0 +1,209 @@
+:root {
+  --navy: #0b1b3a;
+  --navy-dark: #0a1633;
+  --gold: #d4af37;
+  --gold-dark: #b88a1e;
+  --offwhite: #f7f8fb;
+  --muted: #5b667a;
+  --white: #ffffff;
+}
+
+.page {
+  min-height: 100vh;
+  background: var(--offwhite);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.topbar {
+  background: var(--navy-dark);
+  color: var(--white);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--gold);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--navy);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.brandText {
+  display: grid;
+  gap: 2px;
+}
+
+.brandTitle {
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.brandSubtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  background: var(--gold);
+  color: var(--navy);
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.hero {
+  background: var(--navy);
+  color: var(--white);
+  padding: 32px 20px 28px;
+}
+
+.heroInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+
+.tagline {
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.heroTitle {
+  font-size: clamp(2.2rem, 3vw, 2.8rem);
+  font-weight: 800;
+  margin: 6px 0;
+}
+
+.heroSubtitle {
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 760px;
+  line-height: 1.6;
+}
+
+.main {
+  display: grid;
+  gap: 28px;
+  padding: 24px 16px 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+}
+
+.sectionTitle {
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 1.35rem;
+}
+
+.accessGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.accessCard {
+  border: 1px solid var(--navy);
+  background: var(--white);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.accessTitle {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.accessAudience {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.bulletList {
+  color: var(--navy);
+  display: grid;
+  gap: 8px;
+  padding-left: 16px;
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.stepsGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.stepCard {
+  border: 1px solid var(--navy);
+  background: var(--offwhite);
+  min-height: 130px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.stepBadge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--navy);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.stepRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.helpCard {
+  border: 1px solid var(--gold);
+  background: var(--white);
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.footer {
+  background: var(--navy-dark);
+  color: var(--white);
+  padding: 16px;
+  text-align: center;
+  border-top: 3px solid var(--gold);
+  display: grid;
+  gap: 6px;
+}
+
+.footerSub {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+}

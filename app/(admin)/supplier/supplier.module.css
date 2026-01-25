@@ -1,0 +1,208 @@
+.page {
+  min-height: 100vh;
+  background: var(--off-white);
+  padding-bottom: 5rem;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(120deg, var(--navy-dark), #122750);
+  color: var(--white);
+  border-bottom: 3px solid var(--gold);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandText {
+  display: grid;
+  gap: 2px;
+}
+
+.brandTitle {
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.brandSubtitle {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.brandLogo {
+  width: 64px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* Header Card */
+.headerCard {
+  background: var(--navy);
+  padding: 2.5rem 2rem;
+  border-radius: 2rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(11, 27, 58, 0.4);
+}
+
+.headerTitle {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.headerSubtitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* Supplier Master Form (Side Panel) */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 450px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(11, 27, 58, 0.03);
+}
+
+.formLabel {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 900;
+  color: rgba(11, 27, 58, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.formInput {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: var(--off-white);
+  border: 1px solid rgba(11, 27, 58, 0.05);
+  border-radius: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 1.5rem;
+}
+
+.formInput:focus {
+  background: white;
+  border-color: var(--gold);
+  outline: none;
+}
+
+/* Supplier Directory */
+.supplierGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.supplierCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(11, 27, 58, 0.03);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.supplierCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+}
+
+.supplierName {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
+}
+
+.itemKeywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.keywordPill {
+  padding: 0.4rem 0.8rem;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--gold-deep);
+  border-radius: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.contactRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.actionBtn {
+  flex: 1;
+  height: 3rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btnMaps {
+  background: #f1f5f9;
+  color: var(--navy);
+}
+
+.btnWA {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Secret Peek logic */
+.secretField {
+  font-family: ui-monospace, monospace;
+}

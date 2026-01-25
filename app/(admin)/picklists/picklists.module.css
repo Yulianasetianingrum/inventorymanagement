@@ -1,0 +1,160 @@
+:global(:root) {
+  --navy: #0b1b3a;
+  --navy-dark: #08132b;
+  --gold: #d4af37;
+  --gold-dark: #b88a1e;
+  --offwhite: #f7f8fb;
+  --muted: #5b667a;
+  --danger: #dc2626;
+  --safe: #0f9d58;
+  --warn: #f59e0b;
+  --white: #ffffff;
+}
+
+.page {
+  min-height: 100vh;
+  background: var(--offwhite);
+  color: var(--navy);
+}
+
+/* === NAVBAR (copy feel dari Items) === */
+.brandLogo {
+  width: 64px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.brandLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(120deg, var(--navy-dark), #122750);
+  color: var(--white);
+  border-bottom: 3px solid var(--gold);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brandText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brandTitle {
+  font-weight: 800;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brandSubtitle {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* tombol navbar: sama konsep Items */
+.secondaryBtn {
+  background: var(--white);
+  color: var(--navy);
+  border: 1px solid var(--gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.secondaryBtn:hover {
+  transform: translateY(-1px);
+}
+
+/* === KONTEN === */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 14px 36px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e9e9ee;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+
+  .secondaryBtn {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  .container {
+    padding: 14px 12px 28px;
+  }
+}

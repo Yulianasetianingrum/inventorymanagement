@@ -1,0 +1,265 @@
+.page {
+  min-height: 100vh;
+  background: var(--off-white);
+  padding-bottom: 5rem;
+}
+
+.premiumContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* Header Card */
+.headerCard {
+  background: var(--navy);
+  padding: 2.5rem 2rem;
+  border-radius: 2rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(11, 27, 58, 0.4);
+}
+
+.headerCard::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 300px;
+  height: 300px;
+  background: var(--gold);
+  opacity: 0.1;
+  filter: blur(80px);
+  border-radius: 50%;
+}
+
+.headerTitle {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.headerSubtitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* Split Layout */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form Card (Premium Glass) */
+.formCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(11, 27, 58, 0.03);
+  position: sticky;
+  top: 2rem;
+}
+
+.formTitle {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--navy);
+  margin-bottom: 1.5rem;
+}
+
+.fieldGroup {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.formLabel {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 900;
+  color: rgba(11, 27, 58, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.formInput {
+  width: 100%;
+  height: 3.5rem;
+  padding: 0 1.25rem;
+  background: var(--off-white);
+  border: 1px solid rgba(11, 27, 58, 0.05);
+  border-radius: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  transition: all 0.2s;
+}
+
+.formInput:focus {
+  background: white;
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+}
+
+/* Project Cards */
+.projectList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.projectCard {
+  background: white;
+  padding: 1.75rem;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(11, 27, 58, 0.03);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.projectCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+.projectTitle {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 0.25rem;
+}
+
+.clientName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(11, 27, 58, 0.4);
+  margin-bottom: 1.25rem;
+}
+
+.projectDetail {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.detailLabel {
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: rgba(11, 27, 58, 0.3);
+  text-transform: uppercase;
+}
+
+.detailValue {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* Actions */
+.cardActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.actionBtn {
+  flex: 1;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btnWA {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.btnEdit {
+  background: #f1f5f9;
+  color: var(--navy);
+}
+
+.btnDelete {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Modals */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 27, 58, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modalContent {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 2rem;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Phone mask logic */
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.05em;
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--navy);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  z-index: 5000;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0;
+}
+
+.toastVisible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}

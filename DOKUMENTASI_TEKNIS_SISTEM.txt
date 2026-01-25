@@ -1,0 +1,50 @@
+DOKUMENTASI TEKNIS & FITUR SISTEM INVENTORY OS
+---------------------------------------------
+Client: Apix Interior
+Status: Final Version (v1.2 - FIFO Ledger Ready)
+
+I. ALUR KERJA SISTEM (TECHNICAL WORKFLOW)
+---------------------------------------------
+1. INITIATION (Admin):
+   - Admin membuat Proyek baru (Data Klien & Detail Pekerjaan).
+   - Admin membuat Penugasan (Picklist) dengan memilih Item dari gudang.
+   - Status awal: READY.
+
+2. EXECUTION PHASE (Worker):
+   - Worker login ke HP, melihat daftar tugas READY.
+   - Klik "Mulai Mengerjakan": Status berubah menjadi PICKING.
+   - Lokasi rak (Rak 01-04) muncul secara dinamis membantu navigasi di gudang.
+
+3. PICKING & DEDUCTION (Worker & FIFO Logic):
+   - Worker mengambil barang dan WAJIB mengunggah foto bukti fisik.
+   - Klik "Konfirmasi Selesai Ambil": Status menjadi PICKED.
+   - LOGIKA BACKEND: Sistem mencari batch pembelian tertua (First-In-First-Out) dan mengurangi qty_remaining di tabel stock_in_batches. Hal ini memastikan nilai stok di dashboard akurat secara akuntansi.
+
+4. RETURN & CLOSING (Worker Choice):
+   - Setelah proyek di lapangan selesai, Worker masuk ke tahap Return.
+   - Worker menginput: "Digunakan" vs "Sisa".
+   - FITUR BARU: Toggle "Masuk Stok Bekas?". 
+     * Jika ON: Barang sisa masuk kembali ke gudang sebagai "Stok Bekas" (stockUsed).
+     * Jika OFF: Barang sisa dicatat sebagai limbah/habis dan tidak menambah stok.
+   - WAJIB: Unggah foto bukti pengembalian.
+   - Klik "Selesaikan": Status menjadi DELIVERED (Selesai).
+
+
+II. DAFTAR FITUR UTAMA (CORE FEATURES)
+---------------------------------------------
+- AUTHENTICATION: Keamanan berlapis dengan Employee ID + PIN/Password (Admin & Worker).
+- FIFO LEDGER: Perhitungan stok otomatis berdasarkan batch pembelian (Source of Truth).
+- DOUBLE STOCK SYSTEM: Pemisahan otomatis antara Stok Baru (Unused) dan Stok Bekas (Returned).
+- TRACEABILITY BI: Admin bisa melacak siapa yang mengambil barang X, untuk proyek Y, pada tanggal Z.
+- SUPPLIER BENCHMARKING: Sistem otomatis menandai supplier termurah ("Price Leader") berdasarkan riwayat pembelian terakhir.
+- VISUAL AUDIT: Setiap status perubahan barang WAJIB disertai unggahan foto bukti (Base64 storage).
+- REAL-TIME DASHBOARD: Grafik KPI Karyawan (tugas selesai) dan Grafik Pengeluaran Biaya secara berkala.
+- RACK NAVIGATION: Penandaan lokasi rak otomatis pada setiap manifest barang di HP pekerja.
+
+
+III. STRUKTUR TEKNIS (TECH STACK)
+---------------------------------------------
+- Framework: Next.js 15 (App Router).
+- Database: MySQL via Prisma ORM.
+- Frontend: Tailwind-style Vanilla CSS (Premium Glassmorphism Design).
+- Logic: Transaction-safe SQL operations untuk mencegah duplikasi data stok.

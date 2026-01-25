@@ -1,0 +1,41 @@
+RINGKASAN SISTEM INVENTORY OS - APIX INTERIOR
+
+1. ALUR KERJA SISTEM (WORKFLOW)
+----------------------------------
+A. TAHAP PERENCANAAN (ADMIN):
+   - Admin mendata proyek baru di sistem.
+   - Admin membuat "Picklist" (daftar barang) dan menugaskannya ke Worker (Pekerja Gudang).
+
+B. TAHAP PENGAMBILAN (WORKER):
+   - Worker menerima notifikasi tugas di portal HP.
+   - Worker mengambil barang sesuai lokasi rak.
+   - WAJIB: Worker mengunggah foto bukti fisik barang yang diambil.
+   - Stok otomatis berkurang di dashboard menggunakan metode FIFO.
+
+C. TAHAP PENGEMBALIAN (WORKER):
+   - Setelah proyek selesai, Worker menginput sisa barang.
+   - WAJIB: Worker mengunggah foto bukti barang yang dikembalikan ke rak.
+   - Barang sisa otomatis masuk ke kategori "Stok Bekas".
+
+D. TAHAP AUDIT (ADMIN):
+   - Admin memantau efisiensi biaya dan performa tim melalui grafik Audit.
+   - Sistem mendeteksi Supplier mana yang memberikan harga termurah (Price Leader).
+
+
+2. DAFTAR FITUR UTAMA
+----------------------------------
+- MULTI-PORTAL: Portal khusus Admin (Desktop) dan Portal Worker (Mobile).
+- FIFO STOCK LEDGER: Pengurangan stok otomatis berdasarkan barang yang masuk lebih dulu.
+- DOUBLE-STOCK TRACKING: Membedakan "Stok Baru" dan "Stok Bekas" secara otomatis.
+- VISUAL EVIDENCE: Sistem wajib unggah foto di setiap perubahan status barang.
+- SUPPLIER BENCHMARKING: Perbandingan harga beli antar supplier secara real-time.
+- TRACEABILITY: Jejak pemakaian barang (siapa yang ambil, untuk proyek apa, sisa berapa).
+- RACK NAVIGATION: Lokasi barang di gudang (Rak 01-04) muncul otomatis di HP pekerja.
+- KPI DASHBOARD: Statistik performa penyelesaian tugas karyawan.
+
+
+3. KEAMANAN & TEKNIS
+----------------------------------
+- Login menggunakan Employee ID dan PIN/Password unik.
+- Sistem berjalan di Node.js dengan database MySQL yang stabil.
+- Data tersinkronisasi secara real-time antara gudang dan kantor.

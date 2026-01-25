@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String     @id @default(cuid())
+  employeeId      String     @unique
+  name            String
+  role            Role
+  passwordHash    String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  authType        AuthType?
+  isActive        Boolean    @default(true)
+  lastLoginAt     DateTime?
+  notes           String?
+  phone           String?
+  resetCode       String?
+  resetCodeExpiresAt DateTime?
+  targetAuditLogs AuditLog[] @relation("AuditLogTargetUser")
+  auditLogs       AuditLog[] @relation("AuditLogUser")
+
+  // Added for Picklist Overhaul
+  assignedPicklists Picklist[] @relation("PicklistAssignee")
+  createdPicklists  Picklist[] @relation("PicklistCreator")
+  startedPicklists  Picklist[] @relation("PicklistStarter")
+  picklistEvents    PicklistEvent[] @relation("EventActor")
+
+  @@map("user")
+}
+
+model Item {
+  id                Int            @id @default(autoincrement())
+  name              String         @db.VarChar(160)
+  brand             String?        @db.VarChar(120)
+  category          String?        @db.VarChar(120)
+  locationLegacy    String?        @db.VarChar(160) @map("location")
+  locationId        String?
+  storageLocation   Location?      @relation(fields: [locationId], references: [id])
+  size              String?        @db.VarChar(80)
+  unit              String         @default("pcs") @db.VarChar(30)
+  stockNew          Int            @default(0)
+  stockUsed         Int            @default(0)
+  minStock          Int            @default(0)
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  defaultSupplierId Int?
+  defaultSupplier   Supplier?      @relation(fields: [defaultSupplierId], references: [id])
+  batches           StockInBatch[]
+  
+  // Added for Picklist Overhaul
+  picklistLines     PicklistLine[]
+
+  barcode           String?        @unique @db.VarChar(50)
+
+  @@unique([name, brand, size])
+  @@index([isActive])
+  @@index([updatedAt])
+  @@index([defaultSupplierId])
+  @@map("items")
+}
+
+model StockInBatch {
+  id           Int       @id @default(autoincrement())
+  itemId       Int
+  date         DateTime
+  qtyInBase    BigInt
+  unitCost     BigInt
+  qtyRemaining BigInt
+  note         String?
+  createdAt    DateTime  @default(now())
+  supplierId   Int?
+  item         Item      @relation(fields: [itemId], references: [id])
+  supplier     Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@index([itemId])
+  @@index([supplierId])
+  @@map("stock_in_batches")
+}
+
+model Supplier {
+  id             Int            @id @default(autoincrement())
+  namaToko       String
+  keperluanItems String         @db.LongText
+  alamat         String         @db.Text
+  mapsUrl        String?        @db.Text
+  noTelp         String?        @db.VarChar(50)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now())
+  defaultForItem Item[]
+  stockInBatches StockInBatch[]
+
+  @@map("supplier")
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  namaProjek    String
+  namaKlien     String
+  noHpWa        String
+  keperluan     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tglPesan      DateTime? @db.Date
+  tglPengerjaan DateTime? @db.Date
+
+  // Added for Picklist Overhaul
+  picklists     Picklist[]
+
+  @@map("project")
+}
+
+enum PicklistStatus {
+  READY
+  PICKING
+  PICKED
+  DELIVERED
+  CANCELED
+}
+
+enum PicklistMode {
+  INTERNAL
+  EXTERNAL
+}
+
+model Location {
+  id       String @id @default(cuid())
+  code     String @unique
+  name     String @unique
+  letak    String?
+  itemsCsv String?
+  items    Item[]
+
+  @@map("locations")
+}
+
+model Picklist {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  projectId   String?
+  title       String?
+  status      PicklistStatus @default(READY)
+  mode        PicklistMode   @default(INTERNAL)
+  neededAt    DateTime?
+  assigneeId  String?
+  createdById String
+  startedById String?
+  notes       String?
+  startedAt   DateTime?
+  pickedAt    DateTime?
+  deliveredAt DateTime?
+  canceledAt  DateTime?
+  
+  // Mandatory Scans
+  pickingImage   String? @db.LongText
+  returnImage    String? @db.LongText
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lines       PicklistLine[]
+  events      PicklistEvent[]
+  
+  assignee    User? @relation("PicklistAssignee", fields: [assigneeId], references: [id])
+  createdBy   User  @relation("PicklistCreator", fields: [createdById], references: [id])
+  startedBy   User? @relation("PicklistStarter", fields: [startedById], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
+
+  @@map("picklists")
+}
+
+model PicklistLine {
+  id             String        @id @default(cuid())
+  picklistId     String
+  itemId         Int
+  reqQty         Int
+  pickedQty      Int           @default(0)
+  usedQty        Int           @default(0)
+  returnedQty    Int           @default(0)
+  notes          String?
+  
+  picklist       Picklist      @relation(fields: [picklistId], references: [id], onDelete: Cascade)
+  item           Item          @relation(fields: [itemId], references: [id])
+
+  @@map("picklist_lines")
+}
+
+model PicklistEvent {
+  id          String   @id @default(cuid())
+  picklistId  String
+  eventType   String
+  actorUserId String?
+  createdAt   DateTime @default(now())
+  
+  picklist    Picklist @relation(fields: [picklistId], references: [id], onDelete: Cascade)
+  actor       User?    @relation("EventActor", fields: [actorUserId], references: [id])
+
+  @@map("picklist_events")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  detail       String?
+  userId       String?
+  targetUserId String?
+  metaJson     String?  @db.LongText
+  createdAt    DateTime @default(now())
+  targetUser   User?    @relation("AuditLogTargetUser", fields: [targetUserId], references: [id])
+  user         User?    @relation("AuditLogUser", fields: [userId], references: [id])
+
+  @@index([userId], map: "AuditLog_userId_fkey")
+  @@index([createdAt], map: "AuditLog_createdAt_idx")
+  @@index([targetUserId], map: "AuditLog_targetUserId_idx")
+  @@map("auditlog")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  PURCHASING
+  WAREHOUSE_LEAD
+  WORKER
+}
+
+enum AuthType {
+  PIN
+  PASSWORD
+}

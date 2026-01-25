@@ -1,0 +1,157 @@
+// Prisma schema aligned to inventory_db (5).sql (MySQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  PURCHASING
+  WAREHOUSE_LEAD
+  WORKER
+}
+
+enum AuthType {
+  PIN
+  PASSWORD
+}
+
+model User {
+  id           String    @id @default(cuid()) @db.VarChar(191)
+  employeeId   String    @unique(map: "user_employeeId_key") @db.VarChar(191)
+  name         String    @db.VarChar(191)
+  role         Role
+  passwordHash String?   @db.VarChar(191)
+
+  // SQL: createdAt has default, updatedAt is NOT NULL (app/prisma sets it)
+  createdAt    DateTime  @default(now()) @db.DateTime(3)
+  updatedAt    DateTime  @updatedAt @db.DateTime(3)
+
+  authType     AuthType?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime? @db.DateTime(3)
+  notes        String?   @db.VarChar(191)
+  phone        String?   @db.VarChar(191)
+
+  // Relations
+  auditLogs       AuditLog[] @relation("AuditLogUser")
+  targetAuditLogs AuditLog[] @relation("AuditLogTargetUser")
+
+  @@map("user")
+}
+
+model Item {
+  id                Int      @id @default(autoincrement()) @db.Int
+  name              String   @db.VarChar(160)
+  brand             String?  @db.VarChar(120)
+  category          String?  @db.VarChar(120)
+  location          String?  @db.VarChar(160)
+  size              String?  @db.VarChar(80)
+  unit              String   @default("pcs") @db.VarChar(30)
+  defaultSupplierId Int?     @db.Int
+
+  stockNew          Int      @default(0) @db.Int
+  stockUsed         Int      @default(0) @db.Int
+  minStock          Int      @default(0) @db.Int
+  isActive          Boolean  @default(true)
+
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+
+  // Relations
+  batches          StockInBatch[]
+  defaultSupplier  Supplier? @relation(fields: [defaultSupplierId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@unique([name, size], map: "items_name_size_key")
+  @@index([isActive], map: "items_isActive_idx")
+  @@index([updatedAt], map: "items_updatedAt_idx")
+  @@index([defaultSupplierId], map: "items_defaultSupplierId_idx")
+
+  @@map("items")
+}
+
+model StockInBatch {
+  id           Int      @id @default(autoincrement()) @db.Int
+  itemId       Int      @db.Int
+  supplierId   Int?     @db.Int
+  date         DateTime @db.DateTime(3)
+
+  // SQL dump uses BIGINT for these three fields
+  qtyInBase    BigInt   @db.BigInt
+  unitCost     BigInt   @db.BigInt
+  qtyRemaining BigInt   @db.BigInt
+
+  note         String?  @db.VarChar(191)
+  createdAt    DateTime @default(now()) @db.DateTime(3)
+
+  item     Item     @relation(fields: [itemId], references: [id], onUpdate: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([itemId], map: "stock_in_batches_itemId_idx")
+  @@index([supplierId], map: "stock_in_batches_supplierId_idx")
+  @@map("stock_in_batches")
+}
+
+model Supplier {
+  id             Int      @id @default(autoincrement()) @db.Int
+  namaToko       String   @db.VarChar(191)
+  keperluanItems String   @db.LongText
+  alamat         String   @db.Text
+  mapsUrl        String?  @db.Text
+  noTelp         String?  @db.VarChar(50)
+
+  createdAt      DateTime @default(now()) @db.DateTime(3)
+  // SQL: DEFAULT current_timestamp(3) (no ON UPDATE)
+  updatedAt      DateTime @default(now()) @db.DateTime(3)
+
+  stockInBatches StockInBatch[]
+  defaultForItem Item[]
+
+  @@map("supplier")
+}
+
+model Project {
+  id            String    @id @default(cuid()) @db.VarChar(191)
+  namaProjek    String    @db.VarChar(191)
+  namaKlien     String    @db.VarChar(191)
+  noHpWa        String    @db.VarChar(191)
+  keperluan     String?   @db.VarChar(191)
+
+  createdAt     DateTime  @default(now()) @db.DateTime(3)
+  updatedAt     DateTime  @updatedAt @db.DateTime(3)
+
+  // SQL: DATE columns
+  tglPesan      DateTime? @db.Date
+  tglPengerjaan DateTime? @db.Date
+
+  @@map("project")
+}
+
+model AuditLog {
+  id           String    @id @default(cuid()) @db.VarChar(191)
+  action       String    @db.VarChar(191)
+  detail       String?   @db.VarChar(191)
+
+  userId       String?   @db.VarChar(191)
+  targetUserId String?   @db.VarChar(191)
+
+  // SQL: LONGTEXT with json_valid() check
+  metaJson     String?   @db.LongText
+
+  createdAt    DateTime  @default(now()) @db.DateTime(3)
+
+  user       User? @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  targetUser User? @relation("AuditLogTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([userId], map: "AuditLog_userId_fkey")
+  @@index([createdAt], map: "AuditLog_createdAt_idx")
+  @@index([targetUserId], map: "AuditLog_targetUserId_idx")
+
+  @@map("auditlog")
+}
