@@ -28,7 +28,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     // Capabilities
     const [capabilities, setCapabilities] = useState<MediaTrackCapabilities | null>(null);
-    const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null>(null);
     const [torchOn, setTorchOn] = useState(false);
     const [zoom, setZoom] = useState(1);
 
@@ -49,13 +48,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         };
     }, []);
 
-    const applyVideoConstraints = async (track: MediaStreamTrack, advanced: any) => {
-        try {
-            await track.applyConstraints({ advanced: [advanced] });
-        } catch (e) {
-            console.error("Failed to apply constraints", e);
-        }
-    };
+
 
     const startScanning = async (cameraId?: string) => {
         setError(null);
@@ -113,16 +106,15 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 }
             );
 
-            // Access track for controls
-            // Html5Qrcode doesn't easily expose the track, but we can try getting it via capabilities
+            // Access capabilities for controls using official API
             try {
-                const track = html5QrCode.getRunningTrack();
-                if (track) {
-                    setVideoTrack(track);
-                    setCapabilities(track.getCapabilities());
+                // Cast to any to check availability if types are outdated
+                const caps = (html5QrCode as any).getRunningTrackCameraCapabilities();
+                if (caps) {
+                    setCapabilities(caps);
                 }
             } catch (e) {
-                console.warn("Could not get running track", e);
+                console.warn("Could not get track capabilities", e);
             }
 
             setHasPermission(true);
@@ -180,12 +172,15 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-2 px-4 pointer-events-none">
                             <div className="pointer-events-auto flex gap-4">
                                 {/* Torch Toggle */}
-                                {videoTrack && capabilities?.torch && (
+                                {(capabilities as any)?.torch && (
                                     <Button
                                         onClick={() => {
-                                            const newMode = !torchOn;
-                                            applyVideoConstraints(videoTrack, { torch: newMode });
-                                            setTorchOn(newMode);
+                                            if (scannerRef.current) {
+                                                const newMode = !torchOn;
+                                                scannerRef.current.applyVideoConstraints({ advanced: [{ torch: newMode }] } as any)
+                                                    .then(() => setTorchOn(newMode))
+                                                    .catch(e => console.error("Torch failed", e));
+                                            }
                                         }}
                                         className={`h-10 w-10 p-0 rounded-full shadow-lg ${torchOn ? 'bg-yellow-400 text-black' : 'bg-white text-gray-700'}`}
                                     >
@@ -195,18 +190,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             </div>
 
                             {/* Zoom Slider */}
-                            {videoTrack && capabilities?.zoom && (
+                            {(capabilities as any)?.zoom && (
                                 <div className="pointer-events-auto w-full max-w-xs bg-black/50 p-2 rounded-full backdrop-blur-sm">
                                     <input
                                         type="range"
-                                        min={capabilities.zoom.min || 1}
-                                        max={capabilities.zoom.max || 5}
-                                        step={capabilities.zoom.step || 0.1}
+                                        min={(capabilities as any).zoom.min || 1}
+                                        max={(capabilities as any).zoom.max || 5}
+                                        step={(capabilities as any).zoom.step || 0.1}
                                         value={zoom}
                                         onChange={(e) => {
                                             const val = Number(e.target.value);
                                             setZoom(val);
-                                            applyVideoConstraints(videoTrack, { zoom: val });
+                                            if (scannerRef.current) {
+                                                scannerRef.current.applyVideoConstraints({ advanced: [{ zoom: val }] } as any)
+                                                    .catch(console.warn);
+                                            }
                                         }}
                                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                     />
