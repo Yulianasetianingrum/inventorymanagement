@@ -316,20 +316,33 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         </div>
                     </div>
 
-                    {cameras.length > 1 && (
-                        <div className="flex justify-center">
-                            <select
-                                className="bg-white border border-gray-300 text-gray-700 text-xs py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy/20"
-                                onChange={handleCameraChange}
-                                value={activeCameraId || ""}
+                    {cameras.length > 0 && (
+                        <div className="flex flex-col gap-2 justify-center items-center">
+                            {/* Manual Camera Cycler */}
+                            <Button
+                                onClick={() => {
+                                    if (cameras.length > 1) {
+                                        const currentIndex = cameras.findIndex(c => c.id === activeCameraId);
+                                        const nextIndex = (currentIndex + 1) % cameras.length;
+                                        const nextCam = cameras[nextIndex];
+                                        setActiveCameraId(nextCam.id);
+                                        startScanning(nextCam.id);
+                                    } else {
+                                        // If only 1 camera listed but user wants to switch, try toggling facingMode blind
+                                        startScanning(); // Default restart might pick the other one if constraint changes? 
+                                        // Actually better to just reload with diff constraint if possible, but for now just restart.
+                                        alert("Hanya 1 kamera terdeteksi. Coba refresh.");
+                                    }
+                                }}
+                                className="bg-white border border-navy text-navy text-xs py-2 px-4 rounded-full shadow-sm hover:bg-gray-50"
                             >
-                                <option value="" disabled>Ganti Kamera</option>
-                                {cameras.map((cam) => (
-                                    <option key={cam.id} value={cam.id}>
-                                        {cam.label || `Camera ${cam.id.slice(0, 5)}...`}
-                                    </option>
-                                ))}
-                            </select>
+                                🔄 Putar Kamera ({cameras.length})
+                            </Button>
+
+                            {/* Debug Info (To see why 'Back' is Front) */}
+                            <div className="text-[10px] text-gray-400 max-w-[200px] text-center overflow-hidden text-ellipsis whitespace-nowrap">
+                                Aktif: {cameras.find(c => c.id === activeCameraId)?.label || activeCameraId || "Auto"}
+                            </div>
                         </div>
                     )}
 
