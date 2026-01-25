@@ -92,18 +92,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             // Simplified Camera Config (Let Browser Decide Resolution)
             // Sweet Spot: 720p is supported by almost all cameras and is sharp enough for Barcodes.
             // Avoid "exact" constraints as they cause failures.
+            // Simplified Camera Config
+            // 1. Remove "focusMode" from here (it causes startup crashes on some devices)
+            // 2. Use "ideal" not "exact" for resolution
             const cameraConfig = cameraId
                 ? {
                     deviceId: { exact: cameraId },
                     width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    focusMode: "continuous"
+                    height: { ideal: 720 }
                 }
                 : {
                     facingMode: "environment",
                     width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    focusMode: "continuous"
+                    height: { ideal: 720 }
                 };
 
             try {
@@ -120,7 +121,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     }
                 );
             } catch (err: any) {
-                console.error("Camera start failed, retrying generic...", err);
+                console.error("Camera HQ start failed, retrying generic...", err);
+
+                // IMPORTANT: Stop any partial stream before retrying
+                await html5QrCode.stop().catch(() => { });
 
                 // Final Last Resort: Try without ANY constraints
                 try {
@@ -135,12 +139,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 }
             }
 
-            // Access capabilities for controls using official API
+            // Access capabilities and Auto-Apply Focus (Post-Start)
             try {
                 // Cast to any to check availability if types are outdated
                 const caps = (html5QrCode as any).getRunningTrackCameraCapabilities();
-                if (caps) {
-                    setCapabilities(caps);
+                if (caps) setCapabilities(caps);
+
+                // Try to apply continuous focus NOW that camera is running
+                const track = (html5QrCode as any).getRunningTrack();
+                if (track) {
+                    track.applyConstraints({ advanced: [{ focusMode: "continuous" }] })
+                        .catch((e: any) => console.log("Auto-focus not supported", e));
                 }
             } catch (e) {
                 console.warn("Could not get track capabilities", e);
