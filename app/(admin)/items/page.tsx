@@ -1175,7 +1175,17 @@ function AdminItemsContent() {
                   </div>
                   <div>
                     <label className={styles.formLabel}>Unit Satuan</label>
-                    <select className={styles.formInput} value={stockForm.unitQty} onChange={e => setStockForm({ ...stockForm, unitQty: e.target.value as any })}>
+                    <select className={styles.formInput} value={stockForm.unitQty} onChange={e => {
+                      const val = e.target.value as any;
+                      setStockForm({
+                        ...stockForm,
+                        unitQty: val,
+                        // Auto-set price type based on unit
+                        priceType: val === 'pack' ? 'per_pack' : 'per_satuan',
+                        // Optional: Reset price to avoid confusion? Or keep it? keeping it is risky if magnitude differs greatly.
+                        harga: ""
+                      });
+                    }}>
                       <option value="satuan">Satuan ({selectedItem.unit})</option>
                       <option value="pack">Pack / Box</option>
                     </select>
@@ -1188,7 +1198,9 @@ function AdminItemsContent() {
                   )}
                   {stockForm.mode === 'baru' && (
                     <div className={styles.formFull}>
-                      <label className={styles.formLabel}>Harga Beli (Satuan)</label>
+                      <label className={styles.formLabel}>
+                        Harga Beli ({stockForm.unitQty === 'pack' ? 'Per Pack' : 'Per Satuan'})
+                      </label>
                       <input className={styles.formInput} type="number" value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, harga: e.target.value })} />
                     </div>
                   )}
