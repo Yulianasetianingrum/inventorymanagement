@@ -73,38 +73,49 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             const html5QrCode = new Html5Qrcode(regionId, { formatsToSupport, verbose: false } as any);
             scannerRef.current = html5QrCode;
 
+            // Config with Native Detector support
             const config = {
                 fps: fps,
                 qrbox: qrbox,
                 disableFlip: disableFlip,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
             };
 
+            // Simplified Camera Config (Let Browser Decide Resolution)
             const cameraConfig = cameraId
-                ? {
-                    deviceId: { exact: cameraId },
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    focusMode: "continuous"
-                }
-                : {
-                    facingMode: "environment",
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    focusMode: "continuous"
-                };
+                ? { deviceId: { exact: cameraId } }
+                : { facingMode: "environment" };
 
-            await html5QrCode.start(
-                cameraConfig,
-                config,
-                (decodedText, decodedResult) => {
-                    onScanSuccess(decodedText, decodedResult);
-                },
-                (errorMessage) => {
-                    if (onScanFailure) {
-                        onScanFailure(errorMessage);
+            try {
+                await html5QrCode.start(
+                    cameraConfig,
+                    config,
+                    (decodedText, decodedResult) => {
+                        onScanSuccess(decodedText, decodedResult);
+                    },
+                    (errorMessage) => {
+                        if (onScanFailure) {
+                            onScanFailure(errorMessage);
+                        }
                     }
+                );
+            } catch (err: any) {
+                console.error("Camera start failed, retrying generic...", err);
+
+                // Final Last Resort: Try without ANY constraints
+                try {
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        (t, r) => onScanSuccess(t, r),
+                        (e) => onScanFailure?.(e)
+                    );
+                } catch (finalErr) {
+                    throw finalErr;
                 }
-            );
+            }
 
             // Access capabilities for controls using official API
             try {
