@@ -499,9 +499,10 @@ function AdminItemsContent() {
           // For now we auto-fill text fields.
         }));
         showToast("Data ditemukan: " + d.name);
-      } else if (res.googleLink) {
-        showToast("Data tidak ditemukan otomatis. Membuka Google...");
-        window.open(res.googleLink, "_blank");
+      } else {
+        // If not found, we just let the user fill it manually.
+        // We already set the barcode in handleScanSuccess/handleLookup start.
+        showToast("Data tidak ditemukan. Silakan isi manual.");
       }
     } catch (e) {
       showToast("Gagal lookup otomatis", true);

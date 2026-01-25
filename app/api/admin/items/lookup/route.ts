@@ -155,62 +155,95 @@ export async function GET(req: Request) {
             console.warn("Google scrape failed", e);
         }
 
-        // 4. LAST RESORT: PAGE TITLE FALLBACK
-        // If everything else fails, just grab the page title.
-        // Google/DDG titles are usually "Query - Google Search" or "Query at DuckDuckGo".
-        // Using shared 'fallbackHtml' (with structured extraction)
+        // 4. LAST RESORT: BODY TEXT FALLBACK (Desperate Search)
+        // The previous Page Title fallback was useless for SERPs (it just returned the barcode).
+        // Instead, we look for ANY widely used title tag (h3, h4, or valid anchors) that looks like a product name.
         try {
             if (fallbackHtml) {
                 const $ = cheerio.load(fallbackHtml);
-                const pageTitle = $("title").text().trim();
+                let bestGuess = "";
 
-                if (pageTitle && pageTitle.length > 5) {
-                    let cleanName = pageTitle
+                // Collect potential text nodes from common result containers
+                const candidates: string[] = [];
+                $("h3, h4, a").each((i, el) => {
+                    if (candidates.length >= 10) return false;
+
+                    const text = $(el).text().replace(/\s+/g, " ").trim();
+                    const lower = text.toLowerCase();
+
+                    // Filter out navigation/junk
+                    if (text.length < 10 || text.length > 100) return;
+                    if (lower.includes("google") || lower.includes("duckduckgo")) return;
+                    if (lower.includes("login") || lower.includes("sign in") || lower.includes("masuk")) return;
+                    if (lower.includes("maps") || lower.includes("images") || lower.includes("news")) return;
+                    if (lower.includes("privacy") || lower.includes("terms") || lower.includes("settings")) return;
+                    if (lower.includes("shopping") || lower.includes("belanja")) return;
+                    if (text.includes(code)) return; // Probably just the barcode itself
+
+                    candidates.push(text);
+                });
+
+                // Pick the longest unique candidate that triggers a "Product Name" vibe
+                // Or simply the first one that passed the filters (most relevant result usually top)
+                if (candidates.length > 0) {
+                    // Heuristic: The first H3 in main content is usually the first result title.
+                    bestGuess = candidates[0];
+
+                    // Try to be smarter: prefer ones with brand-like separators
+                    const smartCandidate = candidates.find(c => c.includes("-") || c.includes("|"));
+                    if (smartCandidate) bestGuess = smartCandidate;
+                }
+
+                if (bestGuess) {
+                    // Reuse the cleaner logic
+                    let cleanName = bestGuess
                         .replace(/ - Google Search/gi, "")
-                        .replace(/ – Google Search/gi, "") // En dash
                         .replace(/ at DuckDuckGo/gi, "")
                         .replace(/ \| Tokopedia/gi, "")
                         .replace(/ \| Shopee/gi, "")
+                        .replace(/Jual /gi, "")
                         .trim();
 
-                    const lowerName = cleanName.toLowerCase();
-                    const invalidNames = ["google search", "google", "duckduckgo", "search", "penelusuran google"];
+                    // Extract metrics if possible
+                    const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
+                    const sizeMatch = cleanName.match(sizeRegex);
+                    let detectedSize = (sizeMatch) ? `${sizeMatch[1]} ${sizeMatch[2]}` : "";
 
-                    if (cleanName && !invalidNames.includes(lowerName)) {
-
-                        // Apply Regex Extraction to Title to satisfy User Requirement
-                        const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
-                        const sizeMatch = cleanName.match(sizeRegex);
-                        let detectedSize = (sizeMatch) ? `${sizeMatch[1]} ${sizeMatch[2]}` : "";
-
-                        let detectedBrand = "";
-                        if (cleanName.includes("-")) {
-                            const parts = cleanName.split("-");
-                            if (parts[0].trim().length < 15) detectedBrand = parts[0].trim();
-                            else if (parts[parts.length - 1].trim().length < 15) detectedBrand = parts[parts.length - 1].trim();
-                        }
-
-                        return NextResponse.json({
-                            ok: true,
-                            source: "TitleFallback_Smart",
-                            data: {
-                                name: cleanName,
-                                brand: detectedBrand,
-                                category: "",
-                                image: "",
-                                size: detectedSize
-                            }
-                        });
+                    let detectedBrand = "";
+                    if (cleanName.includes("-")) {
+                        const parts = cleanName.split("-");
+                        if (parts[0].trim().length < 15) detectedBrand = parts[0].trim();
                     }
+
+                    return NextResponse.json({
+                        ok: true,
+                        source: "BodyTextFallback",
+                        data: {
+                            name: cleanName,
+                            brand: detectedBrand, // Best effort
+                            category: "",
+                            image: "",
+                            size: detectedSize
+                        }
+                    });
                 }
             }
-        } catch (e) { }
+        } catch (e) {
+            console.warn("Body fallback failed", e);
+        }
 
-        // 5. Fallback: Google Search Link (We cannot scrape Google directly safely)
+        // 5. FINAL FALLBACK: Return Placeholder (Do NOT open Google)
+        // User wants "Auto Input" even if we know nothing.
         return NextResponse.json({
-            ok: false,
-            error: "Product not found automatically",
-            googleLink: `https://www.google.com/search?q=${code}`
+            ok: true,
+            source: "Placeholder",
+            data: {
+                name: `Item ${code}`, // Pre-fill with code so user knows to edit it
+                brand: "",
+                category: "",
+                image: "",
+                size: ""
+            }
         });
 
     } catch (error) {
