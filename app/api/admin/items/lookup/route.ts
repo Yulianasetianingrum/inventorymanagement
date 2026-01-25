@@ -82,21 +82,41 @@ export async function GET(req: Request) {
                 possibleName = firstResult;
             }
 
-            // Fallback: Page Title (often contains "Brand Name - Product Name ...")
+            // Fallback: Page Title cleaning
             if (!possibleName || possibleName.length < 5) {
-                possibleName = $("title").text().replace("- Google Search", "").trim();
+                possibleName = $("title").text().trim();
             }
 
-            if (possibleName && !possibleName.includes("Robot") && !possibleName.includes("Captcha")) {
-                // Heuristic: Try to split by " - " to guess Brand vs Name
+            // CLEANING: aggressively remove " - Google Search" or "on Google"
+            possibleName = possibleName
+                .replace(/ - Google Search/gi, "")
+                .replace(/ – Google Search/gi, "") // En dash
+                .replace(/ - Google/gi, "")
+                .replace(/ \| Google/gi, "")
+                .trim();
+
+            const lowerName = possibleName.toLowerCase();
+            const isInvalid = !possibleName
+                || lowerName.includes("robot")
+                || lowerName.includes("captcha")
+                || lowerName === "google"
+                || lowerName === "google search"
+                || lowerName.includes("penelusuran google") // Indonesian locale
+                || possibleName.includes(code!)
+                || possibleName.length < 3;
+
+            if (!isInvalid) {
+                // Try to split hyphenated titles (Brand - Product)
                 let brandGuess = "";
                 let nameGuess = possibleName;
 
                 if (possibleName.includes("-")) {
-                    const parts = possibleName.split("-").map(s => s.trim());
-                    // Assume shorter part might be brand? or just use full name.
-                    // Often "Product Name - Brand" or "Brand - Product Name"
-                    // Let's just put full text in Name for safety.
+                    const parts = possibleName.split("-");
+                    // Heuristic: First part often product name if title was "Product - Brand"
+                    if (parts.length > 0) {
+                        nameGuess = parts[0].trim();
+                        if (parts.length > 1) brandGuess = parts[parts.length - 1].trim();
+                    }
                 }
 
                 return NextResponse.json({
@@ -104,7 +124,7 @@ export async function GET(req: Request) {
                     source: "GoogleScrape",
                     data: {
                         name: nameGuess,
-                        brand: brandGuess, // Hard to guess accurately without structured data
+                        brand: brandGuess,
                         category: "",
                         image: "",
                         size: ""
