@@ -57,8 +57,62 @@ export async function GET(req: Request) {
             });
         }
 
-        // 2. Fallback: Try a generic lookup via simulated scraping (UPCitemdb or similar public catalog)
-        // Note: Scraping is flaky. We use it as a best-effort.
+        // 1.5. Try EAN-Search.org (Dedicated Barcode DB)
+        try {
+            const eanUrl = `https://www.ean-search.org/?q=${code}`;
+            const eanRes = await fetch(eanUrl, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+            });
+            const html = await eanRes.text();
+
+            // EAN-Search usually puts results in a list or title
+            const $ = cheerio.load(html);
+
+            // Look for the product name in the result list (often .searchresult or similar)
+            // Or just check page title: "EAN 123456 - Product Name"
+            const pageTitle = $("title").text();
+            if (pageTitle.includes(code) && !pageTitle.includes("Unknown")) {
+                let cleanName = pageTitle.split(code)[1]?.replace(/^[\s\-\:]+/, "").replace(/ - EAN-Search.org/i, "").trim();
+
+                // Fallback: Check for specific result elements if title is generic
+                if (!cleanName || cleanName.length < 3) {
+                    // Try to find the first link in the main table
+                    const firstLink = $("td > a").first().text().trim();
+                    if (firstLink && firstLink.length > 5) cleanName = firstLink;
+                }
+
+                if (cleanName && cleanName.length > 3) {
+                    // Extract metrics
+                    const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
+                    const sizeMatch = cleanName.match(sizeRegex);
+                    let detectedSize = (sizeMatch) ? `${sizeMatch[1]} ${sizeMatch[2]}` : "";
+
+                    let detectedBrand = "";
+                    // Basic split inference
+                    if (cleanName.includes(" ")) {
+                        detectedBrand = cleanName.split(" ")[0];
+                    }
+
+                    return NextResponse.json({
+                        ok: true,
+                        source: "EANSearch_Scrape",
+                        data: {
+                            name: cleanName,
+                            brand: detectedBrand,
+                            category: "",
+                            image: "",
+                            size: detectedSize
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn("EAN-Search failed", e);
+        }
+
+        // 2. High Success Rate Lookup: SCRAPE STRATEGY
         // 2. High Success Rate Lookup: Google Search Scraping
         // Since accurate APIs are paid, we scrape Google Search title meta.
         // 2. High Success Rate Lookup: Google Search Scraping
