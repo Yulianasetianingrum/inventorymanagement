@@ -157,6 +157,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     // Initial Start
     useEffect(() => {
+        // 0. SECURE CONTEXT CHECK
+        if (typeof window !== "undefined" && window.isSecureContext === false) {
+            setError("CRITICAL: Camera requires HTTPS or Localhost. Current connection is insecure (HTTP). Cannot access camera hardware.");
+            return;
+        }
+
         // Enumerate just for debug info
         Html5Qrcode.getCameras().then(setCameras).catch(() => { });
         // Start blindly with environment
@@ -170,9 +176,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
             {error ? (
                 // ... (Error UI) ...
-                <div className="bg-red-50 text-red-600 p-4 rounded text-center text-xs">
+                <div className="bg-red-50 text-red-600 p-4 rounded text-center text-xs break-words border border-red-200 shadow-sm">
+                    <strong className="block mb-2 text-sm">Camera Error</strong>
                     {error} <br />
-                    <Button onClick={() => window.location.reload()} className="mt-2 h-6 text-xs bg-white border">Reload</Button>
+                    <div className="mt-3 text-[10px] text-gray-500 font-mono">
+                        Troubleshooting: <br />
+                        1. Check Permission (Allow Camera) <br />
+                        2. Check HTTPS (Must be secure) <br />
+                        3. Close other apps using camera
+                    </div>
+                    <Button onClick={() => window.location.reload()} className="mt-4 h-8 px-4 text-xs bg-white border border-red-200 text-red-600 hover:bg-red-50">
+                        Try Reloading
+                    </Button>
                 </div>
             ) : (
                 <>

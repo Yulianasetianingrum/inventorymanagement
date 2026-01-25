@@ -152,6 +152,8 @@ export async function GET(req: Request) {
         }
 
         // 3. Fallback: DuckDuckGo HTML (Easier to scrape, less CAPTCHA)
+        // 3. Fallback: DuckDuckGo HTML (Easier to scrape, less CAPTCHA)
+        // SMART DDG SCRAPER
         try {
             const ddgUrl = `https://html.duckduckgo.com/html/?q=${code}`;
             const ddgRes = await fetch(ddgUrl, {
@@ -162,18 +164,65 @@ export async function GET(req: Request) {
             const html = await ddgRes.text();
             const $ = cheerio.load(html);
 
-            // DDG HTML class for result title
-            const firstResult = $(".result__title").first().text().trim();
-            if (firstResult) {
+            let candidates: any[] = [];
+
+            // Loop through first 5 results (.result__title)
+            $(".result__title").each((i, el) => {
+                if (i >= 5) return false;
+
+                let rawTitle = $(el).text().trim();
+
+                // Aggressive cleaning
+                let cleanName = rawTitle
+                    .replace(/ - Google Search/gi, "")
+                    // DDG specific noise
+                    .replace(/ at DuckDuckGo/gi, "")
+                    .replace(/ \| Tokopedia/gi, "")
+                    .replace(/ \| Shopee/gi, "")
+                    .replace(/Jual /gi, "")
+                    .trim();
+
+                if (!cleanName || cleanName.length < 5) return;
+
+                // 1. Size Extraction
+                const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
+                const sizeMatch = cleanName.match(sizeRegex);
+                let detectedSize = "";
+                if (sizeMatch) detectedSize = `${sizeMatch[1]} ${sizeMatch[2]}`;
+
+                // 2. Brand Heuristics
+                let detectedBrand = "";
+                if (cleanName.includes("-")) {
+                    const parts = cleanName.split("-");
+                    if (parts[0].trim().length < 15) detectedBrand = parts[0].trim();
+                    else if (parts[parts.length - 1].trim().length < 15) detectedBrand = parts[parts.length - 1].trim();
+                }
+
+                candidates.push({
+                    name: cleanName,
+                    brand: detectedBrand,
+                    size: detectedSize,
+                    score: (detectedSize ? 2 : 0) + (detectedBrand ? 1 : 0)
+                });
+            });
+
+            // Sort by score
+            candidates.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return b.name.length - a.name.length;
+            });
+
+            if (candidates.length > 0) {
+                const best = candidates[0];
                 return NextResponse.json({
                     ok: true,
-                    source: "DDGScrape",
+                    source: "DDGScrape_Smart",
                     data: {
-                        name: firstResult,
-                        brand: "",
+                        name: best.name,
+                        brand: best.brand,
                         category: "",
                         image: "",
-                        size: ""
+                        size: best.size
                     }
                 });
             }
