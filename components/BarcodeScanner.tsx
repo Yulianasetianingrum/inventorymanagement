@@ -65,16 +65,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         setError(null);
         addLog(`Req Start: ${mode}`);
 
-        // Stop specific previous stream
+        // 1. STOP & CLEAR (Critical for Mobile Switch)
         if (scannerRef.current) {
             try {
-                // Check undocumented 'isScanning' flag if available to avoid error
                 if ((scannerRef.current as any).isScanning) {
                     await scannerRef.current.stop();
                 }
                 scannerRef.current.clear();
             } catch (ignore) { }
         }
+
+        // 2. DELAY (Give hardware time to release)
+        await new Promise(r => setTimeout(r, 300));
 
         // Base Config
         const html5QrCode = new Html5Qrcode(regionId, { verbose: true } as any);
@@ -127,25 +129,33 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         // CASCADE OF DESPERATION
         try {
-            // Priority 1: Requested Mode (Exact)
+            // Priority 1: Requested Mode (Exact) - CRITICAL FOR SWITCHING
             if (mode !== "any") {
-                if (await tryStart("Exact Mode", { facingMode: { exact: mode } })) return;
+                // Try exact first (Force Back/Front)
+                if (await tryStart(`Exact ${mode}`, { facingMode: { exact: mode } })) return;
 
-                // Priority 2: Requested Mode (Relaxed)
-                if (await tryStart("Relaxed Mode", { facingMode: mode })) return;
+                // If exact fails, try just label (Relaxed)
+                if (await tryStart(`Relaxed ${mode}`, { facingMode: mode })) return;
             }
 
-            // Priority 3: The "Other" Mode (If environment failed, try user, or vice versa)
+            // Priority 2: ID-based (If we found cameras and have a preference)
+            // Note: This often helps if facingMode fails but we have IDs
+            /*
+            if (cameras.length > 0) {
+                 const targetLabel = mode === "environment" ? "back" : "front";
+                 const match = cameras.find(c => c.label.toLowerCase().includes(targetLabel));
+                 if (match) {
+                     if (await tryStart("Smart ID Match", { deviceId: match.id })) return;
+                 }
+            }
+            */
+
+            // Priority 3: The "Other" Mode (Flip it)
             const alternate = mode === "environment" ? "user" : "environment";
-            if (await tryStart("Alternate Mode", { facingMode: alternate })) return;
+            if (await tryStart(`Alternate (Fallback to ${alternate})`, { facingMode: alternate })) return;
 
             // Priority 4: ANY CAMERA (No constraints)
             if (await tryStart("Generic/Any", { facingMode: undefined })) return;
-
-            // Priority 5: ID-based (If we found cameras)
-            if (cameras.length > 0) {
-                if (await tryStart("ID-Based (First)", { deviceId: cameras[0].id })) return;
-            }
 
             throw new Error("Semua metode gagal. Browser menolak akses kamera.");
 
