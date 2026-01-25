@@ -82,7 +82,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         const baseConfig = {
             fps: fps,
-            qrbox: { width: 320, height: 250 },
+            // LANDSCAPE BOX (Widened for desktop/User request)
+            qrbox: { width: 450, height: 200 },
             enableScanning: true,
             disableFlip: disableFlip,
             experimentalFeatures: { useBarCodeDetectorIfSupported: true }
@@ -197,35 +198,61 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                                 </Button>
                             </div>
 
-                            {/* Focus Button */}
-                            <Button
-                                className="pointer-events-auto h-8 bg-white text-navy text-[10px]"
-                                onClick={() => {
-                                    if (scannerRef.current) {
-                                        setFocusStatus("focusing");
-                                        const scannerAny = scannerRef.current as any;
-                                        let track = null;
-                                        if (typeof scannerAny.getRunningTrack === "function") track = scannerAny.getRunningTrack();
-                                        else if (scannerAny.mediaStream?.getVideoTracks) track = scannerAny.mediaStream.getVideoTracks()[0];
+                            <div className="flex flex-col gap-2 pointer-events-auto">
+                                <div className="flex gap-2">
+                                    <Button
+                                        className="h-8 bg-white text-navy text-[10px]"
+                                        onClick={() => {
+                                            if (scannerRef.current) {
+                                                setFocusStatus("focusing");
+                                                const scannerAny = scannerRef.current as any;
+                                                let track = null;
+                                                if (typeof scannerAny.getRunningTrack === "function") track = scannerAny.getRunningTrack();
+                                                else if (scannerAny.mediaStream?.getVideoTracks) track = scannerAny.mediaStream.getVideoTracks()[0];
 
-                                        if (track?.applyConstraints) {
-                                            // Force Toggle
-                                            track.applyConstraints({ advanced: [{ focusMode: "manual" as any }] })
-                                                .catch(() => { })
-                                                .finally(() => {
-                                                    setTimeout(() => {
-                                                        track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => { });
-                                                        setFocusStatus("idle");
-                                                    }, 300);
-                                                });
-                                        } else {
-                                            setTimeout(() => setFocusStatus("idle"), 500);
-                                        }
-                                    }
-                                }}
-                            >
-                                {focusStatus === "focusing" ? "Fokus..." : "🎯 Fokus"}
-                            </Button>
+                                                if (track?.applyConstraints) {
+                                                    track.applyConstraints({ advanced: [{ focusMode: "manual" as any }] })
+                                                        .catch(() => { })
+                                                        .finally(() => {
+                                                            setTimeout(() => {
+                                                                track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => { });
+                                                                setFocusStatus("idle");
+                                                            }, 300);
+                                                        });
+                                                } else {
+                                                    setTimeout(() => setFocusStatus("idle"), 500);
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        {focusStatus === "focusing" ? "Fokus..." : "Fokus"}
+                                    </Button>
+
+                                    {/* ZOOM SLIDER (Restored) */}
+                                    <div className="flex items-center bg-black/40 rounded px-2">
+                                        <span className="text-[10px] text-white mr-1 font-bold">Zoom</span>
+                                        <input
+                                            type="range"
+                                            min="1" max="3" step="0.1"
+                                            defaultValue="1"
+                                            className="w-20 h-1 accent-white"
+                                            onChange={(e) => {
+                                                const val = Number(e.target.value);
+                                                if (scannerRef.current) {
+                                                    const scannerAny = scannerRef.current as any;
+                                                    let track = null;
+                                                    if (typeof scannerAny.getRunningTrack === "function") track = scannerAny.getRunningTrack();
+                                                    else if (scannerAny.mediaStream?.getVideoTracks) track = scannerAny.mediaStream.getVideoTracks()[0];
+
+                                                    if (track?.applyConstraints) {
+                                                        track.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => { });
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -244,8 +271,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                         </div>
                     </div>
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

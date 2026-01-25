@@ -15,7 +15,8 @@ export async function GET(req: Request) {
 
     try {
         // 0. PRIORITY: Check Local Database
-        const localItem = await prisma.item.findFirst({
+        const localItem = await prisma.item.findUnique({
+            // @ts-ignore - Prisma client out of sync with schema
             where: { barcode: code }
         });
 
@@ -57,6 +58,8 @@ export async function GET(req: Request) {
         // Note: Scraping is flaky. We use it as a best-effort.
         // 2. High Success Rate Lookup: Google Search Scraping
         // Since accurate APIs are paid, we scrape Google Search title meta.
+        // 2. High Success Rate Lookup: Google Search Scraping
+        // Intelligent "Top 5" Analysis
         try {
             const googleUrl = `https://www.google.com/search?q=${code}`;
             const googleRes = await fetch(googleUrl, {
@@ -67,70 +70,83 @@ export async function GET(req: Request) {
             const html = await googleRes.text();
             const $ = cheerio.load(html);
 
-            // Google usually puts the main result title in h3 or within specific containers.
-            // But a safer bet for product names is the meta title or specific result snippets.
-            // We'll try to get the first organic result's Title.
+            // Analyzed candidates
+            let candidates: any[] = [];
 
-            // Try explicit product wrappers first (shopping results often appear)
-            let possibleName = "";
+            // Loop through first 5 results (h3 usually contains the title)
+            $("h3").each((i, el) => {
+                if (i >= 5) return false; // Limit to top 5
 
-            // Selector for first standard search result title (h3)
-            const firstResult = $("h3").first().text().trim();
+                let rawTitle = $(el).text().trim();
 
-            if (firstResult) {
-                // Remove garbage text like "Buy ...", "Price..." if possible, but raw title is better than nothing.
-                possibleName = firstResult;
-            }
+                // Aggressive cleaning
+                let cleanName = rawTitle
+                    .replace(/ - Google Search/gi, "")
+                    .replace(/ – Google Search/gi, "")
+                    .replace(/ \| Google/gi, "")
+                    .replace(/ \| Tokopedia/gi, "")
+                    .replace(/ \| Shopee Indonesia/gi, "")
+                    .replace(/ \| Shopee/gi, "")
+                    .replace(/ \| Bukalapak/gi, "")
+                    .replace(/ \| Blibli/gi, "")
+                    .replace(/ \| Lazada/gi, "")
+                    .replace(/Jual /gi, "")
+                    .replace(/\.\.\.$/, "") // Remove ellipses
+                    .trim();
 
-            // Fallback: Page Title cleaning
-            if (!possibleName || possibleName.length < 5) {
-                possibleName = $("title").text().trim();
-            }
+                if (!cleanName || cleanName.length < 5) return;
 
-            // CLEANING: aggressively remove " - Google Search" or "on Google"
-            possibleName = possibleName
-                .replace(/ - Google Search/gi, "")
-                .replace(/ – Google Search/gi, "") // En dash
-                .replace(/ - Google/gi, "")
-                .replace(/ \| Google/gi, "")
-                .trim();
-
-            const lowerName = possibleName.toLowerCase();
-            const isInvalid = !possibleName
-                || lowerName.includes("robot")
-                || lowerName.includes("captcha")
-                || lowerName === "google"
-                || lowerName === "google search"
-                || lowerName.includes("penelusuran google") // Indonesian locale
-                || possibleName.includes(code!)
-                || possibleName.length < 3;
-
-            if (!isInvalid) {
-                // Try to split hyphenated titles (Brand - Product)
-                let brandGuess = "";
-                let nameGuess = possibleName;
-
-                if (possibleName.includes("-")) {
-                    const parts = possibleName.split("-");
-                    // Heuristic: First part often product name if title was "Product - Brand"
-                    if (parts.length > 0) {
-                        nameGuess = parts[0].trim();
-                        if (parts.length > 1) brandGuess = parts[parts.length - 1].trim();
-                    }
+                // Extraction Logic
+                // 1. Size / Dimension (e.g. 200ml, 1kg, 500 gr, 2.5 Liter)
+                const sizeRegex = /\b(\d+(?:[.,]\d+)?)\s*(ml|l|liter|kg|g|gr|gram|mg|pcs|pack|zak|sak|cm|mm|m)\b/i;
+                const sizeMatch = cleanName.match(sizeRegex);
+                let detectedSize = "";
+                if (sizeMatch) {
+                    detectedSize = `${sizeMatch[1]} ${sizeMatch[2]}`; // e.g. "200 ml"
                 }
 
+                // 2. Brand Heuristics
+                // Strategy: Look for "Merk: X" or assume text BEFORE the first hyphen/pipe is Brand, or text AFTER if it looks like a suffix.
+                let detectedBrand = "";
+
+                // Common separator split
+                if (cleanName.includes("-")) {
+                    const parts = cleanName.split("-");
+                    // Often: "Product Name - Brand" OR "Brand - Product Name"
+                    // If part[0] is short (< 15 chars), assume Brand.
+                    if (parts[0].trim().length < 15) detectedBrand = parts[0].trim();
+                    else if (parts[parts.length - 1].trim().length < 15) detectedBrand = parts[parts.length - 1].trim();
+                }
+
+                candidates.push({
+                    name: cleanName,
+                    brand: detectedBrand,
+                    size: detectedSize,
+                    score: (detectedSize ? 2 : 0) + (detectedBrand ? 1 : 0) // Prefer results with extracted data
+                });
+            });
+
+            // Sort by score (desc) then name length (desc)
+            candidates.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return b.name.length - a.name.length;
+            });
+
+            if (candidates.length > 0) {
+                const best = candidates[0];
                 return NextResponse.json({
                     ok: true,
-                    source: "GoogleScrape",
+                    source: "GoogleScrape_Smart",
                     data: {
-                        name: nameGuess,
-                        brand: brandGuess,
+                        name: best.name,
+                        brand: best.brand,
                         category: "",
                         image: "",
-                        size: ""
+                        size: best.size
                     }
                 });
             }
+
         } catch (e) {
             console.warn("Google scrape failed", e);
         }

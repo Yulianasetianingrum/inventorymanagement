@@ -533,7 +533,7 @@ function AdminItemsContent() {
             <div className="grid grid-cols-2 sm:flex gap-3 w-full md:w-auto">
               {/* Drop All - Full Width on Mobile */}
               <Button onClick={() => setDropAllModalOpen(true)} className="col-span-2 sm:col-span-1 bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 !h-12 !px-4 border-none font-bold">
-                ⚠️ DROP ALL
+                DROP ALL
               </Button>
               <Button onClick={() => {
                 setItemForm({ name: "", brand: "", category: "", location: "", size: "", unit: "pcs", minStock: "0", barcode: "" });
@@ -551,7 +551,7 @@ function AdminItemsContent() {
                 // Delayed start to ensure modal render
                 setTimeout(() => setScanning(true), 100);
               }} className="bg-navy/10 text-navy hover:bg-navy hover:text-white !h-12 !px-4 border border-navy/20 font-bold transition-all">
-                📷 Scan
+                Scan
               </Button>
               <Button onClick={() => router.push("/dashboard")} className="col-span-2 sm:col-span-1 btn-primary !bg-white/10 !backdrop-blur !h-12 !px-6 border-white/20">
                 Dashboard
@@ -563,7 +563,7 @@ function AdminItemsContent() {
         {/* Controls Section */}
         <div className={styles.controlBar}>
           <div className={styles.searchWrapper}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}></span>
             <input
               className={styles.searchInput}
               placeholder="Cari item..."
@@ -674,8 +674,8 @@ function AdminItemsContent() {
         <div className={styles.modalOverlay}>
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-navy/10 animate-in zoom-in-95 duration-200">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                🗑️
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
+                !
               </div>
               <h3 className="text-xl font-black text-navy mb-2">Hapus Item?</h3>
               <p className="text-sm text-navy/60 font-medium">
@@ -715,11 +715,11 @@ function AdminItemsContent() {
               setStockModalOpen(true);
               setStockSupplierQuery(actionMenu.item.name);
               setActionMenu(null);
-            }}><span>➕</span> Tambah Stok</button>
+            }}><span>+</span> Tambah Stok</button>
             <button className={styles.dropdownItem} onClick={() => {
               router.push(`/items/${actionMenu.item.id}/riwayat`);
               setActionMenu(null);
-            }}><span>📜</span> Lihat Riwayat</button>
+            }}><span>•</span> Lihat Riwayat</button>
             <button className={styles.dropdownItem} onClick={() => {
               const u = actionMenu.item;
               setItemForm({ name: u.name, brand: u.brand || "", category: u.category || "", location: u.location || "", size: u.size || "", unit: u.unit, minStock: String(u.minStock), barcode: u.barcode || "" });
@@ -727,12 +727,12 @@ function AdminItemsContent() {
               setItemMode("single");
               setItemFormOpen(true);
               setActionMenu(null);
-            }}><span>✏️</span> Edit Detail</button>
+            }}><span>✎</span> Edit Detail</button>
             <div className="h-px bg-navy/5 my-1" />
             <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={() => {
               setDeleteTarget(actionMenu.item);
               setActionMenu(null);
-            }}><span>🗑️</span> Hapus Item</button>
+            }}><span>✕</span> Hapus Item</button>
           </div>
         </>
       )}
@@ -740,10 +740,10 @@ function AdminItemsContent() {
       {/* Scanner Modal */}
       {scanning && (
         <div className={styles.modalOverlay} style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl relative">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md md:max-w-3xl mx-4 my-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
             <button
               onClick={() => setScanning(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold"
+              className="absolute top-2 right-2 z-[100] bg-white rounded-full p-2 shadow-lg border border-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 font-bold transition-all"
             >
               ✕
             </button>
@@ -770,7 +770,7 @@ function AdminItemsContent() {
                 <div className="h-px bg-gray-200 flex-1"></div>
               </div>
               <label className="btn-primary w-full text-center cursor-pointer text-xs py-3 rounded-lg dark:text-white mb-4 block">
-                📂 Upload Foto Barcode
+                Upload Foto Barcode
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                   if (e.target.files && e.target.files.length > 0) {
                     const file = e.target.files[0];
