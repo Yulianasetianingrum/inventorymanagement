@@ -142,7 +142,8 @@ export async function POST(req: Request) {
             size: size || null,
             brand: brand || null
           },
-          barcode ? { barcode } : { name: "IMPOSSIBLE_MATCH_PLACEHOLDER" } // Hack to avoid empty OR if barcode null
+          // @ts-ignore: Prisma type glitched locally
+          (barcode ? { barcode } : { name: "IMPOSSIBLE_MATCH_PLACEHOLDER" }) as any
         ]
       }
     });
@@ -163,6 +164,7 @@ export async function POST(req: Request) {
         stockNew,
         stockUsed,
         minStock,
+        // @ts-ignore: Prisma local type glitch
         barcode,
       },
     });

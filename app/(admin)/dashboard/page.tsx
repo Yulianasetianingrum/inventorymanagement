@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Cartes
 // import styles from "./dashboard.module.css";
 // Styling replaced with Tailwind classes commensurate with standard enterprise theme
 
-const kpis: { title: string; value: string; desc: string }[] = [];
+
 
 // ✅ Urutkan sesuai alur kerja & keterkaitan: Karyawan → Supplier → Items → Picklist → Projects → Audit
 const moduleCards: { title: string; desc: string; href: string }[] = [
@@ -107,6 +107,7 @@ export default function AdminDashboardPage() {
   const [lowStockList, setLowStockList] = useState<LowStockRow[]>([]);
   const [workerPerformance, setWorkerPerformance] = useState<any[]>([]);
   const [loadingKpi, setLoadingKpi] = useState(true);
+  const [kpis, setKpis] = useState<{ title: string; value: string; desc: string }[]>([]);
 
   const goToLowStock = () => {
     window.location.href = "/items?filter=priority";

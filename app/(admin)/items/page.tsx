@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./items.module.css";
 import { Button } from "@/components/ui/button";
@@ -135,7 +135,7 @@ const SmartSupplierInput = ({
   );
 };
 
-export default function ItemsPage() {
+function AdminItemsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -1295,5 +1295,20 @@ export default function ItemsPage() {
         {toast.msg}
       </div>
     </div >
+  );
+}
+
+export default function AdminItemsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-navy border-t-transparent"></div>
+          <p className="text-xs font-bold text-navy/50 uppercase tracking-widest">Memuat Inventory...</p>
+        </div>
+      </div>
+    }>
+      <AdminItemsContent />
+    </Suspense>
   );
 }

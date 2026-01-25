@@ -50,13 +50,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (!finalSupplierId && supplierName) {
       const existing = await prisma.supplier.findFirst({
-        where: { name: { equals: supplierName, mode: 'insensitive' } }
+        where: { namaToko: { equals: supplierName } } // Fix: Schema uses namaToko, no mode defaults in mysql usually unless mapped
       });
       if (existing) {
         finalSupplierId = existing.id;
       } else {
         const newSupplier = await prisma.supplier.create({
-          data: { name: supplierName, contactInfo: "-" } // Default contact
+          data: { namaToko: supplierName, keperluanItems: "-", alamat: "-" } // Fix: Schema uses namaToko, and required fields strings
         });
         finalSupplierId = newSupplier.id;
       }
