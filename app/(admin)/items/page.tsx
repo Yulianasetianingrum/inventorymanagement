@@ -461,18 +461,28 @@ function AdminItemsContent() {
   }, [scanning]);
 
   const startCamera = async () => {
+    // 1. Strict HTTPS Check
+    if (window.location.hostname !== 'localhost' && window.location.protocol !== 'https:') {
+      showToast("⚠️ WAJIB HTTPS! Ganti URL ke https://...", true);
+      window.location.href = window.location.href.replace('http:', 'https:');
+      return;
+    }
+
     setCameraActive(true);
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
 
-      // 1. Cleanup old instance first
+      // 2. Safe Cleanup of any ghost instance
       if (scannerRef.current) {
         try { await scannerRef.current.stop(); } catch (e) { }
         try { await scannerRef.current.clear(); } catch (e) { }
         scannerRef.current = null;
       }
 
-      // 2. Get Cameras (if needed)
+      // Wait a bit to ensure DOM is ready
+      await new Promise(r => setTimeout(r, 300));
+
+      // 3. Get Cameras (Optional but good for selection)
       if (cameras.length === 0) {
         try {
           const devices = await Html5Qrcode.getCameras();
@@ -481,14 +491,11 @@ function AdminItemsContent() {
             if (!selectedCameraId) setSelectedCameraId(devices[devices.length - 1].id);
           }
         } catch (e) {
-          console.warn("Get cameras failed", e);
+          console.warn("Get cameras warning (ignorable if start works):", e);
         }
       }
 
-      // 3. Start
-      // Wait a tick for UI
-      await new Promise(r => setTimeout(r, 100));
-      if (!document.getElementById("reader")) throw new Error("Kamera view tidak ditemukan");
+      if (!document.getElementById("reader")) throw new Error("Area kamera tidak siap. Coba lagi.");
 
       const html5QrCode = new Html5Qrcode("reader");
       scannerRef.current = html5QrCode;
@@ -501,7 +508,7 @@ function AdminItemsContent() {
         async (decodedText: string) => {
           console.log("Scanned:", decodedText);
 
-          // Stop Safely
+          // Success! Stop camera immediately
           try { await html5QrCode.stop(); } catch (e) { }
           try { await html5QrCode.clear(); } catch (e) { }
           scannerRef.current = null;
@@ -525,10 +532,16 @@ function AdminItemsContent() {
       setCameraActive(false);
 
       const msg = err?.message || err?.toString() || "";
+
+      // Smart Error Messages
       if (msg.includes("Permission") || msg.includes("Access") || msg.includes("denied")) {
-        showToast("⚠️ Kamera diblokir. Gunakan UPLOAD FOTO dibawah.", true);
+        showToast("⚠️ Izin Kamera Ditolak Browser. Silakan Reset Permission (Gembok URL).", true);
+      } else if (msg.includes("Secure Context")) {
+        showToast("⚠️ Wajib HTTPS! Web ini tidak aman untuk kamera.", true);
+      } else if (msg.includes("Starting video failed")) {
+        showToast("⚠️ Kamera sedang dipakai aplikasi lain / Error Hardware.", true);
       } else {
-        showToast("Gagal memulai kamera: " + msg, true);
+        showToast("Gagal akses kamera. Gunakan Upload Foto saja.", true);
       }
     }
   };
