@@ -48,7 +48,7 @@ async function main() {
   }
 
   const hinge = await prisma.item.upsert({
-    where: { name_size: { name: "Engsel Soft Close", size: "" } },
+    where: { name_brand_size: { name: "Engsel Soft Close", brand: "Blum", size: "" } },
     update: {},
     create: {
       name: "Engsel Soft Close",
@@ -64,7 +64,7 @@ async function main() {
   });
 
   const paint = await prisma.item.upsert({
-    where: { name_size: { name: "Cat Duco Putih", size: "" } },
+    where: { name_brand_size: { name: "Cat Duco Putih", brand: "Avian", size: "" } },
     update: {},
     create: {
       name: "Cat Duco Putih",
@@ -80,7 +80,7 @@ async function main() {
   });
 
   await prisma.item.upsert({
-    where: { name_size: { name: "Amplas 120", size: "120" } },
+    where: { name_brand_size: { name: "Amplas 120", brand: "Bosch", size: "120" } },
     update: {},
     create: {
       name: "Amplas 120",
