@@ -185,16 +185,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             {/* Manual Switchers */}
                             <div className="pointer-events-auto flex gap-2">
                                 <Button
-                                    onClick={() => { setRequestedFacingMode("environment"); startScanning("environment"); }}
-                                    className={`h-8 text-[10px] ${requestedFacingMode === 'environment' ? 'bg-navy text-white' : 'bg-white text-navy'}`}
+                                    onClick={() => {
+                                        const newMode = requestedFacingMode === "environment" ? "user" : "environment";
+                                        setRequestedFacingMode(newMode);
+                                        startScanning(newMode);
+                                    }}
+                                    className="h-8 bg-white text-navy border border-gray-200 shadow-sm"
+                                    title="Switch Camera"
                                 >
-                                    Belakang
-                                </Button>
-                                <Button
-                                    onClick={() => { setRequestedFacingMode("user"); startScanning("user"); }}
-                                    className={`h-8 text-[10px] ${requestedFacingMode === 'user' ? 'bg-navy text-white' : 'bg-white text-navy'}`}
-                                >
-                                    Depan
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 10c0-6-8-6-8-6s-8 0-8 6h3l-5 5-5-5h3c0-10 12-10 12-10s12 0 12 10h-3l5 5 5-5z" />
+                                    </svg>
+                                    <span className="ml-2 text-[10px] font-bold">Switch</span>
                                 </Button>
                             </div>
 

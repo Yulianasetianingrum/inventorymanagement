@@ -740,7 +740,7 @@ function AdminItemsContent() {
       {/* Scanner Modal */}
       {scanning && (
         <div className={styles.modalOverlay} style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md md:max-w-3xl mx-4 my-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md md:max-w-3xl mx-4 my-8 shadow-2xl relative overflow-y-auto flex flex-col max-h-[90vh]">
             <button
               onClick={() => setScanning(false)}
               className="absolute top-2 right-2 z-[100] bg-white rounded-full p-2 shadow-lg border border-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 font-bold transition-all"
@@ -760,7 +760,8 @@ function AdminItemsContent() {
               />
             </div>
 
-            {/* <div id="reader" className="w-full overflow-hidden rounded-xl bg-black/5 min-h-[250px]" /> */}
+            {/* Hidden reader element for file scan */}
+            <div id="reader" className="hidden" />
 
             <div className="mt-4 flex flex-col items-center gap-2">
               <p className="text-center text-xs text-gray-400">Arahkan kamera ke kode produk</p>
