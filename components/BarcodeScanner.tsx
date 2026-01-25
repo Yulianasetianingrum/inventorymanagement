@@ -26,12 +26,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const regionId = "html5qr-code-full-region";
 
+    // Capabilities
+    const [capabilities, setCapabilities] = useState<MediaTrackCapabilities | null>(null);
+    const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null>(null);
+    const [torchOn, setTorchOn] = useState(false);
+    const [zoom, setZoom] = useState(1);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.stop().catch(console.error).finally(() => {
-                    // clear() returns void in some versions/types
                     if (scannerRef.current) {
                         try {
                             scannerRef.current.clear();
@@ -44,6 +49,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         };
     }, []);
 
+    const applyVideoConstraints = async (track: MediaStreamTrack, advanced: any) => {
+        try {
+            await track.applyConstraints({ advanced: [advanced] });
+        } catch (e) {
+            console.error("Failed to apply constraints", e);
+        }
+    };
+
     const startScanning = async (cameraId?: string) => {
         setError(null);
         try {
@@ -51,7 +64,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 await scannerRef.current.stop().catch(() => { });
             }
 
-            // Explicitly define formats for better performance
             const formatsToSupport = [
                 Html5QrcodeSupportedFormats.QR_CODE,
                 Html5QrcodeSupportedFormats.UPC_A,
@@ -74,7 +86,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 disableFlip: disableFlip,
             };
 
-            const cameraConfig = cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" };
+            const cameraConfig = cameraId
+                ? {
+                    deviceId: { exact: cameraId },
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 },
+                    focusMode: "continuous"
+                }
+                : {
+                    facingMode: "environment",
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 },
+                    focusMode: "continuous"
+                };
 
             await html5QrCode.start(
                 cameraConfig,
@@ -88,6 +112,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     }
                 }
             );
+
+            // Access track for controls
+            // Html5Qrcode doesn't easily expose the track, but we can try getting it via capabilities
+            try {
+                const track = html5QrCode.getRunningTrack();
+                if (track) {
+                    setVideoTrack(track);
+                    setCapabilities(track.getCapabilities());
+                }
+            } catch (e) {
+                console.warn("Could not get running track", e);
+            }
+
             setHasPermission(true);
         } catch (err: any) {
             console.error("Error starting scanner:", err);
@@ -97,27 +134,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     };
 
     useEffect(() => {
-        // Try to get cameras first
         Html5Qrcode.getCameras()
             .then((devices) => {
                 if (devices && devices.length) {
                     setCameras(devices);
-
-                    // Smart Selection: Prefer back camera, otherwise first available
                     const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('belakang') || d.label.toLowerCase().includes('environment'));
                     const targetId = backCamera ? backCamera.id : devices[0].id;
-
                     setActiveCameraId(targetId);
                     startScanning(targetId);
                 } else {
-                    // No devices listed, but might still have permission for "any" camera
                     console.warn("No cameras found via enumeration, trying generic start...");
                     startScanning();
                 }
             })
             .catch((err) => {
                 console.error("Camera listing failed, forcing generic start:", err);
-                // Fallback: Just try to start without an ID. often works if permission was just "stuck"
                 startScanning();
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,6 +175,45 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 <>
                     <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-black/5">
                         <div id={regionId} className="w-full min-h-[300px]" />
+
+                        {/* CONTROLS OVERLAY */}
+                        <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-2 px-4 pointer-events-none">
+                            <div className="pointer-events-auto flex gap-4">
+                                {/* Torch Toggle */}
+                                {videoTrack && capabilities?.torch && (
+                                    <Button
+                                        onClick={() => {
+                                            const newMode = !torchOn;
+                                            applyVideoConstraints(videoTrack, { torch: newMode });
+                                            setTorchOn(newMode);
+                                        }}
+                                        className={`h-10 w-10 p-0 rounded-full shadow-lg ${torchOn ? 'bg-yellow-400 text-black' : 'bg-white text-gray-700'}`}
+                                    >
+                                        🔦
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Zoom Slider */}
+                            {videoTrack && capabilities?.zoom && (
+                                <div className="pointer-events-auto w-full max-w-xs bg-black/50 p-2 rounded-full backdrop-blur-sm">
+                                    <input
+                                        type="range"
+                                        min={capabilities.zoom.min || 1}
+                                        max={capabilities.zoom.max || 5}
+                                        step={capabilities.zoom.step || 0.1}
+                                        value={zoom}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setZoom(val);
+                                            applyVideoConstraints(videoTrack, { zoom: val });
+                                        }}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                             <div className="w-64 h-64 border-2 border-white/50 rounded-lg"></div>
                         </div>
