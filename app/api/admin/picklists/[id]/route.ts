@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 
+async function ensureAdmin() {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") return null;
+  return prisma.user.findUnique({ where: { employeeId: session.employeeId } });
+}
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
