@@ -48,7 +48,7 @@ export default function WorkerHistoryPage() {
       </header>
 
       {/* Content */}
-      <main className="px-5 -mt-6 relative z-20 space-y-4">
+      <main className="px-5 -mt-6 relative z-20 max-w-7xl mx-auto w-full">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-10 h-10 border-4 border-navy/10 border-t-navy rounded-full animate-spin"></div>
@@ -60,57 +60,59 @@ export default function WorkerHistoryPage() {
             <p className="text-slate-400 text-xs mt-1">Mulai ambil barang atau selesaikan tugas!</p>
           </div>
         ) : (
-          history.map((act) => {
-            const style = getTypeStyle(act.type);
-            return (
-              <div key={act.id} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 relative group active:scale-[0.98] transition-transform">
-                <div className={`absolute top-5 left-0 w-1.5 h-8 ${style.color} rounded-r-full`}></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {history.map((act) => {
+              const style = getTypeStyle(act.type);
+              return (
+                <div key={act.id} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 relative group active:scale-[0.98] transition-transform">
+                  <div className={`absolute top-5 left-0 w-1.5 h-8 ${style.color} rounded-r-full`}></div>
 
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 ${style.color} text-white flex items-center justify-center rounded-xl shadow-lg ${style.shadow} text-xl`}>
-                      {style.icon}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{act.code}</span>
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-black text-white uppercase ${style.color}`}>{style.label}</span>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 ${style.color} text-white flex items-center justify-center rounded-xl shadow-lg ${style.shadow} text-xl`}>
+                        {style.icon}
                       </div>
-                      <h3 className="font-bold text-navy text-base leading-tight">{act.title}</h3>
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{act.code}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-black text-white uppercase ${style.color}`}>{style.label}</span>
+                        </div>
+                        <h3 className="font-bold text-navy text-base leading-tight">{act.title}</h3>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] font-black text-navy/40 uppercase tracking-wider">{act.status}</div>
+                      <div className="text-[10px] text-slate-400 font-bold mt-1">
+                        {new Date(act.timestamp).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-black text-navy/40 uppercase tracking-wider">{act.status}</div>
-                    <div className="text-[10px] text-slate-400 font-bold mt-1">
-                      {new Date(act.timestamp).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}
+
+                  <div className="flex items-center justify-between gap-4 text-xs font-semibold text-slate-500 bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                    <div className="flex-1 overflow-hidden">
+                      <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Project / Tujuan</span>
+                      <div className="text-navy font-bold truncate">{act.projectName}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Kuantitas</span>
+                      <div className="text-navy font-black">{act.itemCount} <span className="text-slate-400 font-bold">Items</span></div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-4 text-xs font-semibold text-slate-500 bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
-                  <div className="flex-1">
-                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Project / Tujuan</span>
-                    <div className="text-navy font-bold truncate max-w-[150px]">{act.projectName}</div>
-                  </div>
-                  <div className="text-right">
-                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Kuantitas</span>
-                    <div className="text-navy font-black">{act.itemCount} <span className="text-slate-400 font-bold">Items</span></div>
+                  <div className="mt-3 flex justify-between items-center px-1">
+                    <div className="text-[10px] text-slate-400 font-medium italic">
+                      {new Date(act.timestamp).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
+                    {act.type !== "RETURN" && (
+                      <Link href={`/worker/picklists/${act.id}`} className="text-[10px] font-black text-navy uppercase tracking-widest hover:underline">
+                        Lihat Detail →
+                      </Link>
+                    )}
                   </div>
                 </div>
-
-                <div className="mt-3 flex justify-between items-center px-1">
-                  <div className="text-[10px] text-slate-400 font-medium italic">
-                    {new Date(act.timestamp).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </div>
-                  {act.type !== "RETURN" && (
-                    <Link href={`/worker/picklists/${act.id}`} className="text-[10px] font-black text-navy uppercase tracking-widest hover:underline">
-                      Lihat Detail →
-                    </Link>
-                  )}
-                </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </main>
     </div>

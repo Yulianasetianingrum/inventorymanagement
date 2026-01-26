@@ -121,37 +121,44 @@ export default function WorkerChatPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+        <div className="fixed inset-0 bg-[#f8fafc] flex flex-col">
             {/* Header */}
-            <header className="bg-navy p-6 pb-12 rounded-b-[40px] shadow-2xl shadow-navy/20 relative z-10">
-                <div className="flex justify-between items-center">
+            <header className="bg-navy p-4 md:p-6 pb-8 md:pb-12 shadow-2xl shadow-navy/20 relative z-10 shrink-0">
+                <div className="flex justify-between items-center max-w-7xl mx-auto w-full">
                     <div>
-                        <h1 className="text-2xl font-black text-white">Pesan & Inbox</h1>
-                        <p className="text-white/60 text-xs font-medium">Hubungan langsung dengan Admin</p>
+                        <h1 className="text-xl md:text-2xl font-black text-white">Pesan & Inbox</h1>
+                        <p className="text-white/60 text-[10px] md:text-xs font-medium">Hubungan langsung dengan Admin</p>
                     </div>
-                    <Link href="/worker/home" className="text-white/60 hover:text-white bg-white/10 px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+                    <Link href="/worker/home" className="text-white/60 hover:text-white bg-white/10 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-colors">
                         &larr; Home
                     </Link>
                 </div>
             </header>
 
             {/* Chat Body */}
-            <main className="flex-1 px-5 -mt-6 relative z-20 flex flex-col pb-6">
-                <div className="flex-1 bg-white rounded-[24px] shadow-lg shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+            <main className="flex-1 relative z-20 flex flex-col w-full max-w-5xl mx-auto -mt-4 md:-mt-6 px-0 md:px-4 pb-0 md:pb-6 overflow-hidden">
+                <div className="flex-1 bg-white md:rounded-[24px] shadow-lg shadow-slate-200/50 border-x md:border border-slate-100 overflow-hidden flex flex-col h-full rounded-t-[24px]">
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-off-white">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth">
                         {messages.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-center opacity-40 p-6">
                                 <div className="text-5xl mb-4">📭</div>
                                 <h3 className="text-navy font-black text-lg">Belum Ada Pesan</h3>
-                                <p className="text-xs text-slate-500 max-w-[200px]">Pesan dari Admin akan muncul di sini.</p>
+                                <p className="text-xs text-slate-500 max-w-[200px] mb-4">Pesan dari Admin akan muncul di sini.</p>
+                                <Button
+                                    onClick={() => handleSend({ preventDefault: () => { } } as React.FormEvent)}
+                                    disabled={false} // Allow trying to start chat
+                                    className="bg-navy text-white text-xs"
+                                >
+                                    Mulai Percakapan Baru
+                                </Button>
                             </div>
                         ) : (
                             messages.map((m) => {
                                 const isMe = m.senderId === me?.id;
                                 return (
                                     <div key={m.id} className={`flex w-full mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
+                                        <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[70%]`}>
                                             <div
                                                 className={`px-4 py-2.5 rounded-2xl text-sm font-medium leading-relaxed shadow-sm transition-all duration-300 ${isMe
                                                     ? 'bg-navy text-white rounded-tr-none'
@@ -175,25 +182,23 @@ export default function WorkerChatPage() {
                                 );
                             })
                         )}
-                        <div ref={bottomRef}></div>
+                        <div ref={bottomRef} className="h-2"></div>
                     </div>
 
-                    {/* Input Area */}
-                    {messages.length > 0 && (
-                        <div className="p-4 bg-white border-t border-slate-100">
-                            <form onSubmit={handleSend} className="flex gap-2">
-                                <input
-                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 transition-all text-navy"
-                                    placeholder="Tulis balasan..."
-                                    value={newMessage}
-                                    onChange={e => setNewMessage(e.target.value)}
-                                />
-                                <button type="submit" disabled={!newMessage.trim()} className="w-12 h-12 bg-gold text-navy rounded-xl flex items-center justify-center hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-black shadow-lg shadow-gold/20 text-xl">
-                                    ➤
-                                </button>
-                            </form>
-                        </div>
-                    )}
+                    {/* Input Area - Sticky Bottom */}
+                    <div className="p-3 md:p-4 bg-white border-t border-slate-100 shrink-0 safe-area-bottom">
+                        <form onSubmit={handleSend} className="flex gap-2 max-w-full">
+                            <input
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 transition-all text-navy placeholder:text-slate-400"
+                                placeholder="Tulis pesan..."
+                                value={newMessage}
+                                onChange={e => setNewMessage(e.target.value)}
+                            />
+                            <button type="submit" disabled={!newMessage.trim()} className="w-12 h-12 bg-gold text-navy rounded-xl flex items-center justify-center hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-black shadow-lg shadow-gold/20 text-xl shrink-0">
+                                ➤
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </main>
         </div>

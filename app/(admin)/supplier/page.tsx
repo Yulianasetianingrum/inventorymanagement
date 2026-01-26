@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import styles from "./supplier.module.css";
 import { SupplierClient } from "./SupplierClient";
+import { SupplierForm } from "./SupplierForm";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -70,64 +70,48 @@ export default async function SupplierPage({ searchParams }: any) {
   const editingItems = editing ? coerceKeperluanItems(editing.keperluanItems).join(", ") : "";
 
   return (
-    <div className={styles.page}>
-      <header className="sticky top-0 z-50 bg-gray-50/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f8fafc] pb-24">
+      {/* Navbar - Sticky on Mobile */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-navy text-white rounded-lg flex items-center justify-center shadow-lg shadow-navy/20">
-            <img src="/logo/apix.png" alt="Logo" className="w-6 h-6 object-contain" />
+          <div className="w-9 h-9 md:w-10 md:h-10 bg-navy text-white rounded-lg flex items-center justify-center shadow-lg shadow-navy/20">
+            <img src="/logo/apix.png" alt="Logo" className="w-5 h-5 md:w-6 md:h-6 object-contain" />
           </div>
           <div className="flex flex-col">
-            <div className="text-sm font-black text-navy uppercase tracking-wider leading-none">Apix Interior</div>
+            <div className="text-xs md:text-sm font-black text-navy uppercase tracking-wider leading-none">Apix Interior</div>
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-0.5">Supplier Directory</div>
           </div>
         </div>
         <Link href="/dashboard">
-          <Button className="bg-navy text-white hover:bg-navy/90 text-xs font-bold uppercase tracking-wider h-9 px-4 shadow-lg shadow-navy/20 border border-transparent">
+          <Button className="bg-navy text-white hover:bg-navy/90 text-[10px] md:text-xs font-bold uppercase tracking-wider h-8 md:h-9 px-3 md:px-4 shadow-lg shadow-navy/20 border border-transparent rounded-lg">
             ← Dashboard
           </Button>
         </Link>
       </header>
 
-      <div className={styles.container}>
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 md:py-8">
         {/* Header Section */}
-        <div className={styles.headerCard}>
-          <p className={styles.headerSubtitle}>Procurement Module</p>
-          <h1 className={styles.headerTitle}>Supplier Relationship</h1>
+        <div className="bg-navy p-6 md:p-10 rounded-[24px] md:rounded-[32px] mb-6 md:mb-10 relative overflow-hidden shadow-2xl shadow-navy/20">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gold opacity-10 blur-[80px] rounded-full pointer-events-none translate-x-1/2 -translate-y-1/2"></div>
+
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-white/50 uppercase tracking-[0.2em] mb-2">Procurement Module</p>
+            <h1 className="text-2xl md:text-4xl font-black text-white leading-tight">Supplier Relationship</h1>
+          </div>
         </div>
 
-        <div className={styles.mainGrid}>
+        <div className="grid grid-cols-1 xl:grid-cols-[400px_1fr] lg:grid-cols-[350px_1fr] gap-6 md:gap-10 items-start">
           {/* Form Side Panel */}
-          <aside className={styles.formCard}>
-            <h2 className="text-xl font-black text-navy mb-6">{editing ? "Update Info Supplier" : "Rekam Supplier Baru"}</h2>
-            <form action={upsertSupplier}>
-              <input type="hidden" name="id" value={editing?.id ?? ""} />
-
-              <label className={styles.formLabel}>Nama Toko / Supplier</label>
-              <input name="namaToko" className={styles.formInput} defaultValue={editing?.namaToko ?? ""} required />
-
-              <label className={styles.formLabel}>Kategori Barang (Koma)</label>
-              <input name="keperluanItems" className={styles.formInput} defaultValue={editingItems} placeholder="HPL, Plywood, Fitting..." required />
-
-              <label className={styles.formLabel}>Alamat Lengkap</label>
-              <textarea name="alamat" className={styles.formInput + " !h-24 py-3"} defaultValue={editing?.alamat ?? ""} />
-
-              <label className={styles.formLabel}>Link Google Maps</label>
-              <input name="mapsUrl" className={styles.formInput} defaultValue={editing?.mapsUrl ?? ""} />
-
-              <label className={styles.formLabel}>No. Telp / WhatsApp</label>
-              <input name="noTelp" className={styles.formInput} defaultValue={editing?.noTelp ?? ""} />
-
-              <Button type="submit" className="btn-gold w-full !h-14 font-black uppercase tracking-widest mt-4 shadow-xl">
-                {editing ? "SIMPAN PERUBAHAN" : "AMANKAN DATA SUPPLIER"}
-              </Button>
-              {editing && (
-                <Link href="/supplier" className="block text-center mt-4 text-xs font-bold text-navy/40 uppercase tracking-widest">Batalkan Edit</Link>
-              )}
-            </form>
+          <aside className="order-2 lg:order-1">
+            <SupplierForm
+              upsertSupplier={upsertSupplier}
+              editing={editing}
+              editingItems={editingItems}
+            />
           </aside>
 
           {/* Directory Client Component */}
-          <section>
+          <section className="order-1 lg:order-2">
             <SupplierClient suppliers={suppliers} deleteSupplier={deleteSupplier} />
           </section>
         </div>
@@ -135,3 +119,4 @@ export default async function SupplierPage({ searchParams }: any) {
     </div>
   );
 }
+

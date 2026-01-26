@@ -300,19 +300,19 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-10">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-8 md:space-y-10">
 
         {/* KPI Section */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-lg font-black text-navy uppercase tracking-wide">Ringkasan Akhir-akhir Ini</h2>
+            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Ringkasan Akhir-akhir Ini</h2>
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
           {kpis.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {kpis.map((kpi) => (
-                <Card key={kpi.title} className="bg-white border border-gray-100 shadow-sm p-6 rounded-xl">
+                <Card key={kpi.title} className="bg-white border border-gray-100 shadow-sm p-5 md:p-6 rounded-xl">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{kpi.title}</div>
                   <div className="text-2xl font-black text-navy mb-1">{kpi.value}</div>
                   <div className="text-xs font-medium text-gray-400">{kpi.desc}</div>
@@ -329,24 +329,24 @@ export default function AdminDashboardPage() {
         {/* Analytics Section with Chart */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-lg font-black text-navy uppercase tracking-wide">Performa & Statistik</h2>
+            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Performa & Statistik</h2>
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Chart Card */}
-            <Card className="md:col-span-2 bg-white border border-gray-200 shadow-sm p-6 rounded-xl min-h-[300px] flex flex-col">
+            <Card className="lg:col-span-2 bg-white border border-gray-200 shadow-sm p-4 md:p-6 rounded-xl min-h-[300px] flex flex-col">
               <div className="flex justify-between items-start mb-6">
                 <Link href="/audit" className="group">
-                  <h3 className="text-sm font-black text-navy uppercase tracking-wide group-hover:text-gold transition-colors flex items-center gap-2">
+                  <h3 className="text-xs md:text-sm font-black text-navy uppercase tracking-wide group-hover:text-gold transition-colors flex items-center gap-2">
                     Traceability Barang
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
                   </h3>
-                  <p className="text-xs text-gray-400">Paling Banyak Digunakan (Bulan Ini)</p>
+                  <p className="text-[10px] md:text-xs text-gray-400">Paling Banyak Digunakan (Bulan Ini)</p>
                 </Link>
               </div>
 
-              <div className="flex-1 w-full min-h-[200px]">
+              <div className="flex-1 w-full min-h-[250px]">
                 {loadingKpi ? (
                   <div className="h-full flex items-center justify-center text-xs font-bold text-gray-300 uppercase tracking-widest animate-pulse">
                     Menghitung Pemakaian...
@@ -400,7 +400,7 @@ export default function AdminDashboardPage() {
 
             {/* Summary Stats */}
             <Link href="/audit" className="block h-full">
-              <Card className="h-full bg-navy text-white shadow-xl shadow-navy/20 p-6 rounded-xl flex flex-col justify-center relative overflow-hidden group hover:shadow-2xl hover:scale-[1.02] transition-all duration-300">
+              <Card className="h-full bg-navy text-white shadow-xl shadow-navy/20 p-6 rounded-xl flex flex-col justify-center relative overflow-hidden group hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 min-h-[200px]">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] translate-x-10 -translate-y-10 group-hover:bg-white/10 transition-colors"></div>
 
                 <div className="relative z-10">
@@ -433,11 +433,11 @@ export default function AdminDashboardPage() {
         {/* Main Menu Grid */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-lg font-black text-navy uppercase tracking-wide">Menu Utama</h2>
+            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Menu Utama</h2>
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {moduleCards.map((m) => (
               <Link key={m.title} href={m.href} className="group block h-full">
                 <Card className="h-full bg-white border border-gray-200 shadow-sm p-5 rounded-xl transition-all duration-200 group-hover:border-gold/60 group-hover:shadow-md group-hover:-translate-y-1">
@@ -455,7 +455,7 @@ export default function AdminDashboardPage() {
         {/* Operational Focus */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-lg font-black text-navy uppercase tracking-wide">Fokus Operasional</h2>
+            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Fokus Operasional</h2>
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
@@ -465,8 +465,8 @@ export default function AdminDashboardPage() {
               className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden cursor-pointer hover:border-gold/30 transition-colors group"
               onClick={goToLowStock}
             >
-              <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <div className="text-sm font-black text-navy uppercase tracking-wide">Low Stock Prioritas</div>
+              <div className="p-4 md:p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div className="text-xs md:text-sm font-black text-navy uppercase tracking-wide">Low Stock Prioritas</div>
                 <span className="text-[10px] font-bold text-gold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Lihat Semua →</span>
               </div>
 
@@ -475,10 +475,10 @@ export default function AdminDashboardPage() {
                   <div className="space-y-1">
                     {lowStockList.map((item) => (
                       <div key={item.id} className="grid grid-cols-12 gap-2 p-3 hover:bg-gray-50 rounded-lg transition-colors items-center text-xs">
-                        <div className="col-span-4 font-bold text-navy truncate">{item.name}</div>
-                        <div className="col-span-3 text-gray-500">Stok: <span className={item.stock <= 0 ? "text-error font-bold" : "text-navy"}>{item.stock}</span></div>
-                        <div className="col-span-2 text-gray-400 text-[10px]">Min: {item.min}</div>
-                        <div className="col-span-3 text-right">
+                        <div className="col-span-6 md:col-span-4 font-bold text-navy truncate">{item.name}</div>
+                        <div className="col-span-6 md:col-span-3 text-gray-500 text-right md:text-left">Stok: <span className={item.stock <= 0 ? "text-error font-bold" : "text-navy"}>{item.stock}</span></div>
+                        <div className="hidden md:block col-span-2 text-gray-400 text-[10px]">Min: {item.min}</div>
+                        <div className="col-span-12 md:col-span-3 flex justify-end">
                           <span className={`inline-flex px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${String(item.status).toLowerCase().includes("habis") ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
                             }`}>
                             {item.status}
@@ -495,8 +495,8 @@ export default function AdminDashboardPage() {
 
             {/* Picklist Watch */}
             <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-              <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <div className="text-sm font-black text-navy uppercase tracking-wide">Picklist Monitor</div>
+              <div className="p-4 md:p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div className="text-xs md:text-sm font-black text-navy uppercase tracking-wide">Picklist Monitor</div>
                 <Link href="/picklists" className="text-[10px] font-bold text-gray-400 hover:text-navy uppercase tracking-widest transition-colors">
                   Lihat Semua
                 </Link>
@@ -509,15 +509,15 @@ export default function AdminDashboardPage() {
                   <div className="space-y-1">
                     {picklistWatch.map((pl) => (
                       <div key={pl.code} className="grid grid-cols-12 gap-2 p-3 hover:bg-gray-50 rounded-lg transition-colors items-center text-xs">
-                        <div className="col-span-3 font-mono font-bold text-navy">{pl.code}</div>
-                        <div className="col-span-4 text-gray-500 truncate">{pl.project}</div>
-                        <div className="col-span-3">
+                        <div className="col-span-6 md:col-span-3 font-mono font-bold text-navy">{pl.code}</div>
+                        <div className="col-span-6 md:col-span-4 text-gray-500 truncate text-right md:text-left">{pl.project}</div>
+                        <div className="col-span-6 md:col-span-3 mt-1 md:mt-0">
                           <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase ${pl.status === 'Running' ? 'bg-warn-light text-warn-dark' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {pl.status}
                           </span>
                         </div>
-                        <div className="col-span-2 text-right text-[10px] text-gray-400 truncate">{pl.worker}</div>
+                        <div className="col-span-6 md:col-span-2 text-right text-[10px] text-gray-400 truncate mt-1 md:mt-0">{pl.worker}</div>
                       </div>
                     ))}
                   </div>
@@ -533,14 +533,14 @@ export default function AdminDashboardPage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-black text-navy uppercase tracking-wide">Log Aktivitas</h2>
+              <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Log Aktivitas</h2>
             </div>
             <Link href="/audit" className="text-[10px] font-bold text-gold hover:text-gold-dark uppercase tracking-widest transition-colors">
               Audit Lengkap →
             </Link>
           </div>
 
-          <Card className="bg-white border border-gray-200 shadow-sm p-5 rounded-xl">
+          <Card className="bg-white border border-gray-200 shadow-sm p-4 md:p-5 rounded-xl">
             {activities.length > 0 ? (
               <ul className="space-y-4">
                 {activities.map((act: any, i) => {
@@ -578,12 +578,12 @@ export default function AdminDashboardPage() {
 
                   return (
                     <li key={i} className="flex items-start gap-3 border-b border-gray-50 last:border-0 pb-3 last:pb-0 group">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs border ${badgeColor} shadow-sm group-hover:scale-105 transition-transform`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs border ${badgeColor} shadow-sm group-hover:scale-105 transition-transform shrink-0`}>
                         {icon}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
-                          <span className="text-[11px] font-black text-navy uppercase tracking-wide truncate pr-2">
+                          <span className="text-[10px] md:text-[11px] font-black text-navy uppercase tracking-wide truncate pr-2">
                             {actionLabel}
                           </span>
                           <span className="text-[9px] font-bold text-gray-300 uppercase whitespace-nowrap">

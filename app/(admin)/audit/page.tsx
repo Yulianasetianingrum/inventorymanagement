@@ -85,7 +85,7 @@ export default function AuditPage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 mb-8 border-b border-gray-200 pb-1">
+        <div className="flex items-center gap-2 mb-8 border-b border-gray-200 pb-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
           {[
             { id: 'KPI', label: 'Performa Kerja' },
             { id: 'ITEMS', label: 'Traceability' },
@@ -94,7 +94,7 @@ export default function AuditPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === tab.id
+              className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all border-b-2 flex-shrink-0 ${activeTab === tab.id
                 ? 'border-gold text-navy'
                 : 'border-transparent text-gray-400 hover:text-navy hover:border-gray-300'
                 }`}
@@ -175,7 +175,8 @@ export default function AuditPage() {
 
             {activeTab === "ITEMS" && (
               <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="bg-navy/5">
@@ -223,13 +224,42 @@ export default function AuditPage() {
                           </td>
                         </tr>
                       ))}
-                      {(Array.isArray(data) && data.length === 0) && (
-                        <tr>
-                          <td colSpan={5} className="px-6 py-20 text-center text-navy/20 italic font-bold">Tidak ada riwayat pemakaian barang dalam periode ini.</td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Cards (Items) */}
+                <div className="md:hidden p-4 space-y-4">
+                  {Array.isArray(data) && data.map((l: any) => (
+                    <div key={l.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">{l.picklist?.deliveredAt ? new Date(l.picklist.deliveredAt).toLocaleDateString("id-ID") : "N/A"}</div>
+                          <div className="font-bold text-navy text-sm">{l.item?.name}</div>
+                          <div className="text-[10px] text-gold font-bold uppercase">{l.item?.brand}</div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="font-black text-navy text-lg">{l.usedQty} <small className="text-[9px] opacity-40">{l.item?.unit}</small></span>
+                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter ${l.stockMode === "baru" ? "bg-navy/5 text-navy" : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
+                            {l.stockMode === "baru" ? "✨ Nuevo" : "♻️ Bekas"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pt-3 border-t border-dashed border-gray-100 flex justify-between items-center">
+                        <div>
+                          <div className="text-[10px] font-bold text-navy">{l.picklist?.project?.namaProjek}</div>
+                          <div className="text-[9px] text-gray-400">{l.picklist?.project?.namaKlien}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-semibold text-gray-400">Worker:</span>
+                          <span className="text-[10px] font-bold text-navy bg-navy/5 px-2 py-1 rounded-lg">{l.picklist?.assignee?.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {Array.isArray(data) && data.length === 0 && (
+                    <div className="py-10 text-center text-gray-400 text-xs font-bold italic">Tidak ada data.</div>
+                  )}
                 </div>
               </div>
             )}
@@ -244,7 +274,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* Search Field */}
-                    <div className="relative group min-w-[300px]">
+                    <div className="relative group w-full md:w-auto md:min-w-[300px]">
                       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                         <span className="text-lg grayscale group-focus-within:grayscale-0 transition-all">🔍</span>
                       </div>
@@ -265,7 +295,7 @@ export default function AuditPage() {
                       )}
                     </div>
 
-                    <span className="bg-gold text-navy text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] self-start md:self-center">Price Leader</span>
+                    <span className="bg-gold text-navy text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] self-start md:self-center hidden md:inline-block">Price Leader</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -330,7 +360,8 @@ export default function AuditPage() {
                   </div>
 
                   <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-                    <div className="overflow-x-auto">
+                    {/* Desktop Table (Transactions) */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
                           <tr className="bg-navy/5">
@@ -363,6 +394,32 @@ export default function AuditPage() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    {/* Mobile Cards (Transactions) */}
+                    <div className="md:hidden p-4 space-y-4">
+                      {data?.batches?.map((b: any) => (
+                        <div key={b.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                          <div className="flex justify-between">
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{new Date(b.date).toLocaleDateString("id-ID")}</div>
+                            <div className="text-[9px] text-gray-400 italic">Received</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-navy text-sm">{b.item.name}</div>
+                            <span className="text-[10px] font-bold text-navy/60 uppercase bg-navy/5 px-2 py-0.5 rounded-full mt-1 inline-block">{b.supplier?.namaToko}</span>
+                          </div>
+                          <div className="pt-3 border-t border-dashed border-gray-100 flex justify-between items-end">
+                            <div>
+                              <div className="text-[9px] text-gray-400 uppercase tracking-wider">Qty</div>
+                              <div className="font-black text-navy">{Number(b.qtyInBase)} Unit</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[9px] text-gray-400 uppercase tracking-wider">Total</div>
+                              <div className="font-black text-navy text-base">Rp {b.total.toLocaleString()}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </section>

@@ -16,28 +16,58 @@ const errorMessages: Record<string, string> = {
 
 export default function WorkerLoginPage({ searchParams }: PageProps) {
   const params = React.use(searchParams);
-  const errorKey = params?.error ?? "";
-  const error = errorMessages[errorKey];
+  const router = useRouter();
   const [showPin, setShowPin] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [localError, setLocalError] = React.useState("");
+
+  const errorKey = params?.error ?? "";
+  const displayError = localError || errorMessages[errorKey];
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setLocalError("");
+
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const res = await fetch("/api/auth/login-worker", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        router.push("/worker/home");
+      } else {
+        setLocalError(errorMessages[json.error] || json.error || "Gagal masuk.");
+      }
+    } catch (err) {
+      setLocalError("Gangguan koneksi. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 p-6 relative">
-      {/* Background Pattern */}
       <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#0b1b3a 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
-          {/* Icon removed as requested */}
           <h1 className="text-2xl font-black text-navy tracking-tight mb-1">Portal Worker</h1>
           <p className="text-navy/30 font-bold uppercase text-[9px] tracking-[0.3em]">Project Fulfillment System</p>
         </div>
 
         <div className="bg-gold rounded-xl shadow-xl border border-gold-deep overflow-hidden relative z-10">
           <div className="p-8 space-y-6">
-            {error && (
+            {displayError && (
               <div className="bg-white/20 border border-white/30 p-3 rounded-2xl flex items-center gap-3">
                 <span className="text-lg">⚠️</span>
-                <p className="text-[11px] font-bold text-navy leading-tight">{error}</p>
+                <p className="text-[11px] font-bold text-navy leading-tight">{displayError}</p>
               </div>
             )}
 
@@ -48,14 +78,15 @@ export default function WorkerLoginPage({ searchParams }: PageProps) {
               PERGI KE HALAMAN ADMIN →
             </a>
 
-            <form method="post" action="/api/auth/login-worker" className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-navy/60 uppercase tracking-widest ml-1">Employee ID</label>
                 <input
                   name="employeeId"
                   required
                   placeholder="ID Karyawan"
-                  className="w-full h-12 px-4 bg-white border border-white/40 rounded-xl font-black text-navy placeholder:text-navy/30 focus:ring-2 focus:ring-navy focus:outline-none transition-all"
+                  className="w-full h-12 px-4 bg-white border border-white/40 rounded-xl font-black text-navy placeholder:text-navy/30 focus:ring-2 focus:ring-navy focus:outline-none transition-all disabled:opacity-50"
+                  disabled={loading}
                 />
               </div>
 
@@ -67,7 +98,8 @@ export default function WorkerLoginPage({ searchParams }: PageProps) {
                     type={showPin ? "text" : "password"}
                     required
                     placeholder="••••"
-                    className="w-full h-12 px-4 bg-white border border-white/40 rounded-xl font-black text-navy placeholder:text-navy/30 focus:ring-2 focus:ring-navy focus:outline-none transition-all"
+                    className="w-full h-12 px-4 bg-white border border-white/40 rounded-xl font-black text-navy placeholder:text-navy/30 focus:ring-2 focus:ring-navy focus:outline-none transition-all disabled:opacity-50"
+                    disabled={loading}
                   />
                   <button
                     type="button"
@@ -81,9 +113,17 @@ export default function WorkerLoginPage({ searchParams }: PageProps) {
 
               <button
                 type="submit"
-                className="btn-primary w-full !h-14 shadow-xl active:scale-95 mt-2"
+                disabled={loading}
+                className="btn-primary w-full !h-14 shadow-xl active:scale-95 mt-2 flex items-center justify-center gap-3"
               >
-                MULAI BEKERJA
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    AUTHENTICATING...
+                  </>
+                ) : (
+                  "MULAI BEKERJA"
+                )}
               </button>
             </form>
 

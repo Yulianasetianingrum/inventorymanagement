@@ -52,7 +52,7 @@
 /* Split Layout */
 .mainGrid {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 350px 1fr;
   gap: 2rem;
   align-items: start;
 }
@@ -60,6 +60,7 @@
 @media (max-width: 1024px) {
   .mainGrid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 

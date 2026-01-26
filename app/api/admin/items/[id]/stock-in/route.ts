@@ -49,20 +49,56 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     let finalSupplierId = supplierId;
 
     if (!finalSupplierId && supplierName) {
+      // Find existing by name equality
       const existing = await prisma.supplier.findFirst({
-        where: { namaToko: { equals: supplierName } } // Fix: Schema uses namaToko, no mode defaults in mysql usually unless mapped
+        where: { namaToko: { equals: supplierName } }
       });
       if (existing) {
         finalSupplierId = existing.id;
       } else {
+        // Create new supplier
         const newSupplier = await prisma.supplier.create({
-          data: { namaToko: supplierName, keperluanItems: "-", alamat: "-" } // Fix: Schema uses namaToko, and required fields strings
+          data: {
+            namaToko: supplierName,
+            keperluanItems: "", // Will be updated below
+            alamat: "-"
+          }
         });
         finalSupplierId = newSupplier.id;
       }
     } else if (finalSupplierId) {
       const supplier = await prisma.supplier.findUnique({ where: { id: finalSupplierId } });
       if (!supplier) return NextResponse.json({ error: "Supplier tidak ditemukan" }, { status: 400 });
+    }
+
+    // Logic to update Supplier's "keperluanItems" (Product History Tags)
+    if (finalSupplierId && mode === 'baru') {
+      try {
+        const supp = await prisma.supplier.findUnique({ where: { id: finalSupplierId } });
+        if (supp) {
+          const newItemTag = item.category || item.name; // Use category preferably, else name
+          let currentTags = (supp.keperluanItems || "").split(",").map(t => t.trim()).filter(t => t && t !== "-");
+
+          // Setup semantic tag (e.g. "Lampu", "Kabel")
+          // Avoid adding full long names if possible, but user asked for "barang yg udah dibeli"
+          // We'll add the Item Name to be precise, or Brand + Category
+          const tagToAdd = item.name.length < 20 ? item.name : (item.category || item.name);
+
+          if (!currentTags.some(t => t.toLowerCase() === tagToAdd.toLowerCase())) {
+            currentTags.push(tagToAdd);
+            // Limit to last 10 tags to prevent overflow? User didn't specify, but good practice. 
+            // Let's just keep it simple for now as per request.
+
+            await prisma.supplier.update({
+              where: { id: finalSupplierId },
+              data: { keperluanItems: currentTags.join(", ") }
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Failed to update related items for supplier", e);
+        // Don't fail the transaction just for this
+      }
     }
 
     if (mode === "bekas" && (item.stockNew ?? 0) < qtyBase) {

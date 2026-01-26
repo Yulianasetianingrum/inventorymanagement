@@ -36,6 +36,15 @@ export default function PicklistPage() {
   const [notes, setNotes] = useState("");
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [searchItem, setSearchItem] = useState("");
+  const [projectSearch, setProjectSearch] = useState(""); // Search term
+
+  const filteredProjects = useMemo(() => {
+    if (!projectSearch) return projects.slice(0, 10);
+    return projects.filter(p =>
+      p.namaProjek.toLowerCase().includes(projectSearch.toLowerCase()) ||
+      p.namaKlien.toLowerCase().includes(projectSearch.toLowerCase())
+    ).slice(0, 10);
+  }, [projects, projectSearch]);
 
   useEffect(() => {
     fetchData();
@@ -214,37 +223,68 @@ export default function PicklistPage() {
                 <div className="flex flex-col gap-1.5 col-span-1 md:col-span-2">
                   <label className="text-xs font-black text-navy uppercase tracking-widest">Proyek Terkait</label>
                   {!isNewProject ? (
-                    <div className="flex gap-2">
-                      <select
-                        className="flex-1 h-11 bg-off-white border border-navy/5 rounded-xl px-4 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 transition-all cursor-pointer"
-                        value={projectId}
-                        onChange={e => setProjectId(e.target.value)}
-                        required={!isNewProject}
-                      >
-                        <option value="">Pilih Proyek Aktif...</option>
-                        {projects.map(p => (
-                          <option key={p.id} value={p.id}>{p.namaProjek} — {p.namaKlien}</option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => setIsNewProject(true)}
-                        className="h-11 px-4 bg-navy text-gold text-xs font-black rounded-xl hover:bg-navy-light transition-all shrink-0"
-                      >
-                        + Proyek Baru
-                      </button>
+                    <div className="relative group">
+                      {/* Search Input */}
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            className="w-full h-11 bg-off-white border border-navy/5 rounded-xl px-4 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 transition-all"
+                            placeholder="Cari Proyek (Ketik Nama)..."
+                            value={projectSearch}
+                            onChange={e => {
+                              setProjectSearch(e.target.value);
+                              if (projectId) setProjectId(""); // Clear selection on type
+                            }}
+                          />
+                          {projectId && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-black text-xs pointer-events-none">
+                              ✓ Selected
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsNewProject(true);
+                            setProjectId("");
+                            setProjectSearch("");
+                          }}
+                          className="h-11 px-4 bg-navy text-gold text-xs font-black rounded-xl hover:bg-navy-light transition-all shrink-0"
+                        >
+                          + Baru
+                        </button>
+                      </div>
+
+                      {/* Dropdown Results */}
+                      {projectSearch && !projectId && filteredProjects.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-navy/5 z-20 overflow-hidden">
+                          {filteredProjects.map(p => (
+                            <div
+                              key={p.id}
+                              onClick={() => {
+                                setProjectId(p.id);
+                                setProjectSearch(p.namaProjek);
+                              }}
+                              className="p-3 hover:bg-off-white cursor-pointer border-b border-navy/5 last:border-0"
+                            >
+                              <div className="font-bold text-navy text-sm">{p.namaProjek}</div>
+                              <div className="text-[10px] text-navy/40 uppercase font-bold">{p.namaKlien}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="bg-off-white p-5 rounded-2xl border border-navy/5 relative group">
+                    <div className="bg-off-white p-5 rounded-2xl border border-navy/5 relative group animate-in fade-in zoom-in-95 duration-200">
                       <div className="flex justify-between items-center mb-4">
                         <strong className="text-xs font-black text-navy uppercase tracking-widest">Detail Proyek Baru</strong>
                         <button type="button" onClick={() => setIsNewProject(false)} className="text-[10px] font-black text-danger uppercase tracking-widest hover:underline">Batal</button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="Nama Projek*" value={newProject.namaProjek} onChange={e => setNewProject({ ...newProject, namaProjek: e.target.value })} required />
-                        <input className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="Nama Klien" value={newProject.namaKlien} onChange={e => setNewProject({ ...newProject, namaKlien: e.target.value })} />
-                        <input className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="WhatsApp Klien" value={newProject.noHpWa} onChange={e => setNewProject({ ...newProject, noHpWa: e.target.value })} />
-                        <input className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="Keperluan" value={newProject.keperluan} onChange={e => setNewProject({ ...newProject, keperluan: e.target.value })} />
+                        <input autoComplete="off" className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="Nama Projek*" value={newProject.namaProjek} onChange={e => setNewProject({ ...newProject, namaProjek: e.target.value })} required />
+                        <input autoComplete="off" className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="Nama Klien" value={newProject.namaKlien} onChange={e => setNewProject({ ...newProject, namaKlien: e.target.value })} />
+                        <input autoComplete="off" className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="WhatsApp Klien" value={newProject.noHpWa} onChange={e => setNewProject({ ...newProject, noHpWa: e.target.value })} />
+                        <input autoComplete="off" className="input-field h-10 bg-white px-3 text-sm rounded-lg border border-navy/5" placeholder="Keperluan" value={newProject.keperluan} onChange={e => setNewProject({ ...newProject, keperluan: e.target.value })} />
                       </div>
                     </div>
                   )}
@@ -385,7 +425,8 @@ export default function PicklistPage() {
           </div>
         ) : (
           <div className="premium-card overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-navy/5">
@@ -469,6 +510,7 @@ export default function PicklistPage() {
                             setEditingId(p.id);
                             setTitle(p.title);
                             setProjectId(p.projectId || "");
+                            setProjectSearch(p.project?.namaProjek || "");
                             setMode(p.mode);
                             setAssigneeId(p.assigneeId || "");
                             setNeededAt(p.neededAt ? new Date(p.neededAt).toISOString().slice(0, 16) : "");
@@ -526,6 +568,93 @@ export default function PicklistPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+              {picklists.map(p => (
+                <div key={p.id} className="p-4 border-b border-navy/5 last:border-0 hover:bg-off-white/50 transition-colors">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-black text-navy text-sm">{p.code}</span>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${p.status === 'DELIVERED' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                          {p.status}
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-bold text-navy/50">{p.title}</div>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${p.mode === 'EXTERNAL' ? 'bg-gold/10 text-gold-deep border border-gold/20' : 'bg-navy/5 text-navy/60 border border-navy/10'}`}>
+                      {p.mode}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-4 bg-navy/5 p-3 rounded-xl border border-navy/5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[10px] font-black text-navy shadow-sm">
+                        {p.project?.namaProjek?.[0] || "?"}
+                      </div>
+                      <div>
+                        <div className="font-bold text-navy text-xs">{p.project?.namaProjek}</div>
+                        <div className="text-[9px] text-navy/40">{p.project?.namaKlien}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {p.assignee?.name && <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[9px] font-bold text-indigo-700">{p.assignee.name[0]}</div>}
+                      <span className="text-[10px] font-bold text-navy/70">{p.assignee?.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="text-[10px] font-bold text-navy hover:underline uppercase"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setEditingId(p.id);
+                          setTitle(p.title);
+                          setProjectId(p.projectId || "");
+                          setProjectSearch(p.project?.namaProjek || "");
+                          setMode(p.mode);
+                          setAssigneeId(p.assigneeId || "");
+                          setNeededAt(p.neededAt ? new Date(p.neededAt).toISOString().slice(0, 16) : "");
+                          setNotes(p.notes || "");
+
+                          const res = await fetch(`/api/admin/picklists/${p.id}`);
+                          const json = await res.json();
+                          if (json.data && json.data.lines) {
+                            setSelectedItems(json.data.lines.map((l: any) => ({
+                              id: l.item.id,
+                              name: l.item.name,
+                              brand: l.item.brand,
+                              unit: l.item.unit,
+                              stockTotal: l.item.stockNew + l.item.stockUsed,
+                              stockNew: l.item.stockNew,
+                              stockUsed: l.item.stockUsed,
+                              reqQty: l.reqQty
+                            })));
+                          }
+                          setShowForm(true);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-[10px] font-bold text-danger hover:underline uppercase"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!confirm("Hapus?")) return;
+                          await fetch(`/api/admin/picklists/${p.id}`, { method: "DELETE" });
+                          fetchData();
+                        }}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

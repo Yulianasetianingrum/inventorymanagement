@@ -80,160 +80,156 @@ export default function WorkerHome() {
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-12">
       {/* Navbar / Header */}
-      <header className="bg-navy pt-8 pb-12 px-6 rounded-b-[40px] shadow-2xl shadow-navy/20 relative overflow-hidden">
+      <header className="bg-navy pt-6 md:pt-10 pb-12 md:pb-16 px-4 md:px-8 rounded-b-[40px] shadow-2xl shadow-navy/20 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
-        <div className="relative z-10 flex justify-between items-start">
-          <div>
-            <div className="text-gold text-xs font-bold uppercase tracking-widest mb-1">Selamat Bekerja</div>
-            <h1 className="text-2xl font-black text-white leading-tight">
+        <div className="relative z-10 max-w-7xl mx-auto flex justify-between items-start">
+          <div className="flex-1 min-w-0 mr-4">
+            <div className="text-gold text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1">Selamat Bekerja</div>
+            <h1 className="text-xl md:text-3xl font-black text-white leading-tight truncate">
               {me ? me.name : "Loading..."}
             </h1>
-            <div className="inline-flex items-center gap-2 mt-2 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
+            <div className="inline-flex items-center gap-2 mt-2 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs font-mono text-white/80">{me ? me.employeeId : "..."}</span>
+              <span className="text-[10px] md:text-xs font-mono text-white/80">{me ? me.employeeId : "..."}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Notification Icon Priority */}
-            <Link href="/worker/chat" className="relative p-2 text-white hover:scale-110 transition-all duration-300">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill={unreadCount > 0 ? "white" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={unreadCount > 0 ? "animate-tada" : ""}>
+          <div className="flex items-center gap-2 md:gap-6">
+            {/* Notification Icon */}
+            <Link href="/worker/chat" className="relative p-2.5 text-white hover:scale-110 transition-all duration-300 bg-white/5 rounded-xl border border-white/5">
+              <svg width="24" height="24" className="md:w-8 md:h-8" viewBox="0 0 24 24" fill={unreadCount > 0 ? "white" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-black h-6 w-6 flex items-center justify-center rounded-full border-2 border-navy animate-bounce shadow-lg shadow-red-500/50">
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-black h-5 w-5 md:h-6 md:w-6 flex items-center justify-center rounded-full border-2 border-navy animate-bounce shadow-lg">
                   {unreadCount}
                 </span>
               )}
             </Link>
 
-            <Button
+            <button
               onClick={logout}
-              style={{ background: "transparent", border: "none" }}
-              className="text-white/60 hover:text-white hover:bg-white/10 transition-colors -mr-2 p-2"
+              className="text-white/60 hover:text-white p-2.5 bg-white/5 rounded-xl border border-white/5 transition-all flex items-center justify-center"
+              aria-label="Logout"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-            </Button>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Global Alert for Unread Messages (Optional, very visible) */}
       {unreadCount > 0 && (
-        <div className="px-5 -mt-8 relative z-30 mb-2">
+        <div className="px-4 md:px-8 -mt-8 relative z-30 mb-2 max-w-7xl mx-auto">
           <Link href="/worker/chat" className="block bg-red-600 text-white p-4 rounded-2xl shadow-xl shadow-red-500/30 flex items-center justify-between animate-pulse">
             <div className="flex items-center gap-3">
               <span className="text-xl">📩</span>
               <div className="flex flex-col">
-                <span className="font-black text-sm uppercase tracking-wider">Pesan Baru Masuk!</span>
-                <span className="text-xs opacity-90">Anda memiliki {unreadCount} pesan belum dibaca</span>
+                <span className="font-black text-sm uppercase tracking-wider">Pesan Baru!</span>
+                <span className="text-xs opacity-90">{unreadCount} pesan belum dibaca</span>
               </div>
             </div>
-            <span className="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold">Buka &rarr;</span>
+            <span className="bg-white/20 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest">Buka &rarr;</span>
           </Link>
         </div>
       )}
 
-      <main className={`px-5 ${unreadCount > 0 ? 'mt-4' : '-mt-6'} relative z-20 space-y-6`}>
+      <main className={`px-4 md:px-8 ${unreadCount > 0 ? 'mt-4' : '-mt-6'} relative z-20 space-y-8 max-w-7xl mx-auto`}>
 
         {/* Active Tasks Section */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-navy font-black text-lg">Tugas Aktif</h2>
-            {active.length > 0 && <span className="bg-navy/5 text-navy/60 text-xs font-bold px-2 py-0.5 rounded-md">{active.length} Tugas</span>}
+            <h2 className="text-navy font-black text-lg md:text-xl lg:text-2xl">Tugas Aktif</h2>
+            {active.length > 0 && <span className="bg-navy/5 text-navy/60 text-xs font-bold px-3 py-1 rounded-full">{todoCount} Total</span>}
           </div>
 
-          <div className="space-y-3">
-            {active.length === 0 ? (
-              <div className="bg-white p-8 rounded-[20px] shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center min-h-[160px]">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-3 text-slate-300">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-                    <rect width="6" height="4" x="9" y="3" rx="2" />
-                    <path d="m9 14 2 2 4-4" />
-                  </svg>
-                </div>
-                <p className="text-navy/60 text-sm font-bold">Tidak ada tugas aktif.</p>
-                <p className="text-slate-400 text-xs mt-1">Sistem standby menunggu order masuk.</p>
+          {active.length === 0 ? (
+            <div className="bg-white p-10 rounded-[32px] shadow-sm border border-slate-100 text-center flex flex-col items-center justify-center min-h-[200px]">
+              <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-4 text-slate-300">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                  <rect width="6" height="4" x="9" y="3" rx="2" />
+                  <path d="m9 14 2 2 4-4" />
+                </svg>
               </div>
-            ) : (
-              active.map((p) => (
-                <div key={p.id} className="bg-white p-5 rounded-[20px] shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-gold"></div>
+              <p className="text-navy font-bold">Semua Tugas Selesai</p>
+              <p className="text-slate-400 text-sm mt-1 max-w-[200px]">Sistem standby menunggu order baru dari Admin.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {active.map((p) => (
+                <div key={p.id} className="bg-white p-6 rounded-[28px] shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden group transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px]">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gold"></div>
 
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{p.code}</span>
-                      <h3 className="font-bold text-navy text-lg leading-tight">{p.title}</h3>
-                      {p.project && <div className="text-xs text-slate-500 font-medium mt-0.5">{p.project.namaKlien}</div>}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">{p.code}</span>
+                      <h3 className="font-bold text-navy text-lg leading-tight truncate">{p.title}</h3>
+                      {p.project && <div className="text-xs text-slate-500 font-medium mt-1 truncate">{p.project.namaKlien}</div>}
                     </div>
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide ${p.status === 'READY' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
+                    <span className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide ${p.status === 'READY' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
                       {p.status}
                     </span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5">
-                      <span>Progress</span>
-                      <span>{Math.round((p.progressDone / Math.max(1, p.progressTotal)) * 100)}%</span>
+                  <div className="mb-6">
+                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                      <span>Penyelesaian</span>
+                      <span className="text-navy">{Math.round((p.progressDone / Math.max(1, p.progressTotal)) * 100)}%</span>
                     </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-navy rounded-full transition-all duration-500"
+                        className="h-full bg-navy rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${(p.progressDone / Math.max(1, p.progressTotal)) * 100}%` }}
                       ></div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      as="a"
-                      href={`/worker/picklists/${p.id}`}
-                      className="w-full bg-navy hover:bg-navy/90 text-white font-bold rounded-xl h-10 shadow-lg shadow-navy/20 justify-center"
-                    >
-                      {p.status === "READY" ? "Mulai Ambil" : "Lanjutkan"}
-                    </Button>
-                  </div>
+                  <Link
+                    href={`/worker/picklists/${p.id}`}
+                    className="w-full bg-navy hover:bg-navy/90 text-white font-black rounded-2xl h-14 shadow-lg shadow-navy/20 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm uppercase tracking-widest"
+                  >
+                    {p.status === "READY" ? "Mulai Ambil" : "Lanjutkan"}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                  </Link>
                 </div>
-              ))
-            )}
-            {active.length > 0 && (
-              <Link href="/worker/picklists" className="block text-center text-xs font-bold text-slate-400 hover:text-navy py-2">
-                Lihat Semua Tugas &rarr;
-              </Link>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {active.length > 0 && (
+            <Link href="/worker/picklists" className="block text-center text-xs font-black text-slate-400 hover:text-navy py-6 uppercase tracking-widest transition-colors">
+              Lihat {todoCount} Daftar Picklist &rarr;
+            </Link>
+          )}
         </section>
 
         {/* Handover Needed Section */}
         {handoverNeeded.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4 px-1">
-              <h2 className="text-navy font-black text-lg">Menunggu Serah Terima</h2>
+              <h2 className="text-navy font-black text-lg md:text-xl">Menunggu Serah Terima</h2>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {handoverNeeded.map((p) => (
-                <div key={p.id} className="bg-white p-5 rounded-[20px] shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center justify-between">
-                  <div>
+                <div key={p.id} className="bg-white p-5 rounded-[24px] shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center justify-between group">
+                  <div className="min-w-0 mr-4">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{p.code}</span>
-                    <div className="font-bold text-navy">{p.title}</div>
+                    <div className="font-bold text-navy truncate">{p.title}</div>
                   </div>
-                  <Button
-                    as="a"
+                  <Link
                     href={`/worker/handover/${p.id}`}
-                    style={{ background: "#9333ea" }}
-                    className="hover:bg-purple-700 text-white rounded-xl font-bold"
+                    className="shrink-0 bg-purple-600 hover:bg-purple-700 text-white px-5 h-12 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95"
                   >
-                    Serah Terima
-                  </Button>
+                    Proses
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -242,78 +238,75 @@ export default function WorkerHome() {
 
         {/* Quick Actions Grid */}
         <section>
-          <h2 className="text-navy font-black text-lg mb-4 px-1">Menu Cepat</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <h2 className="text-navy font-black text-lg md:text-xl mb-4 px-1">Menu Navigasi</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
 
             {/* Picklists Button */}
-            <Link href="/worker/picklists" className="group relative bg-white p-5 rounded-[24px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95">
+            <Link href="/worker/picklists" className="group relative bg-white p-6 md:p-8 rounded-[32px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-4 hover:shadow-2xl transition-all active:scale-95 overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50/50 rounded-bl-[40px] -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
               {todoCount > 0 && (
-                <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-lg shadow-red-500/30">
+                <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-lg shadow-red-500/30 z-10">
                   {todoCount}
                 </div>
               )}
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect width="6" height="4" x="9" y="3" rx="2" /><path d="m9 14 2 2 4-4" /></svg>
+              <div className="relative z-10 w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect width="6" height="4" x="9" y="3" rx="2" /><path d="m9 14 2 2 4-4" /></svg>
               </div>
-              <span className="font-bold text-navy text-sm">Picklists</span>
+              <span className="font-black text-navy text-sm md:text-base uppercase tracking-wider">Picklists</span>
             </Link>
 
             {/* Scan Item Button */}
-            <Link href="/worker/scan" className="group bg-white p-5 rounded-[24px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><rect width="10" height="6" x="7" y="9" rx="1" /></svg>
+            <Link href="/worker/scan" className="group relative bg-white p-6 md:p-8 rounded-[32px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-4 hover:shadow-2xl transition-all active:scale-95 overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50/50 rounded-bl-[40px] -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
+              <div className="relative z-10 w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><rect width="10" height="6" x="7" y="9" rx="1" /></svg>
               </div>
-              <span className="font-bold text-navy text-sm">Scan Item</span>
+              <span className="font-black text-navy text-sm md:text-base uppercase tracking-wider text-center">Scan Item</span>
             </Link>
 
             {/* Retur Sisa Button */}
-            <Link href="/worker/return" className="group bg-white p-5 rounded-[24px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 14 2 2 4-4" /><path d="M5 20v-1a7 7 0 0 1 7-7v0" /><path d="M4 14l4 4 4-4" /></svg>
+            <Link href="/worker/return" className="group relative bg-white p-6 md:p-8 rounded-[32px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-4 hover:shadow-2xl transition-all active:scale-95 overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50/50 rounded-bl-[40px] -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
+              <div className="relative z-10 w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 14 2 2 4-4" /><path d="M5 20v-1a7 7 0 0 1 7-7v0" /><path d="M4 14l4 4 4-4" /></svg>
               </div>
-              <span className="font-bold text-navy text-sm">Retur Sisa</span>
+              <span className="font-black text-navy text-sm md:text-base uppercase tracking-wider text-center">Retur Sisa</span>
             </Link>
 
             {/* Riwayat Button */}
-            <Link href="/worker/history" className="group bg-white p-5 rounded-[24px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" /></svg>
+            <Link href="/worker/history" className="group relative bg-white p-6 md:p-8 rounded-[32px] shadow-xl shadow-slate-200/50 border border-slate-50 flex flex-col items-center justify-center gap-4 hover:shadow-2xl transition-all active:scale-95 overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-purple-50/50 rounded-bl-[40px] -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
+              <div className="relative z-10 w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" /></svg>
               </div>
-              <span className="font-bold text-navy text-sm">Riwayat</span>
+              <span className="font-black text-navy text-sm md:text-base uppercase tracking-wider">Riwayat</span>
             </Link>
 
             {/* Pesan Button - HIGHLIGHTED IF UNREAD */}
-            <Link href="/worker/chat" className={`group col-span-2 p-5 rounded-[24px] shadow-xl transition-all active:scale-95 flex items-center justify-between gap-3 ${unreadCount > 0
-              ? 'bg-red-50 border-2 border-red-500 shadow-red-500/20'
-              : 'bg-white border border-slate-50 shadow-slate-200/50 hover:scale-[1.02]'
+            <Link href="/worker/chat" className={`group relative col-span-2 md:col-span-4 p-6 md:p-8 rounded-[32px] shadow-xl transition-all active:scale-95 flex items-center justify-between gap-4 overflow-hidden ${unreadCount > 0
+              ? 'bg-gradient-to-r from-red-600 to-red-500 border-none text-white'
+              : 'bg-white border border-slate-50 shadow-slate-200/50 hover:shadow-2xl'
               }`}>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors duration-300 ${unreadCount > 0
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : 'bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white'
+              <div className="flex items-center gap-4 md:gap-8 min-w-0">
+                <div className={`shrink-0 w-14 h-14 md:w-20 md:h-20 rounded-3xl flex items-center justify-center transition-all duration-300 ${unreadCount > 0
+                  ? 'bg-white/20 text-white animate-pulse'
+                  : 'bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white lg:rotate-3'
                   }`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                  <svg width="32" height="32" className="md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                 </div>
-                <div className="flex flex-col">
-                  <span className={`font-black text-lg leading-none ${unreadCount > 0 ? 'text-red-700' : 'text-navy'}`}>Pesan & Inbox</span>
-                  {unreadCount > 0 ? (
-                    <span className="text-xs text-red-600 font-bold mt-1 uppercase tracking-wide">
-                      ⚠️ {unreadCount} PESAN BARU!
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-400 font-medium mt-1">Chat dengan Admin</span>
-                  )}
+                <div className="min-w-0">
+                  <h3 className={`font-black text-lg md:text-2xl leading-none uppercase tracking-wider ${unreadCount > 0 ? 'text-white' : 'text-navy'}`}>Pesan & Inbox</h3>
+                  <p className={`text-xs md:text-sm font-bold mt-2 uppercase tracking-widest ${unreadCount > 0 ? 'text-white/80' : 'text-slate-400'}`}>
+                    {unreadCount > 0 ? `⚠️ ${unreadCount} Pesan Baru Menunggu` : 'Konsultasi stok dengan Admin'}
+                  </p>
                 </div>
               </div>
-              {unreadCount > 0 ? (
-                <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-red-500/50 animate-bounce">
-                  {unreadCount}
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                </div>
-              )}
+              <div className={`shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all ${unreadCount > 0
+                ? 'bg-white text-red-600 font-black text-xl shadow-lg'
+                : 'bg-slate-50 text-slate-300'
+                }`}>
+                {unreadCount > 0 ? unreadCount : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>}
+              </div>
             </Link>
 
           </div>
