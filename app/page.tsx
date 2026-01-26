@@ -25,7 +25,7 @@ const accessCards = [
     audience: "Antarmuka khusus pekerja gudang dan lapangan.",
     bullets: [
       "Pantau Daftar Tugas Real-time",
-      "Navigasi Lokasi Rak (Rak01-Rak04)",
+      "Navigasi Lokasi Gudang",
       "Validasi Scan Foto Pengambilan",
       "Proses Return & Update Stok Bekas",
     ],
@@ -168,7 +168,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
               <Link
-                href="https://wa.me/6281214239373"
+                href="https://wa.me/6285175020319"
                 className="inline-flex items-center gap-3 bg-white text-navy px-8 py-4 rounded-2xl font-black hover:bg-gold hover:text-navy transition-all shadow-xl"
               >
                 Hubungi Helpdesk Admin
