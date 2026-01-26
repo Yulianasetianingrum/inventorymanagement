@@ -6,7 +6,7 @@ import { PicklistStatus } from "@prisma/client";
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const session = await getSession();
-    if (!session || session.role !== "WORKER") {
+    if (!session || (session.role !== "WORKER" && session.role !== "ADMIN")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = await prisma.user.findUnique({ where: { employeeId: session.employeeId } });
@@ -28,10 +28,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     try {
         const body = await req.json();
-        const { image, lines } = body; // lines: Array<{ id: string, usedQty: number, returnedQty: number }>
+        const { images, lines } = body;
+        const submitImages = images || (body.image ? [body.image] : []);
 
-        if (!image) {
+        if (!submitImages || submitImages.length === 0) {
             return NextResponse.json({ error: "Bukti foto pengembalian wajib diunggah" }, { status: 400 });
+        }
+
+        // Save images
+        const { saveBase64Image } = await import("@/lib/storage");
+        const savedUrls: string[] = [];
+        try {
+            for (const img of submitImages) {
+                const url = await saveBase64Image(img);
+                savedUrls.push(url);
+            }
+        } catch (e) {
+            console.error("Image save failed", e);
+            return NextResponse.json({ error: "Gagal menyimpan foto" }, { status: 500 });
         }
 
         await prisma.$transaction(async (tx) => {
@@ -41,8 +55,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 data: {
                     status: PicklistStatus.DELIVERED,
                     deliveredAt: new Date(),
-                    returnImage: image,
+                    returnImage: savedUrls[0], // Legacy
                     events: { create: { eventType: "RETURN_AND_DELIVER", actorUserId: user.id } },
+                    evidence: {
+                        create: savedUrls.map(url => ({
+                            imageUrl: url,
+                            type: "RETURN"
+                        }))
+                    }
                 }
             });
 

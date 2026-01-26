@@ -71,18 +71,20 @@ export default async function SupplierPage({ searchParams }: any) {
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.brand}>
-          <div className={styles.brandLogo}>
-            <img src="/logo/apix.png" alt="Apix Interior" className="w-full h-full object-contain" />
+      <header className="sticky top-0 z-50 bg-gray-50/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-navy text-white rounded-lg flex items-center justify-center shadow-lg shadow-navy/20">
+            <img src="/logo/apix.png" alt="Logo" className="w-6 h-6 object-contain" />
           </div>
-          <div className={styles.brandText}>
-            <div className={styles.brandTitle}>Apix Interior</div>
-            <div className={styles.brandSubtitle}>Supplier Directory</div>
+          <div className="flex flex-col">
+            <div className="text-sm font-black text-navy uppercase tracking-wider leading-none">Apix Interior</div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-0.5">Supplier Directory</div>
           </div>
         </div>
         <Link href="/dashboard">
-          <Button className="border-gold text-white hover:bg-gold hover:text-navy">← Dashboard</Button>
+          <Button className="bg-navy text-white hover:bg-navy/90 text-xs font-bold uppercase tracking-wider h-9 px-4 shadow-lg shadow-navy/20 border border-transparent">
+            ← Dashboard
+          </Button>
         </Link>
       </header>
 

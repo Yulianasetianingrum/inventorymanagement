@@ -6,6 +6,7 @@ import Link from "next/link";
 export default function AuditPage() {
   const [activeTab, setActiveTab] = useState("KPI"); // KPI, ITEMS, SPENDING
   const [filter, setFilter] = useState("month"); // week, month, year
+  const [benchmarkSearch, setBenchmarkSearch] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -196,7 +197,12 @@ export default function AuditPage() {
                           </td>
                           <td className="px-6 py-5">
                             <div className="font-bold text-navy">{l.item?.name}</div>
-                            <div className="text-[10px] font-black text-gold uppercase tracking-widest">{l.item?.brand}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <div className="text-[10px] font-black text-gold uppercase tracking-widest">{l.item?.brand}</div>
+                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter ${l.stockMode === "baru" ? "bg-navy/5 text-navy" : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
+                                {l.stockMode === "baru" ? "✨ Baru" : "♻️ Bekas"}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-5">
                             <div className="font-bold text-navy">{l.picklist?.project?.namaProjek}</div>
@@ -231,14 +237,42 @@ export default function AuditPage() {
             {activeTab === "SPENDING" && (
               <div className="space-y-12">
                 <section>
-                  <div className="flex items-center gap-3 mb-8">
-                    <h2 className="text-2xl font-black text-navy tracking-tight">Supplier Benchmarking</h2>
-                    <div className="h-px flex-1 bg-navy/5" />
-                    <span className="bg-gold text-navy text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em]">Price Leader</span>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div className="flex items-center gap-3 flex-1">
+                      <h2 className="text-2xl font-black text-navy tracking-tight">Supplier Benchmarking</h2>
+                      <div className="h-px flex-1 bg-navy/5 hidden md:block" />
+                    </div>
+
+                    {/* Search Field */}
+                    <div className="relative group min-w-[300px]">
+                      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <span className="text-lg grayscale group-focus-within:grayscale-0 transition-all">🔍</span>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Cari item benchmarking..."
+                        className="w-full h-11 pl-12 pr-10 bg-white border border-gray-200 rounded-xl text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-all shadow-sm"
+                        value={benchmarkSearch}
+                        onChange={(e) => setBenchmarkSearch(e.target.value)}
+                      />
+                      {benchmarkSearch && (
+                        <button
+                          onClick={() => setBenchmarkSearch("")}
+                          className="absolute inset-y-0 right-3 flex items-center px-1 text-gray-300 hover:text-navy transition-colors font-bold text-lg"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+
+                    <span className="bg-gold text-navy text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] self-start md:self-center">Price Leader</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {data?.recommendations?.map((r: any, i: number) => (
+                    {data?.recommendations?.filter((r: any) =>
+                      r.item.toLowerCase().includes(benchmarkSearch.toLowerCase()) ||
+                      r.brand.toLowerCase().includes(benchmarkSearch.toLowerCase())
+                    ).map((r: any, i: number) => (
                       <div key={i} className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col hover:border-gold/50 transition-colors">
                         <div className="bg-white h-full flex flex-col">
                           <div className="flex justify-between items-start mb-6">
@@ -278,11 +312,14 @@ export default function AuditPage() {
                         </div>
                       </div>
                     ))}
-                    {data?.recommendations?.length === 0 && (
-                      <div className="col-span-full py-20 text-center border-2 border-dashed border-navy/5 rounded-[40px] text-navy/20 font-black uppercase tracking-widest text-xs">
-                        Data Benchmarking Terbatas
-                      </div>
-                    )}
+                    {(data?.recommendations?.length === 0 || (benchmarkSearch && data?.recommendations?.filter((r: any) =>
+                      r.item.toLowerCase().includes(benchmarkSearch.toLowerCase()) ||
+                      r.brand.toLowerCase().includes(benchmarkSearch.toLowerCase())
+                    ).length === 0)) && (
+                        <div className="col-span-full py-20 text-center border-2 border-dashed border-navy/5 rounded-[40px] text-navy/20 font-black uppercase tracking-widest text-xs">
+                          {benchmarkSearch ? "Item Tidak Ditemukan" : "Data Benchmarking Terbatas"}
+                        </div>
+                      )}
                   </div>
                 </section>
 

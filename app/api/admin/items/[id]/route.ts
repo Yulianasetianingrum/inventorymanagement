@@ -138,6 +138,14 @@ export async function DELETE(
     await prisma.$transaction([
       prisma.stockInBatch.deleteMany({ where: { itemId } }),
       prisma.item.delete({ where: { id: itemId } }),
+      prisma.auditLog.create({
+        data: {
+          action: "DELETE_ITEM",
+          userId: actor.id,
+          detail: `Deleted item #${itemId}`,
+          metaJson: JSON.stringify({ itemId })
+        }
+      })
     ]);
 
     return NextResponse.json({ ok: true });

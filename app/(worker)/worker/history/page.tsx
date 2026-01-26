@@ -1,10 +1,118 @@
-import { Card } from "@/components/ui/card";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function WorkerHistoryPage() {
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/worker/history")
+      .then(res => res.json())
+      .then(json => {
+        setHistory(json.data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  const getTypeStyle = (type: string) => {
+    switch (type) {
+      case "SCAN": return { icon: "📦", color: "bg-emerald-500", label: "Self-Scan", shadow: "shadow-emerald-200" };
+      case "RETURN": return { icon: "♻️", color: "bg-amber-500", label: "Retur Sisa", shadow: "shadow-amber-200" };
+      default: return { icon: "📋", color: "bg-purple-500", label: "Manifest", shadow: "shadow-purple-200" };
+    }
+  };
+
   return (
-    <Card>
-      <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: "0.5rem" }}>History</h1>
-      <p style={{ color: "#6b7280" }}>Riwayat picklist, scan, dan handover.</p>
-    </Card>
+    <div className="min-h-screen bg-[#f8fafc] pb-20">
+      {/* Header */}
+      <header className="bg-navy pt-8 pb-12 px-6 rounded-b-[40px] shadow-2xl shadow-navy/20 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+
+        <div className="relative z-10 flex justify-between items-center">
+          <div>
+            <div className="text-gold text-[10px] font-black uppercase tracking-[0.2em] mb-1">Activity Log</div>
+            <h1 className="text-2xl font-black text-white leading-tight">Riwayat Kerja</h1>
+          </div>
+          <Link href="/worker/home" className="text-white/60 hover:text-white bg-white/10 px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+            Tutup
+          </Link>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="px-5 -mt-6 relative z-20 space-y-4">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-10 h-10 border-4 border-navy/10 border-t-navy rounded-full animate-spin"></div>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="bg-white p-12 rounded-[24px] shadow-lg border border-slate-100 text-center flex flex-col items-center justify-center">
+            <div className="text-5xl mb-4 grayscale opacity-20">📜</div>
+            <p className="text-navy font-bold">Belum ada aktivitas tercatat.</p>
+            <p className="text-slate-400 text-xs mt-1">Mulai ambil barang atau selesaikan tugas!</p>
+          </div>
+        ) : (
+          history.map((act) => {
+            const style = getTypeStyle(act.type);
+            return (
+              <div key={act.id} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 relative group active:scale-[0.98] transition-transform">
+                <div className={`absolute top-5 left-0 w-1.5 h-8 ${style.color} rounded-r-full`}></div>
+
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 ${style.color} text-white flex items-center justify-center rounded-xl shadow-lg ${style.shadow} text-xl`}>
+                      {style.icon}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{act.code}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-black text-white uppercase ${style.color}`}>{style.label}</span>
+                      </div>
+                      <h3 className="font-bold text-navy text-base leading-tight">{act.title}</h3>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] font-black text-navy/40 uppercase tracking-wider">{act.status}</div>
+                    <div className="text-[10px] text-slate-400 font-bold mt-1">
+                      {new Date(act.timestamp).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 text-xs font-semibold text-slate-500 bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                  <div className="flex-1">
+                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Project / Tujuan</span>
+                    <div className="text-navy font-bold truncate max-w-[150px]">{act.projectName}</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Kuantitas</span>
+                    <div className="text-navy font-black">{act.itemCount} <span className="text-slate-400 font-bold">Items</span></div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex justify-between items-center px-1">
+                  <div className="text-[10px] text-slate-400 font-medium italic">
+                    {new Date(act.timestamp).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                  {act.type !== "RETURN" && (
+                    <Link href={`/worker/picklists/${act.id}`} className="text-[10px] font-black text-navy uppercase tracking-widest hover:underline">
+                      Lihat Detail →
+                    </Link>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </main>
+    </div>
   );
 }

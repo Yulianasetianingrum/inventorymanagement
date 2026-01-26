@@ -44,8 +44,8 @@ const moduleCards: { title: string; desc: string; href: string }[] = [
   },
 ];
 
-const picklistWatch: { code: string; project: string; status: string; worker: string }[] = [];
-const activities: string[] = [];
+
+
 
 type LowStockRow = {
   id: number;
@@ -108,6 +108,8 @@ export default function AdminDashboardPage() {
   const [workerPerformance, setWorkerPerformance] = useState<any[]>([]);
   const [loadingKpi, setLoadingKpi] = useState(true);
   const [kpis, setKpis] = useState<{ title: string; value: string; desc: string }[]>([]);
+  const [picklistWatch, setPicklistWatch] = useState<{ code: string; project: string; status: string; worker: string }[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
 
   const goToLowStock = () => {
     window.location.href = "/items?filter=priority";
@@ -210,9 +212,13 @@ export default function AdminDashboardPage() {
     const loadKpiData = async () => {
       try {
         setLoadingKpi(true);
-        const res = await fetch("/api/admin/audit/kpi?filter=month");
-        if (res.ok) {
-          const json = await res.json();
+        const [kpiRes, plistRes] = await Promise.all([
+          fetch("/api/admin/audit/kpi?filter=month"),
+          fetch("/api/admin/picklists")
+        ]);
+
+        if (kpiRes.ok) {
+          const json = await kpiRes.json();
           // ✅ Switch to Top Items (Traceability)
           if (json.data?.topItems) {
             setWorkerPerformance(json.data.topItems.map((item: any) => ({
@@ -226,9 +232,30 @@ export default function AdminDashboardPage() {
           if (json.data?.kpis) {
             setKpis(json.data.kpis);
           }
+          if (json.data?.recentActivity) {
+            // @ts-ignore
+            setActivities(json.data.recentActivity);
+          }
         }
+
+        if (plistRes.ok) {
+          const json = await plistRes.json();
+          const list = Array.isArray(json.data) ? json.data : Array.isArray(json.picklists) ? json.picklists : [];
+          // Filter only active (READY/PICKING) and take top 5
+          const active = list
+            .filter((p: any) => ["READY", "PICKING"].includes(p.status))
+            .slice(0, 5)
+            .map((p: any) => ({
+              code: p.code,
+              project: p.project?.namaProjek || "No Project",
+              status: p.status === "PICKING" ? "Running" : "Pending",
+              worker: p.assignee?.name || "-"
+            }));
+          setPicklistWatch(active);
+        }
+
       } catch (e) {
-        console.error("Failed to load KPI chart", e);
+        console.error("Failed to load KPI/Picklist data", e);
       } finally {
         setLoadingKpi(false);
       }
@@ -278,7 +305,7 @@ export default function AdminDashboardPage() {
         {/* KPI Section */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-lg font-black text-navy uppercase tracking-wide">Ringkasan Hari Ini</h2>
+            <h2 className="text-lg font-black text-navy uppercase tracking-wide">Ringkasan Akhir-akhir Ini</h2>
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
@@ -310,10 +337,13 @@ export default function AdminDashboardPage() {
             {/* Chart Card */}
             <Card className="md:col-span-2 bg-white border border-gray-200 shadow-sm p-6 rounded-xl min-h-[300px] flex flex-col">
               <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-sm font-black text-navy uppercase tracking-wide">Traceability Barang</h3>
+                <Link href="/audit" className="group">
+                  <h3 className="text-sm font-black text-navy uppercase tracking-wide group-hover:text-gold transition-colors flex items-center gap-2">
+                    Traceability Barang
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                  </h3>
                   <p className="text-xs text-gray-400">Paling Banyak Digunakan (Bulan Ini)</p>
-                </div>
+                </Link>
               </div>
 
               <div className="flex-1 w-full min-h-[200px]">
@@ -323,7 +353,17 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : workerPerformance.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={workerPerformance} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <BarChart
+                      data={workerPerformance}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                      onClick={(data) => {
+                        if (data && data.activePayload && data.activePayload[0]) {
+                          const payload = data.activePayload[0].payload;
+                          if (payload.id) window.location.href = `/items/${payload.id}`;
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                       <XAxis
                         dataKey="name"
@@ -359,32 +399,34 @@ export default function AdminDashboardPage() {
             </Card>
 
             {/* Summary Stats */}
-            <Card className="bg-navy text-white shadow-xl shadow-navy/20 p-6 rounded-xl flex flex-col justify-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] translate-x-10 -translate-y-10"></div>
+            <Link href="/audit" className="block h-full">
+              <Card className="h-full bg-navy text-white shadow-xl shadow-navy/20 p-6 rounded-xl flex flex-col justify-center relative overflow-hidden group hover:shadow-2xl hover:scale-[1.02] transition-all duration-300">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] translate-x-10 -translate-y-10 group-hover:bg-white/10 transition-colors"></div>
 
-              <div className="relative z-10">
-                <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1">Total Item Keluar</div>
-                <div className="text-4xl font-black text-white mb-6">
-                  {workerPerformance.reduce((acc, curr) => acc + curr.tasks, 0)} <span className="text-sm font-bold opacity-50">Unit</span>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Item Terlaris</div>
-                    <div className="text-lg font-bold text-gold">
-                      {workerPerformance[0]?.full || "-"}
-                    </div>
-                    <div className="text-[10px] text-white/60">
-                      {workerPerformance[0] ? `${workerPerformance[0].tasks} ${workerPerformance[0].unit}` : ""}
-                    </div>
+                <div className="relative z-10">
+                  <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1 group-hover:text-white/60 transition-colors">Total Item Keluar</div>
+                  <div className="text-4xl font-black text-white mb-6">
+                    {workerPerformance.reduce((acc, curr) => acc + curr.tasks, 0)} <span className="text-sm font-bold opacity-50">Unit</span>
                   </div>
 
-                  <Link href="/audit" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
-                    Lihat Detail Audit →
-                  </Link>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 group-hover:text-white/60">Item Terlaris</div>
+                      <div className="text-lg font-bold text-gold group-hover:text-white transition-colors">
+                        {workerPerformance[0]?.full || <span className="text-xs text-white/30 italic font-normal">Belum ada statistik</span>}
+                      </div>
+                      <div className="text-[10px] text-white/60">
+                        {workerPerformance[0] ? `${workerPerformance[0].tasks} ${workerPerformance[0].unit}` : ""}
+                      </div>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 group-hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
+                      Lihat Audit Log →
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </Link>
           </div>
         </section>
 
@@ -461,14 +503,19 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="p-2">
-                {picklistWatch.length > 0 ? (
+                {loadingKpi ? (
+                  <div className="py-10 text-center text-xs font-bold text-gray-300 uppercase tracking-widest animate-pulse">Memuat Antrian...</div>
+                ) : picklistWatch.length > 0 ? (
                   <div className="space-y-1">
                     {picklistWatch.map((pl) => (
                       <div key={pl.code} className="grid grid-cols-12 gap-2 p-3 hover:bg-gray-50 rounded-lg transition-colors items-center text-xs">
                         <div className="col-span-3 font-mono font-bold text-navy">{pl.code}</div>
                         <div className="col-span-4 text-gray-500 truncate">{pl.project}</div>
                         <div className="col-span-3">
-                          <span className="inline-flex px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-bold uppercase">{pl.status}</span>
+                          <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase ${pl.status === 'Running' ? 'bg-warn-light text-warn-dark' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {pl.status}
+                          </span>
                         </div>
                         <div className="col-span-2 text-right text-[10px] text-gray-400 truncate">{pl.worker}</div>
                       </div>
@@ -495,13 +542,62 @@ export default function AdminDashboardPage() {
 
           <Card className="bg-white border border-gray-200 shadow-sm p-5 rounded-xl">
             {activities.length > 0 ? (
-              <ul className="space-y-3">
-                {activities.slice(0, 10).map((act, i) => (
-                  <li key={i} className="flex items-start gap-3 text-xs text-gray-600 border-b border-gray-50 last:border-0 pb-2 last:pb-0">
-                    <span className="w-1.5 h-1.5 bg-gold rounded-full mt-1.5 flex-shrink-0"></span>
-                    <span>{act}</span>
-                  </li>
-                ))}
+              <ul className="space-y-4">
+                {activities.map((act: any, i) => {
+                  let badgeColor = "bg-gray-100 text-gray-600";
+                  let actionLabel = act.action;
+                  let icon = "🔧";
+
+                  if (act.action === "CREATE_PICKLIST") {
+                    badgeColor = "bg-blue-50 text-blue-700 border-blue-100";
+                    actionLabel = "Membuat Picklist";
+                    icon = "📝";
+                  } else if (act.action === "STOCK_ADJUSTMENT") {
+                    badgeColor = "bg-amber-50 text-amber-700 border-amber-100";
+                    actionLabel = "Update Stok";
+                    icon = "📦";
+                  } else if (act.action === "DELETE_ITEM") {
+                    badgeColor = "bg-red-50 text-red-700 border-red-100";
+                    actionLabel = "Hapus Item";
+                    icon = "🗑️";
+                  } else if (act.action === "CREATE_USER") {
+                    badgeColor = "bg-green-50 text-green-700 border-green-100";
+                    actionLabel = "Tambah User";
+                    icon = "👤";
+                  } else if (act.action === "DELETE_USER") {
+                    badgeColor = "bg-red-50 text-red-700 border-red-100";
+                    actionLabel = "Hapus User";
+                    icon = "🚫";
+                  }
+
+                  // Clean detail text
+                  let safeDetail = act.detail || "";
+                  safeDetail = safeDetail.replace("Created picklist ", "No. ");
+                  safeDetail = safeDetail.replace("Deleted item ", "Item ID: ");
+                  safeDetail = safeDetail.replace("Adj Stock: ", "");
+
+                  return (
+                    <li key={i} className="flex items-start gap-3 border-b border-gray-50 last:border-0 pb-3 last:pb-0 group">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs border ${badgeColor} shadow-sm group-hover:scale-105 transition-transform`}>
+                        {icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-black text-navy uppercase tracking-wide truncate pr-2">
+                            {actionLabel}
+                          </span>
+                          <span className="text-[9px] font-bold text-gray-300 uppercase whitespace-nowrap">
+                            {new Date(act.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-0.5 leading-relaxed truncate font-medium">
+                          <span className="text-navy/60 font-bold mr-1">{act.user}</span>
+                          {safeDetail}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <div className="text-center py-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Belum ada aktivitas tercatat</div>

@@ -750,32 +750,32 @@ function AdminItemsContent() {
         <>
           <div className="fixed inset-0 z-[999]" onClick={() => setActionMenu(null)} />
           <div
-            className={`${styles.dropdown} animate-in fade-in slide-in-from-top-2`}
+            className="fixed z-[999] bg-white rounded-xl shadow-2xl border border-navy/5 p-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-0.5"
             style={{ left: actionMenu.left, top: actionMenu.top, transform: actionMenu.dir === 'up' ? 'translateY(-100%)' : 'none' }}
           >
-            <button className={styles.dropdownItem} onClick={() => {
+            <button className="w-full text-left px-4 py-3 rounded-lg text-xs font-bold text-navy hover:bg-navy/5 transition-colors flex items-center gap-3" onClick={() => {
               setSelectedItem(actionMenu.item);
               setStockModalOpen(true);
               setStockSupplierQuery(actionMenu.item.name);
               setActionMenu(null);
-            }}><span>+</span> Tambah Stok</button>
-            <button className={styles.dropdownItem} onClick={() => {
+            }}><span className="text-gold text-sm">✚</span> Tambah Stok</button>
+            <button className="w-full text-left px-4 py-3 rounded-lg text-xs font-bold text-navy hover:bg-navy/5 transition-colors flex items-center gap-3" onClick={() => {
               router.push(`/items/${actionMenu.item.id}/riwayat`);
               setActionMenu(null);
-            }}><span>•</span> Lihat Riwayat</button>
-            <button className={styles.dropdownItem} onClick={() => {
+            }}><span className="text-navy/40 text-sm">●</span> Lihat Riwayat</button>
+            <button className="w-full text-left px-4 py-3 rounded-lg text-xs font-bold text-navy hover:bg-navy/5 transition-colors flex items-center gap-3" onClick={() => {
               const u = actionMenu.item;
               setItemForm({ name: u.name, brand: u.brand || "", category: u.category || "", location: u.location || "", size: u.size || "", unit: u.unit, minStock: String(u.minStock), barcode: u.barcode || "" });
               setEditTargetId(u.id);
               setItemMode("single");
               setItemFormOpen(true);
               setActionMenu(null);
-            }}><span>✎</span> Edit Detail</button>
-            <div className="h-px bg-navy/5 my-1" />
-            <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={() => {
+            }}><span className="text-navy/40 text-sm">✎</span> Edit Detail</button>
+            <div className="h-px bg-gray-100 my-1" />
+            <button className="w-full text-left px-4 py-3 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-3" onClick={() => {
               setDeleteTarget(actionMenu.item);
               setActionMenu(null);
-            }}><span>✕</span> Hapus Item</button>
+            }}><span className="text-sm">✕</span> Hapus Item</button>
           </div>
         </>
       )}
@@ -871,33 +871,60 @@ function AdminItemsContent() {
 
       {/* Item Form Modal (With Bulk Support) */}
       {itemFormOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={`${styles.modalContent} ${itemMode === 'bulk' ? '!max-w-5xl' : ''}`}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>{editTargetId ? 'Edit Item' : itemMode === 'bulk' ? 'Input Barang Masuk (Bulk)' : 'Input Barang Baru'}</h2>
-              <button className={styles.modalClose} onClick={() => setItemFormOpen(false)}>✕</button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className={`bg-white rounded-3xl shadow-2xl w-full flex flex-col max-h-[90vh] overflow-hidden ${itemMode === 'bulk' ? 'max-w-6xl' : 'max-w-2xl'} animate-in zoom-in-95 duration-200`}>
+
+            {/* Header */}
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+              <div>
+                <h2 className="text-2xl font-black text-navy tracking-tight">{editTargetId ? 'Edit Item' : itemMode === 'bulk' ? 'Input Barang Masuk' : 'Input Barang Baru'}</h2>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Management Inventory</p>
+              </div>
+              <button
+                onClick={() => setItemFormOpen(false)}
+                className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors font-bold text-lg"
+              >
+                ✕
+              </button>
             </div>
-            <div className={styles.modalBody}>
+
+            {/* Body */}
+            <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
               {!editTargetId && (
-                <div className={styles.modeToggle}>
-                  <button className={`${styles.modeBtn} ${itemMode === 'single' ? styles.modeBtnActive : ''}`} onClick={() => setItemMode('single')}>Single Item</button>
-                  <button className={`${styles.modeBtn} ${itemMode === 'bulk' ? styles.modeBtnActive : ''}`} onClick={() => setItemMode('bulk')}>Bulk Entry (Banyak Item)</button>
+                <div className="flex bg-gray-100/50 p-1.5 rounded-xl mb-8 w-fit mx-auto border border-gray-100">
+                  <button
+                    className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${itemMode === 'single' ? 'bg-white text-navy shadow-sm ring-1 ring-black/5' : 'text-gray-400 hover:text-navy'}`}
+                    onClick={() => setItemMode('single')}
+                  >
+                    Single Item
+                  </button>
+                  <button
+                    className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${itemMode === 'bulk' ? 'bg-white text-navy shadow-sm ring-1 ring-black/5' : 'text-gray-400 hover:text-navy'}`}
+                    onClick={() => setItemMode('bulk')}
+                  >
+                    Bulk Entry
+                  </button>
                 </div>
               )}
 
               {/* BULK MODE UI */}
               {itemMode === 'bulk' && (
-                <div className="space-y-6">
-                  <div className={styles.formFull}>
-                    <label className={styles.formLabel}>Pilih Supplier</label>
-                    <div className={styles.searchInputWrap}>
-                      <input placeholder="Cari supplier..." value={supplierSearch} onChange={e => setSupplierSearch(e.target.value)} />
+                <div className="space-y-8">
+                  <div className="bg-navy/5 p-6 rounded-2xl border border-navy/5">
+                    <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest block mb-3">Supplier Batch Ini</label>
+                    <div className="relative">
+                      <input
+                        className="w-full h-11 bg-white border border-navy/5 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-navy/10 transition-all"
+                        placeholder="Cari atau pilih supplier..."
+                        value={supplierSearch}
+                        onChange={e => setSupplierSearch(e.target.value)}
+                      />
                     </div>
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 flex-wrap mt-3">
                       {bulkSuppliers.map(s => (
                         <button key={s.id}
                           onClick={() => setBulkSelectedSupplier({ id: s.id, name: s.name })}
-                          className={`${styles.supplierBtn} ${bulkSelectedSupplier.id === s.id ? '!bg-gold !text-white' : ''}`}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${bulkSelectedSupplier.id === s.id ? 'bg-navy text-white border-navy shadow-lg shadow-navy/20' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
                         >
                           {s.name}
                         </button>
@@ -905,221 +932,241 @@ function AdminItemsContent() {
                     </div>
                   </div>
 
-                  <div className={styles.bulkTableWrapper}>
-                    <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto px-1 py-2">
-                      <div className="grid grid-cols-12 gap-2 px-4 text-xs font-bold text-navy/40 uppercase tracking-wider">
-                        <div className="col-span-5">Identitas Produk</div>
-                        <div className="col-span-7 pl-6">Detail Stok & Lokasi</div>
+                  <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                    <div className="max-h-[50vh] overflow-y-auto">
+                      {/* Bulk Header */}
+                      <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 px-4 py-3 grid grid-cols-12 gap-4">
+                        <div className="col-span-5 text-[10px] font-black text-gray-400 uppercase tracking-widest pl-8">Identitas Produk</div>
+                        <div className="col-span-7 flex gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                          <span className="flex-1">Kategori & Lokasi</span>
+                          <div className="w-px h-3 bg-gray-300 mx-2"></div>
+                          <span className="flex-[2]">Stok & Harga</span>
+                        </div>
                       </div>
+
                       {bulkItems.map((row, idx) => (
-                        <div key={idx} className="flex flex-col bg-white border border-gray-200 shadow-sm rounded-xl p-4 gap-3 hover:shadow-md transition-shadow relative group">
-                          <button className="absolute -right-2 -top-2 w-6 h-6 bg-red-100 text-red-600 rounded-full shadow flex items-center justify-center hover:bg-red-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 z-10 font-bold" onClick={() => {
-                            const n = [...bulkItems]; n.splice(idx, 1); setBulkItems(n);
-                          }}>✕</button>
+                        <div key={idx} className="group border-b border-gray-100 last:border-0 p-4 hover:bg-blue-50/30 transition-colors relative">
+                          <div className="grid grid-cols-12 gap-6 relative z-10">
+                            {/* Number & Remove */}
+                            <div className="absolute -left-1 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
+                              <span className="text-[10px] font-bold text-gray-300 group-hover:text-navy/60 w-6 text-center">{idx + 1}</span>
+                              <button
+                                onClick={() => { const n = [...bulkItems]; n.splice(idx, 1); setBulkItems(n); }}
+                                className="w-6 h-6 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                              >✕</button>
+                            </div>
 
-                          {/* ROW 1: Identity */}
-                          <div className="flex gap-3 items-center border-b border-dashed border-gray-100 pb-3">
-                            <div className="w-8 flex items-center justify-center font-bold text-navy/20">{idx + 1}.</div>
-                            <div className="flex-1">
-                              <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Nama Produk</label>
-                              <input className={styles.formInput} placeholder="Contoh: Semen Gresik 40kg" value={row.name} onChange={e => {
-                                const n = [...bulkItems]; n[idx].name = e.target.value; setBulkItems(n);
-                              }} />
-                            </div>
-                            <div className="w-1/4">
-                              <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Brand</label>
-                              <input className={styles.formInput} placeholder="Merk" value={row.brand} onChange={e => {
-                                const n = [...bulkItems]; n[idx].brand = e.target.value; setBulkItems(n);
-                              }} />
-                            </div>
-                            <div className="w-1/6">
-                              <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Size</label>
-                              <input className={styles.formInput} placeholder="Ukuran" value={row.size} onChange={e => {
-                                const n = [...bulkItems]; n[idx].size = e.target.value; setBulkItems(n);
-                              }} />
-                            </div>
-                          </div>
-
-                          {/* ROW 2: Specs & Stock */}
-                          <div className="flex gap-3 pl-8">
-                            <div className="flex-1 flex gap-2">
-                              <div className="flex-1">
-                                <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Kategori</label>
-                                <input className={styles.formInput} placeholder="Kategori" value={row.category} onChange={e => {
-                                  const n = [...bulkItems]; n[idx].category = e.target.value; setBulkItems(n);
-                                }} />
-                              </div>
-                              <div className="w-1/3">
-                                <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Rak</label>
-                                <input className={styles.formInput} placeholder="Lokasi" value={row.location} onChange={e => {
-                                  const n = [...bulkItems]; n[idx].location = e.target.value; setBulkItems(n);
-                                }} />
+                            {/* Section 1: ID */}
+                            <div className="col-span-5 space-y-3 pl-8">
+                              <input
+                                className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-sm font-bold text-navy placeholder:text-gray-300 focus:bg-white focus:border-navy/20 focus:outline-none focus:ring-2 focus:ring-navy/5 transition-all"
+                                placeholder="Nama Produk"
+                                value={row.name}
+                                onChange={e => { const n = [...bulkItems]; n[idx].name = e.target.value; setBulkItems(n); }}
+                              />
+                              <div className="flex gap-2">
+                                <input className="flex-1 h-8 bg-white border border-gray-200 rounded-lg px-3 text-xs font-semibold placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="Brand" value={row.brand} onChange={e => { const n = [...bulkItems]; n[idx].brand = e.target.value; setBulkItems(n); }} />
+                                <input className="w-20 h-8 bg-white border border-gray-200 rounded-lg px-3 text-xs font-semibold placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="Ukuran" value={row.size} onChange={e => { const n = [...bulkItems]; n[idx].size = e.target.value; setBulkItems(n); }} />
                               </div>
                             </div>
 
-                            <div className="w-px bg-gray-100 mx-2" />
-
-                            <div className="flex-1 flex gap-2">
-                              {/* Stock Params */}
-                              <div className="flex-[2] flex gap-2">
-                                <div className="w-16">
-                                  <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Unit</label>
-                                  <input className={styles.formInput + " text-center"} placeholder="Pcs" value={row.unit} onChange={e => {
-                                    const n = [...bulkItems]; n[idx].unit = e.target.value; setBulkItems(n);
-                                  }} />
-                                </div>
-                                <div className="w-20">
-                                  <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Qty</label>
-                                  <input type="number" className={styles.formInput + " text-center font-bold text-navy"} placeholder="0" value={row.qty} onChange={e => {
-                                    const n = [...bulkItems]; n[idx].qty = e.target.value; setBulkItems(n);
-                                  }} />
-                                </div>
-                                <div className="w-24">
-                                  <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Satuan</label>
-                                  <select className={styles.formInput} value={row.unitQty || 'satuan'} onChange={e => {
-                                    const n = [...bulkItems]; n[idx].unitQty = e.target.value; setBulkItems(n);
-                                  }}>
-                                    <option value="satuan">Pcs/Satuan</option>
-                                    <option value="pack">Pack/Dus</option>
+                            {/* Section 2: Details */}
+                            <div className="col-span-7 flex gap-4">
+                              <div className="flex-1 space-y-3">
+                                <input className="w-full h-9 bg-white border border-gray-200 rounded-lg px-3 text-xs font-semibold placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="Kategori" value={row.category} onChange={e => { const n = [...bulkItems]; n[idx].category = e.target.value; setBulkItems(n); }} />
+                                <input className="w-full h-8 bg-white border border-gray-200 rounded-lg px-3 text-xs font-semibold placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="Lokasi Rak" value={row.location} onChange={e => { const n = [...bulkItems]; n[idx].location = e.target.value; setBulkItems(n); }} />
+                              </div>
+                              <div className="w-px bg-gray-100"></div>
+                              <div className="flex-[2] space-y-2">
+                                <div className="flex gap-2">
+                                  <input className="w-16 h-8 text-center bg-white border border-gray-200 rounded-lg text-xs font-bold uppercase placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="PCS" value={row.unit} onChange={e => { const n = [...bulkItems]; n[idx].unit = e.target.value; setBulkItems(n); }} />
+                                  <input type="number" className="flex-1 h-8 bg-blue-50/50 border border-blue-100 text-blue-800 rounded-lg px-3 text-xs font-bold text-center focus:border-blue-300 focus:outline-none" placeholder="Qty" value={row.qty} onChange={e => { const n = [...bulkItems]; n[idx].qty = e.target.value; setBulkItems(n); }} />
+                                  <select className="flex-1 h-8 bg-white border border-gray-200 rounded-lg text-xs font-semibold px-2 focus:border-navy/20 focus:outline-none" value={row.unitQty || 'satuan'} onChange={e => { const n = [...bulkItems]; n[idx].unitQty = e.target.value; setBulkItems(n); }}>
+                                    <option value="satuan">Satuan</option>
+                                    <option value="pack">Pack</option>
                                   </select>
                                 </div>
-                                {row.unitQty === 'pack' && (
-                                  <div className="w-16">
-                                    <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Isi</label>
-                                    <input type="number" className={styles.formInput + " text-center"} placeholder="1" value={row.isiPerPack} onChange={e => {
-                                      const n = [...bulkItems]; n[idx].isiPerPack = e.target.value; setBulkItems(n);
-                                    }} />
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex-1">
-                                <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Harga Beli</label>
-                                <input type="number" className={styles.formInput} placeholder="Rp" value={row.harga} onChange={e => {
-                                  const n = [...bulkItems]; n[idx].harga = e.target.value; setBulkItems(n);
-                                }} />
-                              </div>
-                              <div className="w-16">
-                                <label className="text-[10px] uppercase font-bold text-navy/40 mb-1 block">Min.</label>
-                                <input type="number" className={styles.formInput + " text-center"} placeholder="0" value={row.minStock} onChange={e => {
-                                  const n = [...bulkItems]; n[idx].minStock = e.target.value; setBulkItems(n);
-                                }} />
+                                <div className="flex gap-2">
+                                  <input type="number" className="flex-[2] h-8 bg-white border border-gray-200 rounded-lg px-3 text-xs font-semibold placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="Harga Beli" value={row.harga} onChange={e => { const n = [...bulkItems]; n[idx].harga = e.target.value; setBulkItems(n); }} />
+                                  <input type="number" className="w-16 h-8 text-center bg-white border border-gray-200 rounded-lg text-xs font-semibold text-red-500 placeholder:text-gray-300 focus:border-navy/20 focus:outline-none" placeholder="Min" value={row.minStock} onChange={e => { const n = [...bulkItems]; n[idx].minStock = e.target.value; setBulkItems(n); }} />
+                                </div>
                               </div>
                             </div>
                           </div>
+
+                          {row.unitQty === 'pack' && (
+                            <div className="ml-8 mt-2 pl-3 border-l-2 border-dashed border-gray-200">
+                              <span className="text-[9px] font-bold text-gray-400 uppercase mr-2">Detail Pack:</span>
+                              <input type="number" className="w-16 h-6 text-center text-[10px] bg-white border border-gray-200 rounded px-1" placeholder="Isi" value={row.isiPerPack} onChange={e => { const n = [...bulkItems]; n[idx].isiPerPack = e.target.value; setBulkItems(n); }} />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
-                    <Button className="m-4 !h-8 !text-xs" onClick={() => setBulkItems([...bulkItems, { name: "", brand: "", category: "", location: "", size: "", unit: "pcs", unitQty: "satuan", isiPerPack: "", priceType: "per_satuan", minStock: "0", qty: "", harga: "", supplierId: 0, supplierName: "" }])}>+ Tambah Baris</Button>
+                    <div className="p-2 bg-gray-50 border-t border-gray-200">
+                      <button className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:text-navy hover:border-navy/30 hover:bg-white transition-all uppercase tracking-wide" onClick={() => setBulkItems([...bulkItems, { name: "", brand: "", category: "", location: "", size: "", unit: "pcs", unitQty: "satuan", isiPerPack: "", priceType: "per_satuan", minStock: "0", qty: "", harga: "", supplierId: 0, supplierName: "" }])}>
+                        + Tambah Baris Baru
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* SINGLE MODE UI */}
               {itemMode === 'single' && (<>
-                <div className={styles.formGrid}>
-                  <div className={styles.formFull}>
-                    <label className={styles.formLabel}>Barcode / QR Code</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Barcode / QR Code</label>
                     <div className="flex gap-2">
-                      <input
-                        className={styles.formInput}
-                        value={(itemForm as any).barcode || ""}
-                        onChange={e => setItemForm({ ...itemForm, barcode: e.target.value } as any)}
-                        placeholder="Scan atau ketik kode..."
-                        onBlur={(e) => {
-                          if (e.target.value.length > 5) handleLookup(e.target.value);
-                        }}
-                      />
+                      <div className="relative flex-1">
+                        <input
+                          className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 pl-11 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-all"
+                          value={(itemForm as any).barcode || ""}
+                          onChange={e => setItemForm({ ...itemForm, barcode: e.target.value } as any)}
+                          placeholder="Scan atau ketik kode..."
+                          onBlur={(e) => {
+                            if (e.target.value.length > 5) handleLookup(e.target.value);
+                          }}
+                        />
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg grayscale opacity-50">📷</span>
+                      </div>
                       <button
-                        className="px-4 bg-navy text-white rounded-lg font-bold hover:bg-navy/80 flex items-center gap-2"
+                        className="px-6 h-11 bg-navy text-white rounded-xl font-bold hover:bg-navy/90 shadow-lg shadow-navy/20 transition-all active:scale-95"
                         onClick={() => setScanning(true)}
                       >
-                        <span>📷</span> Scan
+                        SCAN
                       </button>
                     </div>
                   </div>
-                  <div className={styles.formFull}>
-                    <label className={styles.formLabel}>Nama Lengkap Barang</label>
-                    <input className={styles.formInput} value={itemForm.name} onChange={e => setItemForm({ ...itemForm, name: e.target.value })} />
+
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Nama Lengkap Barang</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      value={itemForm.name}
+                      onChange={e => setItemForm({ ...itemForm, name: e.target.value })}
+                      placeholder="Contoh: Lampu LED Philips 14W Putih"
+                    />
                   </div>
+
                   <div>
-                    <label className={styles.formLabel}>Brand / Merk</label>
-                    <input className={styles.formInput} value={itemForm.brand} onChange={e => setItemForm({ ...itemForm, brand: e.target.value })} />
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Brand</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      value={itemForm.brand}
+                      onChange={e => setItemForm({ ...itemForm, brand: e.target.value })}
+                      placeholder="Merk"
+                    />
                   </div>
+
                   <div>
-                    <label className={styles.formLabel}>Kategori</label>
-                    <input className={styles.formInput} value={itemForm.category} onChange={e => setItemForm({ ...itemForm, category: e.target.value })} />
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Kategori</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      value={itemForm.category}
+                      onChange={e => setItemForm({ ...itemForm, category: e.target.value })}
+                      placeholder="Jenis Barang"
+                    />
                   </div>
+
                   <div>
-                    <label className={styles.formLabel}>Dimensi / Ukuran</label>
-                    <input className={styles.formInput} value={itemForm.size} onChange={e => setItemForm({ ...itemForm, size: e.target.value })} />
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Dimensi / Ukuran</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      value={itemForm.size}
+                      onChange={e => setItemForm({ ...itemForm, size: e.target.value })}
+                      placeholder="Ex: 60x60cm, 10kg, dll"
+                    />
                   </div>
+
                   <div>
-                    <label className={styles.formLabel}>Unit Satuan</label>
-                    <input className={styles.formInput} value={itemForm.unit} onChange={e => setItemForm({ ...itemForm, unit: e.target.value })} />
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Unit Satuan</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      value={itemForm.unit}
+                      onChange={e => setItemForm({ ...itemForm, unit: e.target.value })}
+                      placeholder="Pcs / Set / Roll"
+                    />
                   </div>
+
                   <div>
-                    <label className={styles.formLabel}>Lokasi Rak</label>
-                    <input className={styles.formInput} value={itemForm.location} onChange={e => setItemForm({ ...itemForm, location: e.target.value })} />
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Lokasi Rak</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      value={itemForm.location}
+                      onChange={e => setItemForm({ ...itemForm, location: e.target.value })}
+                      placeholder="Kode Rak"
+                    />
                   </div>
+
                   <div>
-                    <label className={styles.formLabel}>Minimum Stok (Alert)</label>
-                    <input className={styles.formInput} type="number" value={itemForm.minStock} onChange={e => setItemForm({ ...itemForm, minStock: e.target.value })} />
+                    <label className="text-xs font-black text-navy uppercase tracking-widest mb-1.5 block">Minimum Stok (Alert)</label>
+                    <input
+                      className="w-full h-11 bg-off-white border-transparent focus:bg-white border focus:border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"
+                      type="number"
+                      value={itemForm.minStock}
+                      onChange={e => setItemForm({ ...itemForm, minStock: e.target.value })}
+                    />
                   </div>
                 </div>
 
                 {/* SINGLE MODE: Optional Initial Stock */}
                 {!editTargetId && (
-                  <div className="mt-6 border-t border-dashed border-navy/10 pt-6">
-                    <h3 className="text-sm font-bold text-navy mb-4 flex items-center gap-2">
-                      📦 Stok Awal (Opsional)
+                  <div className="mt-8 bg-blue-50/50 rounded-2xl p-6 border border-blue-100/50">
+                    <h3 className="text-sm font-black text-navy mb-4 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-navy text-gold flex items-center justify-center text-xs">📦</span>
+                      STOK AWAL (OPSIONAL)
                     </h3>
-                    <div className={styles.formFull}>
-                      <label className={styles.formLabel}>Supplier</label>
-                      <SmartSupplierInput
-                        value={singleSelectedSupplier.name || ""}
-                        onChange={(val) => {
-                          setSingleSelectedSupplier(prev => ({ ...prev, name: val }));
-                          setStockSupplierQuery(val);
-                        }}
-                        onSelect={(id, name) => setSingleSelectedSupplier({ id, name })}
-                      />
-                    </div>
 
-                    <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="space-y-4">
                       <div>
-                        <label className={styles.formLabel}>Qty Awal</label>
-                        <input type="number" className={styles.formInput} value={stockForm.qty} onChange={e => setStockForm({ ...stockForm, qty: e.target.value })} placeholder="0" />
-                      </div>
-                      <div>
-                        <label className={styles.formLabel}>Satuan</label>
-                        <select className={styles.formInput} value={stockForm.unitQty} onChange={e => setStockForm({ ...stockForm, unitQty: e.target.value as any })}>
-                          <option value="satuan">Pcs/Satuan</option>
-                          <option value="pack">Pack/Dus</option>
-                        </select>
+                        <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Supplier</label>
+                        <SmartSupplierInput
+                          value={singleSelectedSupplier.name || ""}
+                          onChange={(val) => {
+                            setSingleSelectedSupplier(prev => ({ ...prev, name: val }));
+                            setStockSupplierQuery(val);
+                          }}
+                          onSelect={(id, name) => setSingleSelectedSupplier({ id, name })}
+                          placeholder="Cari atau ketik nama supplier..."
+                        />
                       </div>
 
-                      {stockForm.unitQty === 'pack' && (
+                      <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <label className={styles.formLabel}>Isi per Pack</label>
-                          <input type="number" className={styles.formInput} value={stockForm.isiPerPack} onChange={e => setStockForm({ ...stockForm, isiPerPack: e.target.value })} placeholder="1" />
+                          <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Qty Awal</label>
+                          <input type="number" className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.qty} onChange={e => setStockForm({ ...stockForm, qty: e.target.value })} placeholder="0" />
                         </div>
-                      )}
+                        <div>
+                          <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Satuan</label>
+                          <select className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.unitQty} onChange={e => setStockForm({ ...stockForm, unitQty: e.target.value as any })}>
+                            <option value="satuan">Pcs/Satuan</option>
+                            <option value="pack">Pack/Dus</option>
+                          </select>
+                        </div>
 
-                      <div>
-                        <label className={styles.formLabel}>Harga Beli</label>
-                        <input type="number" className={styles.formInput} value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, priceType: 'per_satuan', harga: e.target.value })} placeholder="Rp /pcs" />
+                        {stockForm.unitQty === 'pack' && (
+                          <div>
+                            <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Isi per Pack</label>
+                            <input type="number" className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.isiPerPack} onChange={e => setStockForm({ ...stockForm, isiPerPack: e.target.value })} placeholder="1" />
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Harga Beli</label>
+                          <input type="number" className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, priceType: 'per_satuan', harga: e.target.value })} placeholder="Rp" />
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
               </>)}
+            </div>
 
-              <div className="mt-8">
-                <Button onClick={handleItemSubmit} disabled={loading} className="btn-gold w-full !h-14 shadow-xl">
-                  {loading ? 'MEMPROSES...' : itemMode === 'bulk' ? 'PROSES BULK ITEMS' : 'SIMPAN DATA'}
-                </Button>
-              </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <Button onClick={handleItemSubmit} disabled={loading} className="btn-gold !h-12 !px-8 shadow-xl shadow-gold/20 text-sm">
+                {loading ? 'MEMPROSES...' : itemMode === 'bulk' ? 'PROSES BULK ITEMS' : 'SIMPAN DATA'}
+              </Button>
             </div>
           </div>
         </div>
@@ -1127,62 +1174,70 @@ function AdminItemsContent() {
       }
 
       {/* Stock Modal (With Suppliers) */}
-      {
-        stockModalOpen && selectedItem && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modalContent}>
-              <div className={styles.modalHeader}>
-                <h2 className={styles.modalTitle}>Stock Adjust: {selectedItem.name}</h2>
-                <button className={styles.modalClose} onClick={() => setStockModalOpen(false)}>✕</button>
+      {stockModalOpen && selectedItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="px-8 py-6 border-b border-gray-100 bg-white flex justify-between items-center sticky top-0 z-10">
+              <div>
+                <h2 className="text-xl font-black text-navy tracking-tight">{selectedItem.name}</h2>
+                <p className="text-[10px] font-bold text-gold uppercase tracking-widest mt-0.5">Stock Adjustment</p>
               </div>
-              <div className={styles.modalBody}>
-                <div className={styles.formGrid}>
-                  {/* Mode Toggle */}
-                  <div className={styles.formFull}>
-                    <div className="flex gap-2 bg-navy/5 p-1 rounded-xl mb-4">
-                      {["baru", "bekas"].map(m => (
-                        <button key={m} onClick={() => setStockForm({ ...stockForm, mode: m as any })}
-                          className={`flex-1 py-2 rounded-lg font-bold text-xs uppercase ${stockForm.mode === m ? 'bg-white shadow text-navy' : 'text-navy/40'}`}>
-                          Stok {m}
+              <button
+                className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 font-bold"
+                onClick={() => setStockModalOpen(false)}
+              >✕</button>
+            </div>
+
+            <div className="p-8 overflow-y-auto custom-scrollbar">
+              {/* Mode Toggle */}
+              <div className="flex bg-gray-100/50 p-1.5 rounded-xl mb-6 border border-gray-100">
+                {["baru", "bekas"].map(m => (
+                  <button key={m} onClick={() => setStockForm({ ...stockForm, mode: m as any })}
+                    className={`flex-1 py-2.5 rounded-lg font-black text-xs uppercase tracking-wide transition-all ${stockForm.mode === m ? 'bg-white shadow-sm text-navy ring-1 ring-black/5' : 'text-gray-400 hover:text-navy'}`}>
+                    Stok {m}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-5">
+                {/* Supplier Selection for New Stock */}
+                {stockForm.mode === 'baru' && (
+                  <div>
+                    <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Supplier</label>
+                    <div className="relative">
+                      <input
+                        className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20"
+                        placeholder="Cari supplier..." value={stockSupplierQuery} onChange={e => setStockSupplierQuery(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-2 mt-2 custom-scrollbar">
+                      {stockSuppliers.slice(0, 4).map(s => (
+                        <button key={s.id} onClick={() => {
+                          setSelectedStockSupplier({ id: s.id, name: s.name });
+                          setStockSupplierQuery(s.name);
+                        }} className={`whitespace-nowrap px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedStockSupplier.id === s.id ? 'bg-navy border-navy text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                          {s.name}
                         </button>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Supplier Selection for New Stock */}
-                  {stockForm.mode === 'baru' && (
-                    <div className={styles.formFull}>
-                      <label className={styles.formLabel}>Supplier</label>
-                      <div className={styles.searchInputWrap}>
-                        <input placeholder="Cari supplier..." value={stockSupplierQuery} onChange={e => setStockSupplierQuery(e.target.value)} />
-                      </div>
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        {stockSuppliers.slice(0, 4).map(s => (
-                          <button key={s.id} onClick={() => {
-                            setSelectedStockSupplier({ id: s.id, name: s.name });
-                            setStockSupplierQuery(s.name);
-                          }} className={`whitespace-nowrap ${styles.supplierBtn} ${selectedStockSupplier.id === s.id ? '!bg-gold !text-white' : ''}`}>
-                            {s.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                <div>
+                  <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Jumlah Penambahan (Qty)</label>
+                  <input className="w-full h-12 bg-off-white/50 border border-navy/10 rounded-xl px-4 text-lg font-black text-navy focus:outline-none focus:ring-2 focus:ring-gold/20" type="number" placeholder="0" value={stockForm.qty} onChange={e => setStockForm({ ...stockForm, qty: e.target.value })} />
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={styles.formLabel}>Jumlah (Qty)</label>
-                    <input className={styles.formInput} type="number" value={stockForm.qty} onChange={e => setStockForm({ ...stockForm, qty: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className={styles.formLabel}>Unit Satuan</label>
-                    <select className={styles.formInput} value={stockForm.unitQty} onChange={e => {
+                    <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Unit</label>
+                    <select className="w-full h-11 bg-white border border-navy/10 rounded-xl px-3 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-gold/20" value={stockForm.unitQty} onChange={e => {
                       const val = e.target.value as any;
                       setStockForm({
                         ...stockForm,
                         unitQty: val,
                         // Auto-set price type based on unit
                         priceType: val === 'pack' ? 'per_pack' : 'per_satuan',
-                        // Optional: Reset price to avoid confusion? Or keep it? keeping it is risky if magnitude differs greatly.
                         harga: ""
                       });
                     }}>
@@ -1190,28 +1245,40 @@ function AdminItemsContent() {
                       <option value="pack">Pack / Box</option>
                     </select>
                   </div>
-                  {stockForm.unitQty === 'pack' && (
-                    <div className={styles.formFull}>
-                      <label className={styles.formLabel}>Isi Per Pack</label>
-                      <input className={styles.formInput} type="number" value={stockForm.isiPerPack} onChange={e => setStockForm({ ...stockForm, isiPerPack: e.target.value })} />
+
+                  {stockForm.unitQty === 'pack' ? (
+                    <div>
+                      <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Isi Per Pack</label>
+                      <input className="w-full h-11 bg-white border border-navy/10 rounded-xl px-3 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-gold/20" type="number" placeholder="1" value={stockForm.isiPerPack} onChange={e => setStockForm({ ...stockForm, isiPerPack: e.target.value })} />
                     </div>
-                  )}
-                  {stockForm.mode === 'baru' && (
-                    <div className={styles.formFull}>
-                      <label className={styles.formLabel}>
-                        Harga Beli ({stockForm.unitQty === 'pack' ? 'Per Pack' : 'Per Satuan'})
-                      </label>
-                      <input className={styles.formInput} type="number" value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, harga: e.target.value })} />
+                  ) : (
+                    <div className="opacity-30 pointer-events-none">
+                      <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Isi Per Pack</label>
+                      <input className="w-full h-11 bg-gray-100 border-transparent rounded-xl px-3 text-sm font-bold" disabled value="-" />
                     </div>
                   )}
                 </div>
-                <div className="mt-8">
-                  <Button onClick={handleStockSubmit} className="btn-primary w-full !h-14 shadow-xl">SIMPAN PERUBAHAN STOK</Button>
-                </div>
+
+                {stockForm.mode === 'baru' && (
+                  <div>
+                    <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">
+                      Harga Beli ({stockForm.unitQty === 'pack' ? 'Per Pack' : 'Per Satuan'})
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-navy/30">Rp</span>
+                      <input className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 pl-10 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-gold/20" type="number" value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, harga: e.target.value })} placeholder="0" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <Button onClick={handleStockSubmit} className="btn-primary w-full !h-12 text-sm shadow-xl shadow-navy/20">SIMPAN STOK</Button>
               </div>
             </div>
           </div>
-        )
+        </div>
+      )
       }
 
       {/* Drop All Modal */}

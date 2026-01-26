@@ -3,13 +3,22 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 
+import { ChatPopup } from "@/components/admin/ChatPopup";
+
 export default function PicklistPage() {
   const [picklists, setPicklists] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null); // For chat sender
+
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Chat State
+  const [showChat, setShowChat] = useState(false);
+  const [chatTarget, setChatTarget] = useState<any>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -43,6 +52,7 @@ export default function PicklistPage() {
       ]);
 
       const plistData = await plistRes.json();
+      if (plistData.currentUser) setCurrentUser(plistData.currentUser); // Expect API update
       const projData = await projRes.json();
       const workerData = await workerRes.json();
       const itemData = await itemRes.json();
@@ -68,7 +78,7 @@ export default function PicklistPage() {
     return items.filter(it =>
       it.name.toLowerCase().includes(searchItem.toLowerCase()) ||
       it.brand?.toLowerCase().includes(searchItem.toLowerCase())
-    ).slice(0, 5);
+    ).slice(0, 20);
   }, [items, searchItem]);
 
   function addItem(item: any) {
@@ -82,7 +92,15 @@ export default function PicklistPage() {
   }
 
   function updateQty(id: number, qty: number) {
-    setSelectedItems(selectedItems.map(si => si.id === id ? { ...si, reqQty: qty } : si));
+    const item = selectedItems.find(si => si.id === id);
+    if (!item) return;
+
+    // Clamp logic
+    let safeQty = qty;
+    if (safeQty > item.stockTotal) safeQty = item.stockTotal;
+    if (safeQty < 1) safeQty = 1;
+
+    setSelectedItems(selectedItems.map(si => si.id === id ? { ...si, reqQty: safeQty } : si));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,8 +119,11 @@ export default function PicklistPage() {
     };
 
     try {
-      const res = await fetch("/api/admin/picklists", {
-        method: "POST",
+      const url = editingId ? `/api/admin/picklists/${editingId}` : "/api/admin/picklists";
+      const method = editingId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
@@ -115,7 +136,7 @@ export default function PicklistPage() {
         alert("Gagal: " + (err.error || "Server error"));
       }
     } catch (err) {
-      alert("Error membuat picklist");
+      alert("Error processing request");
     }
   }
 
@@ -129,6 +150,7 @@ export default function PicklistPage() {
     setNeededAt("");
     setNotes("");
     setSelectedItems([]);
+    setEditingId(null);
   }
 
   return (
@@ -163,7 +185,7 @@ export default function PicklistPage() {
         {showForm && (
           <div className="premium-card p-1 mb-10 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="bg-white p-8 rounded-[19px]">
-              <h2 className="text-2xl font-black text-navy mb-8 tracking-tight">Form Penugasan Baru</h2>
+              <h2 className="text-2xl font-black text-navy mb-8 tracking-tight">{editingId ? "Edit Penugasan" : "Form Penugasan Baru"}</h2>
               <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 <div className="flex flex-col gap-1.5 col-span-1 md:col-span-2">
@@ -270,20 +292,22 @@ export default function PicklistPage() {
                       onChange={e => setSearchItem(e.target.value)}
                     />
                     {filteredItems.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-navy/5 overflow-hidden z-20">
-                        {filteredItems.map(it => (
-                          <div
-                            key={it.id}
-                            className="p-3 flex items-center justify-between hover:bg-off-white cursor-pointer transition-colors"
-                            onClick={() => addItem(it)}
-                          >
-                            <div>
-                              <div className="font-bold text-navy text-sm">{it.name}</div>
-                              <div className="text-[10px] font-bold text-navy/40 uppercase tracking-widest">{it.brand} — Rak: {it.location || "???"}</div>
+                      <div className="absolute top-full left-0 right-0 mt-2 z-20">
+                        <div className="bg-white rounded-2xl shadow-2xl border border-navy/10 overflow-y-auto max-h-[400px] custom-scrollbar p-1 pb-16">
+                          {filteredItems.map(it => (
+                            <div
+                              key={it.id}
+                              className="p-3 flex items-center justify-between hover:bg-off-white cursor-pointer transition-colors"
+                              onClick={() => addItem(it)}
+                            >
+                              <div>
+                                <div className="font-bold text-navy text-sm">{it.name}</div>
+                                <div className="text-[10px] font-bold text-navy/40 uppercase tracking-widest">{it.brand} — Rak: {it.location || "???"}</div>
+                              </div>
+                              <div className="bg-success/10 text-success text-[10px] font-black px-2 py-1 rounded">Stok: {it.stockNew}</div>
                             </div>
-                            <div className="bg-success/10 text-success text-[10px] font-black px-2 py-1 rounded">Stok: {it.stockNew}</div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -305,15 +329,21 @@ export default function PicklistPage() {
                               <div className="text-[10px] font-bold text-navy/40 uppercase tracking-widest">{si.brand}</div>
                             </td>
                             <td className="px-5 py-4">
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="number"
-                                  min="1"
-                                  className="w-16 h-8 bg-off-white rounded-lg text-center font-black focus:outline-none focus:ring-1 focus:ring-gold"
-                                  value={si.reqQty}
-                                  onChange={e => updateQty(si.id, Number(e.target.value))}
-                                />
-                                <span className="text-[11px] font-bold text-navy/40">{si.unit}</span>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max={si.stockTotal}
+                                    className="w-16 h-8 bg-off-white rounded-lg text-center font-black focus:outline-none focus:ring-1 focus:ring-gold"
+                                    value={si.reqQty}
+                                    onChange={e => updateQty(si.id, Number(e.target.value))}
+                                  />
+                                  <span className="text-[11px] font-bold text-navy/40">{si.unit}</span>
+                                </div>
+                                <div className="text-[9px] font-bold text-navy/30 uppercase tracking-wide">
+                                  Max: {si.stockTotal} (B:{si.stockNew} | S:{si.stockUsed})
+                                </div>
                               </div>
                             </td>
                             <td className="px-5 py-4 text-right">
@@ -334,7 +364,7 @@ export default function PicklistPage() {
                 </div>
 
                 <div className="col-span-1 md:col-span-3 pt-6 border-t border-navy/5">
-                  <button type="submit" className="btn-primary w-full shadow-lg shadow-navy/10">Konfirmasi & Rilis Picklist</button>
+                  <button type="submit" className="btn-primary w-full shadow-lg shadow-navy/10">{editingId ? "Simpan Perubahan" : "Konfirmasi & Rilis Picklist"}</button>
                 </div>
               </form>
             </div>
@@ -379,11 +409,39 @@ export default function PicklistPage() {
                         <div className="text-[11px] font-medium text-navy/50">{p.project?.namaKlien}</div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-navy/10 flex items-center justify-center text-[9px] font-black text-navy">
-                            {p.assignee?.name?.[0]}
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-navy/10 flex items-center justify-center text-[9px] font-black text-navy">
+                              {p.assignee?.name?.[0]}
+                            </div>
+                            <span className="font-bold text-navy/70">{p.assignee?.name}</span>
                           </div>
-                          <span className="font-bold text-navy/70">{p.assignee?.name}</span>
+
+                          {p.status !== 'DELIVERED' && (
+                            <div className="flex gap-2 ml-8">
+                              {p.assignee?.phone && (
+                                <a
+                                  href={`https://wa.me/${p.assignee.phone.replace(/\D/g, "")}`}
+                                  target="_blank"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="px-2 py-1 bg-[#25d366] hover:bg-[#128c7e] text-white text-[9px] font-black rounded uppercase tracking-wider flex items-center gap-1 transition-colors shadow-sm"
+                                  title="Chat WhatsApp"
+                                >
+                                  <span>WA</span>
+                                </a>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChatTarget(p.assignee);
+                                  setShowChat(true);
+                                }}
+                                className="px-2 py-1 bg-navy/10 hover:bg-navy/20 text-navy text-[9px] font-black rounded uppercase tracking-wider flex items-center gap-1 transition-colors"
+                              >
+                                💬 Chat
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -404,6 +462,41 @@ export default function PicklistPage() {
                       <td className="px-6 py-5 text-right">
                         <div className="text-[11px] font-bold text-navy/40">{new Date(p.updatedAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                         <div className="text-[9px] font-medium text-navy/20 uppercase tracking-tighter">{new Date(p.updatedAt).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}</div>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            // Logic to pre-fill form
+                            setEditingId(p.id);
+                            setTitle(p.title);
+                            setProjectId(p.projectId || "");
+                            setMode(p.mode);
+                            setAssigneeId(p.assigneeId || "");
+                            setNeededAt(p.neededAt ? new Date(p.neededAt).toISOString().slice(0, 16) : "");
+                            setNotes(p.notes || "");
+
+                            // Fetch full details to get lines
+                            const res = await fetch(`/api/admin/picklists/${p.id}`);
+                            const json = await res.json();
+                            if (json.data && json.data.lines) {
+                              setSelectedItems(json.data.lines.map((l: any) => ({
+                                id: l.item.id,
+                                name: l.item.name,
+                                brand: l.item.brand,
+                                unit: l.item.unit,
+                                stockTotal: l.item.stockNew + l.item.stockUsed, // Approx
+                                stockNew: l.item.stockNew,
+                                stockUsed: l.item.stockUsed,
+                                reqQty: l.reqQty
+                              })));
+                            }
+
+                            setShowForm(true);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="mt-2 mr-3 text-[10px] font-bold text-navy hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Edit
+                        </button>
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -437,6 +530,16 @@ export default function PicklistPage() {
           </div>
         )}
       </main>
+
+      {/* Chat Popup */}
+      {showChat && chatTarget && currentUser && (
+        <ChatPopup
+          isOpen={showChat}
+          onClose={() => setShowChat(false)}
+          targetUser={chatTarget}
+          currentUser={currentUser}
+        />
+      )}
     </div>
   );
 }

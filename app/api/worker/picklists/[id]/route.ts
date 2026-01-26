@@ -3,23 +3,49 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const session = await getSession();
-  if (!session || session.role !== "WORKER") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const picklist = await prisma.picklist.findUnique({
-    where: { id },
-    include: {
-      assignee: true,
-      lines: { include: { item: true } },
-      project: true,
-      events: { include: { actor: true }, orderBy: { createdAt: "desc" } },
-    },
-  });
-  if (!picklist || picklist.assignee?.employeeId !== session.employeeId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  try {
+    const { id } = await params;
+    const session = await getSession();
+    const authorizedRoles = ["WORKER", "ADMIN", "OWNER", "PURCHASING", "WAREHOUSE_LEAD"];
+    if (!session || !authorizedRoles.includes(session.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  return NextResponse.json({ data: picklist });
+    const picklist = await prisma.picklist.findUnique({
+      where: { id },
+      include: {
+        assignee: true,
+        lines: { include: { item: { include: { storageLocation: true } } } },
+        project: true,
+        events: { include: { actor: true }, orderBy: { createdAt: "desc" } }
+      },
+    }) as any;
+
+    if (!picklist) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Try to fetch evidence separately if the join fails due to type mismatch
+    // (This is a safety fallback)
+    try {
+      const evidence = await (prisma as any).picklistEvidence.findMany({
+        where: { picklistId: id }
+      });
+      picklist.evidence = evidence;
+    } catch {
+      picklist.evidence = [];
+    }
+
+    const isOwner = picklist.assignee?.employeeId === session.employeeId;
+    const isAdmin = session.role === "ADMIN" || session.role === "OWNER";
+
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    return NextResponse.json({ data: picklist });
+  } catch (error: any) {
+    console.error("[GET_WORKER_PICKLIST_ERROR]", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }

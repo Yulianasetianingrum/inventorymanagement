@@ -30,6 +30,10 @@ model User {
   createdPicklists  Picklist[] @relation("PicklistCreator")
   startedPicklists  Picklist[] @relation("PicklistStarter")
   picklistEvents    PicklistEvent[] @relation("EventActor")
+  
+  // Messaging
+  sentMessages      Message[]  @relation("MessageSender")
+  receivedMessages  Message[]  @relation("MessageReceiver")
 
   @@map("user")
 }
@@ -160,6 +164,7 @@ model Picklist {
   // Mandatory Scans
   pickingImage   String? @db.LongText
   returnImage    String? @db.LongText
+  evidence       PicklistEvidence[] // New relation
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -183,6 +188,7 @@ model PicklistLine {
   pickedQty      Int           @default(0)
   usedQty        Int           @default(0)
   returnedQty    Int           @default(0)
+  stockMode      String        @default("baru") // "baru" or "bekas"
   notes          String?
   
   picklist       Picklist      @relation(fields: [picklistId], references: [id], onDelete: Cascade)
@@ -221,6 +227,22 @@ model AuditLog {
   @@map("auditlog")
 }
 
+model Message {
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  senderId   String
+  receiverId String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("messages")
+}
+
 enum Role {
   OWNER
   ADMIN
@@ -232,4 +254,15 @@ enum Role {
 enum AuthType {
   PIN
   PASSWORD
+}
+
+model PicklistEvidence {
+  id         String   @id @default(cuid())
+  picklistId String
+  picklist   Picklist @relation(fields: [picklistId], references: [id], onDelete: Cascade)
+  imageUrl   String   @db.LongText
+  type       String   // "PICKING" or "RETURN"
+  createdAt  DateTime @default(now())
+
+  @@map("picklist_evidence")
 }

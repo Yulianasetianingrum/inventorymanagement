@@ -15,28 +15,45 @@ export async function GET(req: Request) {
     else dateLimit.setMonth(dateLimit.getMonth() - 1);
 
     try {
-        const lines = await prisma.picklistLine.findMany({
-            orderBy: { picklist: { deliveredAt: "desc" } },
-            where: {
-                picklist: {
-                    status: "DELIVERED",
-                    deliveredAt: { gte: dateLimit }
-                }
-            },
-            include: {
-                item: { select: { name: true, unit: true, brand: true } },
-                picklist: {
-                    select: {
-                        code: true,
-                        deliveredAt: true,
-                        project: { select: { namaProjek: true, namaKlien: true } },
-                        assignee: { select: { name: true } }
-                    }
-                }
-            }
-        });
+        await prisma.$executeRawUnsafe("ALTER TABLE picklist_lines ADD COLUMN IF NOT EXISTS stockMode VARCHAR(191) NOT NULL DEFAULT 'baru'").catch(() => { });
 
-        return NextResponse.json({ data: lines });
+        // Fetch using raw SQL to bypass Prisma Client sync issues with 'stockMode' field
+        const lines: any[] = await prisma.$queryRaw`
+            SELECT 
+                pl.*,
+                i.name as itemName, i.unit as itemUnit, i.brand as itemBrand,
+                p.code as picklistCode, p.deliveredAt as picklistDeliveredAt,
+                pr.namaProjek as projectNamaProjek, pr.namaKlien as projectNamaKlien,
+                u.name as assigneeName
+            FROM picklist_lines pl
+            JOIN items i ON pl.itemId = i.id
+            JOIN picklists p ON pl.picklistId = p.id
+            LEFT JOIN project pr ON p.projectId = pr.id
+            LEFT JOIN user u ON p.assigneeId = u.id
+            WHERE p.status = 'DELIVERED'
+              AND p.deliveredAt >= ${dateLimit}
+            ORDER BY p.deliveredAt DESC
+        `;
+
+        // Map raw results to the format the UI expects
+        const mappedLines = lines.map(l => ({
+            id: l.id,
+            itemId: l.itemId,
+            reqQty: l.reqQty,
+            pickedQty: l.pickedQty,
+            usedQty: l.usedQty,
+            returnedQty: l.returnedQty,
+            stockMode: l.stockMode,
+            item: { name: l.itemName, unit: l.itemUnit, brand: l.itemBrand },
+            picklist: {
+                code: l.picklistCode,
+                deliveredAt: l.picklistDeliveredAt,
+                project: { namaProjek: l.projectNamaProjek, namaKlien: l.projectNamaKlien },
+                assignee: { name: l.assigneeName }
+            }
+        }));
+
+        return NextResponse.json({ data: mappedLines });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

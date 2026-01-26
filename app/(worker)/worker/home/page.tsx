@@ -24,13 +24,15 @@ export default function WorkerHome() {
   const [active, setActive] = useState<PicklistCard[]>([]);
   const [handoverNeeded, setHandoverNeeded] = useState<PicklistCard[]>([]);
   const [todoCount, setTodoCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [userRes, listRes] = await Promise.all([
-          fetch("/api/worker/me"),
-          fetch("/api/worker/picklists?tab=active") // Fetch both active and picked for home
+        const [userRes, listRes, unreadRes] = await Promise.all([
+          fetch("/api/worker/me", { cache: "no-store" }),
+          fetch("/api/worker/picklists?tab=active", { cache: "no-store" }),
+          fetch("/api/worker/messages/unread", { cache: "no-store" })
         ]);
 
         if (userRes.status === 401) {
@@ -57,6 +59,12 @@ export default function WorkerHome() {
           // Handover needed (PICKED)
           setHandoverNeeded(data.filter((d: PicklistCard) => d.status === "PICKED"));
         }
+
+        if (unreadRes.ok) {
+          const unreadData = await unreadRes.json();
+          setUnreadCount(unreadData.count || 0);
+        }
+
       } catch (err) {
         console.error("Home Load Error:", err);
       }
@@ -88,21 +96,51 @@ export default function WorkerHome() {
             </div>
           </div>
 
-          <Button
-            onClick={logout}
-            style={{ background: "transparent", border: "none" }}
-            className="text-white/60 hover:text-white hover:bg-white/10 transition-colors -mr-2 p-2"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </Button>
+          <div className="flex items-center gap-4">
+            {/* Notification Icon Priority */}
+            <Link href="/worker/chat" className="relative p-2 text-white hover:scale-110 transition-all duration-300">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill={unreadCount > 0 ? "white" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={unreadCount > 0 ? "animate-tada" : ""}>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-black h-6 w-6 flex items-center justify-center rounded-full border-2 border-navy animate-bounce shadow-lg shadow-red-500/50">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+
+            <Button
+              onClick={logout}
+              style={{ background: "transparent", border: "none" }}
+              className="text-white/60 hover:text-white hover:bg-white/10 transition-colors -mr-2 p-2"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="px-5 -mt-6 relative z-20 space-y-6">
+      {/* Global Alert for Unread Messages (Optional, very visible) */}
+      {unreadCount > 0 && (
+        <div className="px-5 -mt-8 relative z-30 mb-2">
+          <Link href="/worker/chat" className="block bg-red-600 text-white p-4 rounded-2xl shadow-xl shadow-red-500/30 flex items-center justify-between animate-pulse">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">📩</span>
+              <div className="flex flex-col">
+                <span className="font-black text-sm uppercase tracking-wider">Pesan Baru Masuk!</span>
+                <span className="text-xs opacity-90">Anda memiliki {unreadCount} pesan belum dibaca</span>
+              </div>
+            </div>
+            <span className="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold">Buka &rarr;</span>
+          </Link>
+        </div>
+      )}
+
+      <main className={`px-5 ${unreadCount > 0 ? 'mt-4' : '-mt-6'} relative z-20 space-y-6`}>
 
         {/* Active Tasks Section */}
         <section>
@@ -242,6 +280,40 @@ export default function WorkerHome() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" /></svg>
               </div>
               <span className="font-bold text-navy text-sm">Riwayat</span>
+            </Link>
+
+            {/* Pesan Button - HIGHLIGHTED IF UNREAD */}
+            <Link href="/worker/chat" className={`group col-span-2 p-5 rounded-[24px] shadow-xl transition-all active:scale-95 flex items-center justify-between gap-3 ${unreadCount > 0
+              ? 'bg-red-50 border-2 border-red-500 shadow-red-500/20'
+              : 'bg-white border border-slate-50 shadow-slate-200/50 hover:scale-[1.02]'
+              }`}>
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors duration-300 ${unreadCount > 0
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white'
+                  }`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`font-black text-lg leading-none ${unreadCount > 0 ? 'text-red-700' : 'text-navy'}`}>Pesan & Inbox</span>
+                  {unreadCount > 0 ? (
+                    <span className="text-xs text-red-600 font-bold mt-1 uppercase tracking-wide">
+                      ⚠️ {unreadCount} PESAN BARU!
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400 font-medium mt-1">Chat dengan Admin</span>
+                  )}
+                </div>
+              </div>
+              {unreadCount > 0 ? (
+                <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-red-500/50 animate-bounce">
+                  {unreadCount}
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                </div>
+              )}
             </Link>
 
           </div>

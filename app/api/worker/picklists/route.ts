@@ -18,9 +18,10 @@ export async function GET(req: Request) {
     const picklists = await prisma.picklist.findMany({
       where: {
         assigneeId: user.id,
-        status: { not: "CANCELED" },
         ...(tab === "active" ? { status: { in: ["READY", "PICKING"] } } : {}),
         ...(tab === "picked" ? { status: "PICKED" } : {}),
+        ...(tab === "history" ? { status: { in: ["DELIVERED", "CANCELED"] } } : {}),
+        ...(!tab ? { status: { not: "CANCELED" } } : {}), // Default behavior if no tab
       },
       orderBy: { createdAt: "desc" },
       include: {

@@ -20,7 +20,7 @@ export async function GET() {
       include: {
         project: true,
         assignee: {
-          select: { id: true, name: true, employeeId: true }
+          select: { id: true, name: true, employeeId: true, phone: true }
         },
         createdBy: {
           select: { id: true, name: true }
@@ -31,7 +31,7 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json({ data: picklists });
+    return NextResponse.json({ data: picklists, currentUser: { id: actor.id, name: actor.name, employeeId: actor.employeeId } });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -69,14 +69,14 @@ export async function POST(req: Request) {
       finalProjectId = createdProject.id;
     }
 
-    // Generate unique code for picklist (e.g. PKL-20240123-XXXX)
+    // Generate unique code for picklist (e.g. PL-20240123-XXXX)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const count = await prisma.picklist.count({
       where: {
-        code: { startsWith: `PKL-${dateStr}` }
+        code: { startsWith: `PL-${dateStr}` }
       }
     });
-    const code = `PKL-${dateStr}-${String(count + 1).padStart(4, "0")}`;
+    const code = `PL-${dateStr}-${String(count + 1).padStart(4, "0")}`;
 
     const picklist = await prisma.picklist.create({
       data: {

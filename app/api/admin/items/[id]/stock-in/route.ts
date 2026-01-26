@@ -90,6 +90,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             ? { stockUsed: { increment: qtyBase }, stockNew: { decrement: qtyBase } }
             : { stockNew: { increment: qtyBase } },
       }),
+      prisma.auditLog.create({
+        data: {
+          action: "STOCK_ADJUSTMENT",
+          userId: actor.id,
+          detail: `Adj Stock: ${item.name} (${qtyBase > 0 ? '+' : ''}${qtyBase} ${item.unit})`,
+          metaJson: JSON.stringify({ itemId, mode, qtyBase, note: noteStored })
+        }
+      })
     ]);
 
     return NextResponse.json({
