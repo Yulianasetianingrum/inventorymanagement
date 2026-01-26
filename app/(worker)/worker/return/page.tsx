@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default function AdHocReturnPage() {
+function ReturnContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefillItemName = searchParams.get("itemName");
@@ -329,5 +329,13 @@ export default function AdHocReturnPage() {
 
       </main>
     </div>
+  );
+}
+
+export default function AdHocReturnPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading form...</div>}>
+      <ReturnContent />
+    </Suspense>
   );
 }
