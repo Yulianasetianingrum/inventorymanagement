@@ -16,7 +16,7 @@ const accessCards = [
       "Pembuatan & Penugasan Picklist",
       "Audit Performa & Supplier Benchmarking",
     ],
-    buttonLabel: "Masuk Panel Admin",
+    buttonLabel: "PERGI KE HALAMAN ADMIN →",
     href: "/login",
   },
   {
@@ -29,7 +29,7 @@ const accessCards = [
       "Validasi Scan Foto Pengambilan",
       "Proses Return & Update Stok Bekas",
     ],
-    buttonLabel: "Mulai Tugas Worker",
+    buttonLabel: "MASUK KE PORTAL WORKER →",
     href: "/worker/login",
   },
 ];
@@ -166,12 +166,26 @@ export default function HomePage() {
               Sistem ini untuk penggunaan internal Apix Interior.
               Minta akun atau reset kredensial ke Administrator Gudang.
             </p>
-            <Link
-              href="https://wa.me/6281214239373"
-              className="inline-flex items-center gap-3 bg-white text-navy px-8 py-4 rounded-2xl font-black hover:bg-gold hover:text-navy transition-all shadow-xl"
-            >
-              Hubungi Helpdesk Admin
-            </Link>
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
+              <Link
+                href="https://wa.me/6281214239373"
+                className="inline-flex items-center gap-3 bg-white text-navy px-8 py-4 rounded-2xl font-black hover:bg-gold hover:text-navy transition-all shadow-xl"
+              >
+                Hubungi Helpdesk Admin
+              </Link>
+              <a
+                href="/login"
+                className="block w-full md:w-auto text-center py-3 bg-navy/5 text-navy/40 text-[10px] font-black rounded-xl shadow-sm active:scale-95 transition-all hover:bg-navy/10 hover:text-navy"
+              >
+                PERGI KE HALAMAN ADMIN →
+              </a>
+              <a
+                href="/worker/login"
+                className="block w-full md:w-auto text-center py-3 bg-white/5 text-white/40 text-[10px] font-black rounded-xl border border-white/5 shadow-sm active:scale-95 transition-all hover:bg-white/10 hover:text-white"
+              >
+                MASUK KE PORTAL WORKER →
+              </a>
+            </div>
           </div>
         </section>
       </main>
@@ -187,7 +201,7 @@ export default function HomePage() {
           </div>
           <div className="flex gap-8 text-[11px] font-black uppercase tracking-widest text-navy/60">
             <span>Security Logged</span>
-            <span>v2.4.1</span>
+            <span>v3.0.0 — Unified Portal</span>
           </div>
         </div>
       </footer>

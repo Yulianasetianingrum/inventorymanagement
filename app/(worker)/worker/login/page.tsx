@@ -41,14 +41,12 @@ export default function WorkerLoginPage({ searchParams }: PageProps) {
               </div>
             )}
 
-            {errorKey === "wrong_portal" && (
-              <a
-                href="/login"
-                className="block w-full text-center py-3 bg-navy text-white text-[10px] font-black rounded-xl shadow-lg active:scale-95 transition-all"
-              >
-                PERGI KE HALAMAN ADMIN →
-              </a>
-            )}
+            <a
+              href="/login"
+              className="block w-full text-center py-3 bg-navy text-white text-[10px] font-black rounded-xl shadow-lg active:scale-95 transition-all"
+            >
+              PERGI KE HALAMAN ADMIN →
+            </a>
 
             <form method="post" action="/api/auth/login-worker" className="space-y-4">
               <div className="space-y-2">

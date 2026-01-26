@@ -42,14 +42,12 @@ export default function AdminLoginPage({ searchParams }: PageProps) {
               </div>
             )}
 
-            {errorKey === "wrong_portal" && (
-              <a
-                href="/worker/login"
-                className="block w-full text-center py-3 bg-white/10 text-white text-xs font-black rounded-xl border border-white/10 shadow-lg active:scale-95 transition-all hover:bg-white/20"
-              >
-                MASUK KE PORTAL WORKER →
-              </a>
-            )}
+            <a
+              href="/worker/login"
+              className="block w-full text-center py-3 bg-white/10 text-white text-xs font-black rounded-xl border border-white/10 shadow-lg active:scale-95 transition-all hover:bg-white/20"
+            >
+              MASUK KE PORTAL WORKER →
+            </a>
 
             <form method="post" action="/api/auth/login-admin" className="space-y-5">
               <div className="space-y-2">
