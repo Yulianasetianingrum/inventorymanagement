@@ -26,8 +26,11 @@ export async function GET(req: Request) {
                     select: {
                         assignedPicklists: {
                             where: {
-                                status: "DELIVERED",
-                                deliveredAt: { gte: startDate }
+                                status: { in: ["PICKED", "DELIVERED"] },
+                                OR: [
+                                    { pickedAt: { gte: startDate } },
+                                    { deliveredAt: { gte: startDate } }
+                                ]
                             }
                         }
                     }
