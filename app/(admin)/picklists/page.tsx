@@ -226,12 +226,12 @@ export default function PicklistPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-black text-navy uppercase tracking-widest">Metode Distribusi</label>
                   <select
-                    className="w-full h-11 bg-off-white border border-navy/5 rounded-xl px-4 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 transition-all cursor-pointer"
                     value={mode}
-                    onChange={e => setMode(e.target.value)}
+                    onChange={(e) => setMode(e.target.value as "INTERNAL" | "EXTERNAL")}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 appearance-none bg-slate-50"
                   >
                     <option value="INTERNAL">Internal (Gudang → Workshop)</option>
-                    <option value="EXTERNAL">External (Pembelian/Restock Supplier)</option>
+                    {/* External mode removed as per user request (too complicated) */}
                   </select>
                 </div>
 
