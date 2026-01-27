@@ -13,7 +13,7 @@ export async function GET() {
             where: {
                 picklists: {
                     some: {
-                        status: { in: ['READY', 'PICKING'] }
+                        status: { in: ['READY', 'PICKING', 'PICKED'] }
                     }
                 }
             },

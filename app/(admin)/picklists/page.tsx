@@ -56,7 +56,10 @@ export default function PicklistPage() {
   }, [projects, projectSearch]);
 
   useEffect(() => {
-    fetchData();
+    // Run auto-close logic first
+    fetch("/api/admin/picklists/auto-close")
+      .then(() => fetchData())
+      .catch(() => fetchData());
   }, []);
 
   async function fetchData() {
@@ -497,6 +500,12 @@ export default function PicklistPage() {
                                 💬 Chat
                               </button>
                             </div>
+                          )}
+
+                          {p.status === 'PICKED' && (
+                            <span className="ml-2 px-2 py-0.5 bg-success/10 text-success text-[8px] font-bold rounded border border-success/20 uppercase tracking-wider">
+                              ✅ Menunggu Jadwal
+                            </span>
                           )}
                         </div>
                       </td>

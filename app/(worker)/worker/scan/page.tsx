@@ -17,7 +17,6 @@ export default function MaterialWithdrawalPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [projectSearch, setProjectSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   useEffect(() => {
@@ -191,61 +190,22 @@ export default function MaterialWithdrawalPage() {
       </header>
 
       <main className="px-4 md:px-8 -mt-6 relative z-20 space-y-6 max-w-4xl mx-auto">
-        {/* Project Select (Searchable) */}
+        {/* Project Select */}
         <div className="bg-white p-5 rounded-[24px] shadow-lg border border-slate-100 relative z-30">
           <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Project Tujuan</label>
-
-          {!projectId ? (
-            <div className="relative">
-              <input
-                className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 pl-11 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-slate-400"
-                placeholder="Cari Project..."
-                value={projectSearch}
-                onChange={e => setProjectSearch(e.target.value)}
-              />
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg grayscale">🔍</span>
-
-              {/* Dropdown Results */}
-              {projectSearch && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-navy/5 z-50 overflow-hidden max-h-[250px] overflow-y-auto custom-scrollbar">
-                  {projects.filter(p =>
-                    p.namaProjek.toLowerCase().includes(projectSearch.toLowerCase()) ||
-                    p.namaKlien.toLowerCase().includes(projectSearch.toLowerCase())
-                  ).map(p => (
-                    <div
-                      key={p.id}
-                      onClick={() => {
-                        setProjectId(p.id);
-                        setProjectSearch("");
-                      }}
-                      className="p-4 hover:bg-off-white cursor-pointer border-b border-navy/5 last:border-0"
-                    >
-                      <div className="font-bold text-navy text-sm">{p.namaProjek}</div>
-                      <div className="text-[10px] font-bold text-navy/40 uppercase">{p.namaKlien}</div>
-                    </div>
-                  ))}
-                  {projects.filter(p =>
-                    p.namaProjek.toLowerCase().includes(projectSearch.toLowerCase())
-                  ).length === 0 && (
-                      <div className="p-4 text-center text-xs text-slate-400 italic">Project tidak ditemukan</div>
-                    )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-navy/5 p-4 rounded-xl flex items-center justify-between border border-navy/5">
-              <div>
-                <div className="font-black text-navy text-sm">{projects.find(p => p.id === projectId)?.namaProjek}</div>
-                <div className="text-[10px] font-bold text-navy/40 uppercase tracking-wide">{projects.find(p => p.id === projectId)?.namaKlien}</div>
-              </div>
-              <button
-                onClick={() => setProjectId("")}
-                className="text-[10px] font-bold text-gold hover:underline uppercase tracking-wide bg-navy px-3 py-1.5 rounded-lg"
-              >
-                Ganti
-              </button>
-            </div>
-          )}
+          <div className="relative">
+            <select
+              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 appearance-none"
+              value={projectId}
+              onChange={e => setProjectId(e.target.value)}
+            >
+              <option value="">-- Pilih Project --</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.namaProjek} - {p.namaKlien}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-navy/40">▼</div>
+          </div>
         </div>
 
         {/* Item Selector */}

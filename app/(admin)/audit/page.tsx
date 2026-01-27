@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { HistoryPopup } from "./HistoryPopup";
+
 
 export default function AuditPage() {
   const [activeTab, setActiveTab] = useState("KPI"); // KPI, ITEMS, SPENDING
@@ -9,6 +11,7 @@ export default function AuditPage() {
   const [benchmarkSearch, setBenchmarkSearch] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -123,7 +126,11 @@ export default function AuditPage() {
                     </h2>
                     <div className="space-y-4">
                       {data?.workers?.map((w: any, idx: number) => (
-                        <div key={w.id} className="flex items-center justify-between p-4 rounded-2xl bg-off-white/50 border border-navy/5 hover:border-gold/30 transition-all">
+                        <div
+                          key={w.id}
+                          onClick={() => setSelectedUser(w)}
+                          className="flex items-center justify-between p-4 rounded-2xl bg-off-white/50 border border-navy/5 hover:border-gold/30 hover:bg-gold/5 cursor-pointer transition-all"
+                        >
                           <div className="flex items-center gap-4">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${idx < 3 ? 'bg-gold text-navy' : 'bg-navy/5 text-navy/40'}`}>
                               {idx + 1}
@@ -488,6 +495,12 @@ export default function AuditPage() {
         <div className="text-[10px] font-black text-navy/20 uppercase tracking-[0.4em]">Business Intelligence Center</div>
         <div className="text-[11px] font-black text-gold/60 uppercase tracking-widest">Apix Interior © 2026</div>
       </footer>
+
+      <HistoryPopup
+        isOpen={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        targetUser={selectedUser}
+      />
     </div>
   );
 }
