@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,23 +18,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         assignee: true,
         lines: { include: { item: { include: { storageLocation: true } } } },
         project: true,
-        events: { include: { actor: true }, orderBy: { createdAt: "desc" } }
+        events: { include: { actor: true }, orderBy: { createdAt: "desc" } },
+        evidence: true
       },
     }) as any;
 
     if (!picklist) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    // Try to fetch evidence separately if the join fails due to type mismatch
-    // (This is a safety fallback)
-    try {
-      const evidence = await (prisma as any).picklistEvidence.findMany({
-        where: { picklistId: id }
-      });
-      picklist.evidence = evidence;
-    } catch {
-      picklist.evidence = [];
     }
 
     const isOwner = picklist.assignee?.employeeId === session.employeeId;

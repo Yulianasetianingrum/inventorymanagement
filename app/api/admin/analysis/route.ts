@@ -51,14 +51,35 @@ export async function GET(req: Request) {
         });
 
         // 4. Sort for Fast / Slow / Dead
-        // Fast: Highest Usage
+
+        // NEW LOGIC: Calculate Consumption based on Picklists (Internal Outgoing)
+        const consumption = await prisma.picklistLine.groupBy({
+            by: ['itemId'],
+            where: {
+                picklist: {
+                    status: { in: ['PICKED', 'DELIVERED'] },
+                    mode: 'INTERNAL'
+                }
+            },
+            _sum: {
+                pickedQty: true
+            }
+        });
+
+        const consumptionMap = new Map<number, number>();
+        consumption.forEach(c => {
+            consumptionMap.set(c.itemId, c._sum.pickedQty || 0);
+        });
+
+        // Fast: Highest Consumption (Real Usage)
         const fastMoving = [...itemPerformance]
-            .sort((a, b) => b.stockUsed - a.stockUsed)
+            .map(i => ({ ...i, consumption: consumptionMap.get(i.id) || 0 }))
+            .sort((a, b) => b.consumption - a.consumption)
             .slice(0, 10);
 
-        // Dead: Zero Usage & Has Stock
+        // Dead: Zero Consumption & Has Stock (and created a while ago? simplified for now)
         const deadStock = itemPerformance
-            .filter(i => i.stockUsed === 0 && i.totalStock > 0)
+            .filter(i => (consumptionMap.get(i.id) || 0) === 0 && i.totalStock > 0)
             .sort((a, b) => b.value - a.value) // Most expensive dead stock first
             .slice(0, 10);
 
