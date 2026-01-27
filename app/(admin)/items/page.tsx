@@ -1237,14 +1237,16 @@ function AdminItemsContent() {
                                       <option value="pack">Pack</option>
                                     </select>
                                     {row.unitQty === 'pack' && (
-                                      <div className="absolute top-7 left-0 w-[120%] z-20 bg-white shadow-xl border border-gray-100 rounded-xl p-2 animate-in zoom-in-95 origin-top-left">
+                                      <div className="absolute bottom-full mb-1 left-0 w-[140%] z-50 bg-white shadow-xl border border-navy/10 rounded-xl p-2 animate-in slide-in-from-bottom-2 fade-in duration-200 origin-bottom-left">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-[9px] font-bold text-gray-400">ISI:</span>
-                                          <input type="number" className="w-full h-6 text-center text-[10px] font-bold border border-gray-200 rounded focus:border-navy focus:ring-1 focus:ring-navy/20 outline-none"
-                                            placeholder="1..."
+                                          <span className="text-[9px] font-black text-navy/40 uppercase tracking-wider whitespace-nowrap">ISI / PACK:</span>
+                                          <input type="number" className="w-full h-7 text-center text-xs font-black text-navy border border-navy/10 rounded-lg focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none shadow-inner bg-slate-50"
+                                            placeholder="1"
+                                            autoFocus
                                             value={row.isiPerPack}
                                             onChange={e => { const n = [...bulkItems]; n[idx].isiPerPack = e.target.value; setBulkItems(n); }} />
                                         </div>
+                                        <div className="absolute -bottom-1.5 left-4 w-3 h-3 bg-white border-b border-r border-navy/10 rotate-45 transform"></div>
                                       </div>
                                     )}
                                   </td>
