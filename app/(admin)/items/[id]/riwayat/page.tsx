@@ -206,18 +206,7 @@ export default function ItemRiwayatPage() {
           {error ? <Card className={styles.errorCard}>{error}</Card> : null}
 
           <Card className={styles.tableCard}>
-            {supplierHistory.length ? (
-              <div className={styles.supplierHistoryBar}>
-                <div className={styles.supplierHistoryTitle}>Supplier yang pernah dipakai:</div>
-                <div className={styles.supplierHistoryList}>
-                  {supplierHistory.map((s) => (
-                    <span key={s.id} className={styles.supplierChip}>
-                      {s.name || `Supplier #${s.id}`}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+
             <div className={styles.tableContainer}>
               <table className={styles.listTable}>
                 <thead>
@@ -258,12 +247,12 @@ export default function ItemRiwayatPage() {
                           {b.note ? <div>{b.note}</div> : b.mode === "bekas" ? null : "-"}
                         </td>
                         <td className={styles.actionCell}>
-                        <button className={styles.actionBtn} onClick={() => openEdit(b)}>
-                          Edit
-                        </button>
-                        <button className={styles.dangerBtn} onClick={() => setDeleteTarget(b)}>
-                          Hapus
-                        </button>
+                          <button className={styles.actionBtn} onClick={() => openEdit(b)}>
+                            Edit
+                          </button>
+                          <button className={styles.dangerBtn} onClick={() => setDeleteTarget(b)}>
+                            Hapus
+                          </button>
                         </td>
                       </tr>
                     );
@@ -300,7 +289,7 @@ export default function ItemRiwayatPage() {
                         {isBekas ? `Qty bekas: ${qtyBekas} ${unitLabel}` : `Qty baru: ${qtyBaru ?? 0} ${unitLabel}`}
                       </div>
                       <div className={styles.cardMeta}>Supplier: {b.supplierName || "-"}</div>
-                  </div>
+                    </div>
                     <div className={styles.cardValue}>{isBekas ? "-" : formatCurrency(nilaiRow)}</div>
                   </div>
                   <div className={styles.cardStats}>
@@ -317,12 +306,12 @@ export default function ItemRiwayatPage() {
                     <Button onClick={() => openEdit(b)} style={{ background: "var(--navy)", color: "#fff" }}>
                       Edit
                     </Button>
-                  <Button
-                    onClick={() => setDeleteTarget(b)}
-                    style={{ background: "#fff1f1", color: "var(--danger)", border: "1px solid #fecdd3" }}
-                  >
-                    Hapus
-                  </Button>
+                    <Button
+                      onClick={() => setDeleteTarget(b)}
+                      style={{ background: "#fff1f1", color: "var(--danger)", border: "1px solid #fecdd3" }}
+                    >
+                      Hapus
+                    </Button>
                   </div>
                   <div className={styles.cardNote}>
                     {isBekas ? <div className={styles.badgeTransfer}>Dipindah dari stok baru</div> : null}
