@@ -144,8 +144,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mode,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to add stock", error);
-    return NextResponse.json({ error: "Failed to add stock" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to add stock: " + (error.message || String(error)) }, { status: 500 });
   }
 }
