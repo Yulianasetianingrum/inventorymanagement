@@ -324,58 +324,82 @@ export default function ItemRiwayatPage() {
           </div>
 
           <Modal open={editOpen} title="Edit Batch Pembelian" onClose={() => setEditOpen(false)}>
-            <div className={styles.modalForm}>
-              <div className={styles.formGrid}>
-                <div className={styles.formRow}>
-                  <label>Tanggal</label>
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <label className="text-xs font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Tanggal</label>
                   <input
                     type="date"
+                    className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/5"
                     value={editForm.date}
                     onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
                   />
                 </div>
-                <div className={styles.formRow}>
-                  <label>Mode</label>
-                  <div className={styles.muted} style={{ padding: "8px 0" }}>
-                    {editForm.mode === "bekas" ? "Barang bekas (kembali)" : "Barang baru"}
+                <div className="col-span-1">
+                  <label className="text-xs font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Mode</label>
+                  <div className="w-full h-11 flex items-center bg-gray-50 border border-transparent rounded-xl px-4 text-sm font-bold text-gray-500">
+                    {editForm.mode === "bekas" ? "Barang Bekas (Retur/Sisa)" : "Barang Baru (Beli)"}
                   </div>
                 </div>
-                <div className={styles.formRow}>
-                  <label>{editForm.mode === "bekas" ? `Qty Bekas (${unitLabel})` : `Qty Baru (${unitLabel})`}</label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-black text-navy/40 uppercase tracking-widest mb-1.5 block">
+                    {editForm.mode === "bekas" ? `Qty Bekas (${unitLabel})` : `Qty Baru (${unitLabel})`}
+                  </label>
                   <input
                     type="number"
+                    className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/5"
                     value={editForm.qtyInBase}
                     onChange={(e) => setEditForm((f) => ({ ...f, qtyInBase: e.target.value }))}
                   />
                 </div>
-                {editForm.mode !== "bekas" ? (
-                  <div className={styles.formRow}>
-                    <label>Unit Cost (rupiah)</label>
-                    <input
-                      type="number"
-                      value={editForm.unitCost}
-                      onChange={(e) => setEditForm((f) => ({ ...f, unitCost: e.target.value }))}
-                    />
-                  </div>
-                ) : null}
-                <div className={styles.formRow}>
-                  <label>Supplier</label>
-                  <div className={styles.muted} style={{ padding: "8px 0" }}>
-                    {editTarget?.supplierName || "-"}
-                  </div>
-                </div>
-                {/* Qty tersisa di-hide; tetap dikirim nilai lama agar tidak berubah */}
-                <div className={styles.formRow}>
-                  <label>Catatan/Nota/Supplier</label>
-                  <input
-                    value={editForm.note}
-                    onChange={(e) => setEditForm((f) => ({ ...f, note: e.target.value }))}
-                  />
+                <div>
+                  <label className="text-xs font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Unit Cost</label>
+                  {editForm.mode !== "bekas" ? (
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy/30 font-bold">Rp</span>
+                      <input
+                        type="number"
+                        className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 pl-10 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/5"
+                        value={editForm.unitCost}
+                        onChange={(e) => setEditForm((f) => ({ ...f, unitCost: e.target.value }))}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-11 flex items-center bg-gray-50 border border-transparent rounded-xl px-4 text-sm font-bold text-gray-400">
+                      -
+                    </div>
+                  )}
                 </div>
               </div>
-              <button className={styles.saveBtn} onClick={saveEdit}>
-                {actionLoading ? "Menyimpan..." : "Simpan"}
-              </button>
+
+              <div>
+                <label className="text-xs font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Supplier</label>
+                <div className="w-full h-11 flex items-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 text-sm font-bold text-navy">
+                  {editTarget?.supplierName || "Tidak ada data supplier"}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Catatan / Referensi</label>
+                <textarea
+                  className="w-full h-20 bg-white border border-navy/10 rounded-xl p-4 text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/5 resize-none"
+                  value={editForm.note}
+                  onChange={(e) => setEditForm((f) => ({ ...f, note: e.target.value }))}
+                  placeholder="Tambahkan catatan..."
+                />
+              </div>
+
+              <div className="pt-4">
+                <Button
+                  onClick={saveEdit}
+                  className="w-full h-12 bg-navy text-white rounded-xl font-bold hover:bg-navy/90 shadow-lg shadow-navy/20 transition-all text-sm uppercase tracking-wide"
+                >
+                  {actionLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
+                </Button>
+              </div>
             </div>
           </Modal>
 
