@@ -7,10 +7,9 @@ async function main() {
     try {
         const s = await prisma.supplier.create({
             data: {
-                namaToko: "Test Supplier " + Date.now(),
-                // Mimicking the code in stock-in route
-                keperluanItems: "-",
-                alamat: "-",
+                namaToko: "Test Supplier JSON " + Date.now(),
+                keperluanItems: JSON.stringify(["Debug Verified"]),
+                alamat: "Alamat Debug Correct",
             }
         });
         console.log("Success:", s);

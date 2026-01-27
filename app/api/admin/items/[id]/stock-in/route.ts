@@ -60,7 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const newSupplier = await prisma.supplier.create({
           data: {
             namaToko: supplierName.trim() || "Supplier Baru",
-            keperluanItems: "General Supply", // Safer length for constraints
+            keperluanItems: JSON.stringify(["General Supply"]), // Fix: Send valid JSON string
             alamat: "Alamat belum diisi"
           }
         });
@@ -117,6 +117,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           unitCost: BigInt(unitCost),
           qtyRemaining: BigInt(qtyBase),
           note: noteStored,
+          supplierId: finalSupplierId // Fix: Link batch to supplier
         },
       }),
       prisma.item.update({
