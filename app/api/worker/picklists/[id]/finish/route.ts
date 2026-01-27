@@ -48,6 +48,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Gagal menyimpan foto" }, { status: 500 });
   }
 
+  // Validate Stock Availability for INTERNAL Picklists
+  if (picklist.mode !== "EXTERNAL") {
+    for (const line of picklist.lines) {
+      const mode = lineModes[line.id] || "baru";
+      const qtyNeeded = line.pickedQty > 0 ? line.pickedQty : line.reqQty;
+
+      const freshItem = await prisma.item.findUnique({
+        where: { id: line.itemId },
+        select: { stockNew: true, stockUsed: true, name: true }
+      });
+
+      if (!freshItem) return NextResponse.json({ error: `Item ${line.itemId} not found` }, { status: 400 });
+
+      if (mode === "baru" && freshItem.stockNew < qtyNeeded) {
+        return NextResponse.json({
+          error: `Stok BARU untuk item "${freshItem.name}" tidak mencukupi (Butuh: ${qtyNeeded}, Ada: ${freshItem.stockNew})`
+        }, { status: 400 });
+      }
+
+      if (mode === "bekas" && freshItem.stockUsed < qtyNeeded) {
+        return NextResponse.json({
+          error: `Stok BEKAS untuk item "${freshItem.name}" tidak mencukupi (Butuh: ${qtyNeeded}, Ada: ${freshItem.stockUsed})`
+        }, { status: 400 });
+      }
+    }
+  }
+
   // Update Stock Logic: Reduce stockNew
   try {
     await prisma.$transaction(async (tx) => {

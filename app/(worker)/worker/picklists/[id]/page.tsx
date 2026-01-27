@@ -254,13 +254,21 @@ export default function WorkerPicklistDetailPage() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => setLineModes(prev => ({ ...prev, [l.id]: "baru" }))}
-                      className={`flex-1 h-10 md:h-11 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${lineModes[l.id] === "baru" ? "bg-navy text-gold shadow-lg shadow-navy/20 border-2 border-gold/20 scale-[1.02]" : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100"}`}
+                      disabled={l.item.stockNew < l.reqQty && picklist.mode !== 'EXTERNAL'}
+                      className={`flex-1 h-10 md:h-11 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 
+                        ${lineModes[l.id] === "baru" ? "bg-navy text-gold shadow-lg shadow-navy/20 border-2 border-gold/20 scale-[1.02]" : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100"}
+                        disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-300
+                      `}
                     >
                       ✨ BARU ({l.item.stockNew})
                     </button>
                     <button
                       onClick={() => setLineModes(prev => ({ ...prev, [l.id]: "bekas" }))}
-                      className={`flex-1 h-10 md:h-11 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${lineModes[l.id] === "bekas" ? "bg-amber-600 text-white shadow-lg shadow-amber-900/20 border-2 border-amber-500/20 scale-[1.02]" : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100"}`}
+                      disabled={l.item.stockUsed < l.reqQty && picklist.mode !== 'EXTERNAL'}
+                      className={`flex-1 h-10 md:h-11 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 
+                        ${lineModes[l.id] === "bekas" ? "bg-amber-600 text-white shadow-lg shadow-amber-900/20 border-2 border-amber-500/20 scale-[1.02]" : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100"}
+                        disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-300
+                      `}
                     >
                       ♻️ BEKAS ({l.item.stockUsed})
                     </button>
