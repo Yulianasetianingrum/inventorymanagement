@@ -116,8 +116,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           qtyInBase: BigInt(qtyBase),
           unitCost: BigInt(unitCost),
           qtyRemaining: BigInt(qtyBase),
-          note: noteStored,
-          supplierId: finalSupplierId // Fix: Link batch to supplier
+          note: noteStored
         },
       }),
       prisma.item.update({
