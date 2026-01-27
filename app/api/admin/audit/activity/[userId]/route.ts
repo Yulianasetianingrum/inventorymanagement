@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 
-export async function GET(req: Request, { params }: { params: { userId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ userId: string }> }) {
     const session = await getSession();
     if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
-        const { userId } = params;
+        const { userId } = await params;
 
         // Fetch recent activities from AuditLog
         const activities = await prisma.auditLog.findMany({
