@@ -53,6 +53,21 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   }
 
   try {
+    const existing = await prisma.picklist.findUnique({
+      where: { id },
+      select: { status: true }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Picklist not found" }, { status: 404 });
+    }
+
+    if (existing.status === "PICKED" || existing.status === "DELIVERED") {
+      return NextResponse.json({
+        error: "Tidak dapat menghapus picklist yang sudah diproses (Status: " + existing.status + ")"
+      }, { status: 400 });
+    }
+
     await prisma.$transaction([
       prisma.picklistLine.deleteMany({ where: { picklistId: id } }),
       prisma.picklistEvent.deleteMany({ where: { picklistId: id } }),

@@ -1,37 +1,16 @@
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
+// Refactored to store Base64 directly in DB for reliability in cloud environments
+// This avoids filesystem persistence issues on ephemeral deployments (Vercel, Docker, etc.)
 
 export async function saveBase64Image(base64Data: string): Promise<string> {
-    // 1. Strip prefix (e.g. "data:image/jpeg;base64,")
-    const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-
-    if (!matches || matches.length !== 3) {
-        throw new Error("Invalid base64 string");
+    // 1. Basic validation
+    if (!base64Data.startsWith("data:image")) {
+        // If it's already a URL or invalid, just return it (fallback)
+        if (base64Data.startsWith("http") || base64Data.startsWith("/")) return base64Data;
+        throw new Error("Invalid base64 image data");
     }
 
-    const type = matches[1];
-    const buffer = Buffer.from(matches[2], "base64");
-
-    // 2. Determine extension
-    let ext = "jpg";
-    if (type === "image/png") ext = "png";
-    if (type === "image/jpeg") ext = "jpg";
-    if (type === "image/webp") ext = "webp";
-    // add more if needed
-
-    // 3. Ensure dir exists
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "evidence");
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    // 4. Save file
-    const filename = `${uuidv4()}.${ext}`;
-    const filepath = path.join(uploadDir, filename);
-
-    fs.writeFileSync(filepath, buffer);
-
-    // 5. Return public URL
-    return `/uploads/evidence/${filename}`;
+    // 2. Return the data URI directly
+    // The database column is LongText, which can hold ~4GB of data.
+    // Compressed images (~50KB-100KB) fit easily.
+    return base64Data;
 }

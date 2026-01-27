@@ -552,17 +552,19 @@ export default function PicklistPage() {
                           }}
                           className="mt-2 mr-3 text-[10px] font-bold text-navy hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          Edit
+                          edit
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(p.id);
-                          }}
-                          className="mt-2 text-[10px] font-bold text-red-500 hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          Hapus
-                        </button>
+                        {p.status !== 'PICKED' && p.status !== 'DELIVERED' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(p.id);
+                            }}
+                            className="mt-2 text-[10px] font-bold text-red-500 hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            Hapus
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -645,15 +647,17 @@ export default function PicklistPage() {
                       >
                         Edit
                       </button>
-                      <button
-                        className="text-[10px] font-bold text-danger hover:underline uppercase"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(p.id);
-                        }}
-                      >
-                        Hapus
-                      </button>
+                      {p.status !== 'PICKED' && p.status !== 'DELIVERED' && (
+                        <button
+                          className="text-[10px] font-bold text-danger hover:underline uppercase"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(p.id);
+                          }}
+                        >
+                          Hapus
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
