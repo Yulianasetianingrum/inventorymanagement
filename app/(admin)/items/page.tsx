@@ -444,7 +444,7 @@ function AdminItemsContent() {
               unitQty: stockForm.unitQty,
               isiPerPack: stockForm.unitQty === "pack" ? Number(stockForm.isiPerPack) : undefined,
               harga: Number(stockForm.harga),
-              priceType: "per_satuan",
+              priceType: stockForm.priceType,
               mode: "baru",
               supplierId: singleSelectedSupplier.id,
               supplierName: singleSelectedSupplier.name
@@ -1232,7 +1232,7 @@ function AdminItemsContent() {
                                   <td className="p-1">
                                     <select className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-1 text-[10px] font-semibold focus:outline-none cursor-pointer"
                                       value={row.unitQty || 'satuan'}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].unitQty = e.target.value; setBulkItems(n); }}>
+                                      onChange={e => { const n = [...bulkItems]; n[idx].unitQty = e.target.value; n[idx].priceType = e.target.value === 'pack' ? 'per_pack' : 'per_satuan'; setBulkItems(n); }}>
                                       <option value="satuan">Unit</option>
                                       <option value="pack">Pack</option>
                                     </select>
@@ -1458,7 +1458,7 @@ function AdminItemsContent() {
                           </div>
                           <div>
                             <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Satuan</label>
-                            <select className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.unitQty} onChange={e => setStockForm({ ...stockForm, unitQty: e.target.value as any })}>
+                            <select className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.unitQty} onChange={e => setStockForm({ ...stockForm, unitQty: e.target.value as any, priceType: e.target.value === 'pack' ? 'per_pack' : 'per_satuan' })}>
                               <option value="satuan">Pcs/Satuan</option>
                               <option value="pack">Pack/Dus</option>
                             </select>
@@ -1473,7 +1473,7 @@ function AdminItemsContent() {
 
                           <div>
                             <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Harga Beli</label>
-                            <input type="number" className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, priceType: 'per_satuan', harga: e.target.value })} placeholder="Rp" />
+                            <input type="number" className="w-full h-10 bg-white border border-navy/5 rounded-lg px-3 text-sm font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy" value={stockForm.harga} onChange={e => setStockForm({ ...stockForm, harga: e.target.value })} placeholder="Rp" />
                           </div>
                         </div>
                       </div>
