@@ -373,15 +373,17 @@ export default function AdminDashboardPage() {
                   <div className="text-gray-400 text-[10px] mt-1">Jenis barang aktif</div>
                 </Card>
 
-                <Card className={`border border-gray-100 shadow-sm rounded-xl p-5 ${analysisData.kpi.lowStockCount > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
-                  <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${analysisData.kpi.lowStockCount > 0 ? 'text-red-400' : 'text-green-600'}`}>Status Alert</div>
-                  <div className={`text-2xl font-black ${analysisData.kpi.lowStockCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {analysisData.kpi.lowStockCount} Item
-                  </div>
-                  <div className={`text-[10px] mt-1 ${analysisData.kpi.lowStockCount > 0 ? 'text-red-400' : 'text-green-600'}`}>
-                    {analysisData.kpi.lowStockCount > 0 ? 'Perlu Restock Segera!' : 'Stok Aman Terkendali'}
-                  </div>
-                </Card>
+                <Link href="/items?filter=priority" className="contents">
+                  <Card className={`border border-gray-100 shadow-sm rounded-xl p-5 cursor-pointer hover:shadow-md hover:border-red-200 transition-all ${analysisData.kpi.lowStockCount > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+                    <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${analysisData.kpi.lowStockCount > 0 ? 'text-red-400' : 'text-green-600'}`}>Status Alert</div>
+                    <div className={`text-2xl font-black ${analysisData.kpi.lowStockCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {analysisData.kpi.lowStockCount} Item
+                    </div>
+                    <div className={`text-[10px] mt-1 ${analysisData.kpi.lowStockCount > 0 ? 'text-red-400' : 'text-green-600'}`}>
+                      {analysisData.kpi.lowStockCount > 0 ? 'Perlu Restock Segera! (Klik untuk melihat)' : 'Stok Aman Terkendali'}
+                    </div>
+                  </Card>
+                </Link>
               </div>
 
               {/* 2. Charts Row */}

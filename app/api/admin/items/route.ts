@@ -24,6 +24,8 @@ const computeStatus = (total: number, minStock: number): RefillStatus => {
   return "Aman";
 };
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const actor = await ensureAdmin();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -100,9 +102,10 @@ export async function GET(req: Request) {
         nilaiStok: agg.val ?? 0,
       };
     })
-    .filter((it) => {
-      if (filter === "low") return it.statusRefill === "Wajib Refill";
-      if (filter === "empty") return it.stockTotal === 0;
+    .filter((item) => {
+      if (filter === "priority") return item.statusRefill !== "Aman";
+      if (filter === "low") return item.statusRefill === "Wajib Refill";
+      if (filter === "empty") return item.statusRefill === "Habis";
       return true;
     });
 

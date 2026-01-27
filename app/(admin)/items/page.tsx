@@ -327,12 +327,14 @@ function AdminItemsContent() {
     try {
       const q = new URLSearchParams();
       if (search.trim()) q.set("search", search.trim());
-      q.set("filter", effectiveFilter === "priority" ? "all" : effectiveFilter);
-      const data = await fetchJson(`/api/admin/items?${q.toString()}`);
+      q.set("filter", effectiveFilter); // Pass filter directly to API
+      q.set("_t", Date.now().toString()); // Cache buster
+
+      const data = await fetchJson(`/api/admin/items?${q.toString()}`, { cache: "no-store" });
       let list = data.data ?? [];
-      if (effectiveFilter === "priority") {
-        list = list.filter((i: ItemRow) => i.statusRefill !== "Aman");
-      }
+
+      // Client side filtering is no longer needed as API handles it
+
       setItems(list);
     } catch (e) {
       showToast("Gagal mengambil data items", true);
@@ -343,11 +345,17 @@ function AdminItemsContent() {
 
   useEffect(() => {
     const f = String(searchParams?.get("filter") || "").trim();
-    if (f === "priority" || f === "all" || f === "low" || f === "empty") setFilter(f as FilterOption);
-    loadItems();
+    if (f === "priority" || f === "all" || f === "low" || f === "empty") {
+      setFilter(f as FilterOption);
+      loadItems(f as FilterOption);
+    } else {
+      loadItems();
+    }
   }, [searchParams]);
 
   useEffect(() => {
+    // Only reload if search is actually present or changed, to avoid clashing with initial filter load
+    if (!search) return;
     const t = setTimeout(() => loadItems(), 300);
     return () => clearTimeout(t);
   }, [search]);
