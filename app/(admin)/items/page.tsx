@@ -222,61 +222,63 @@ function AdminItemsContent() {
     if (!bulkBarcode.trim()) return;
 
     const code = bulkBarcode.trim();
-    // 1. Check if item is already in the BULK LIST (Merge/Increment)
+
+    // 1. Search in Loaded Items (Local DB Context)
+    const existing = items.find(i => i.barcode === code || i.id.toString() === code);
+
+    // 2. Check if already in current bulk list to Merge/Increment vs Add New Line
+    // User requested "tiap di scan itu fill barcode otomatis".
+    // If user wants to scan 10 times to add 10 qty, we can stick to increment logic OR add mostly duplicate rows.
+    // The previous logic was "Increment Qty". We'll keep that as it's efficient.
     const existingRowIndex = bulkItems.findIndex(r => r.barcode === code);
 
     if (existingRowIndex >= 0) {
-      // Increment Qty
+      // Increment existing row
       const newItems = [...bulkItems];
       const currentQty = parseInt(newItems[existingRowIndex].qty) || 0;
       newItems[existingRowIndex].qty = (currentQty + 1).toString();
       setBulkItems(newItems);
       showToast(`Qty item ditambahkan (+1)`, false);
+    } else if (existing) {
+      // Auto-Fill from DB
+      setBulkItems(prev => [...prev, {
+        name: existing.name,
+        brand: existing.brand || "",
+        category: existing.category || "",
+        location: existing.location || "",
+        size: existing.size || "",
+        unit: existing.unit || "pcs",
+        unitQty: "satuan",
+        isiPerPack: existing.unit === 'pack' ? "10" : "1",
+        priceType: "per_satuan",
+        minStock: existing.minStock?.toString() || "0",
+        qty: "1",
+        harga: "",
+        supplierId: 0,
+        supplierName: "",
+        barcode: code // Fill Barcode
+      }]);
+      showToast(`Item "${existing.name}" ditemukan & ditambahkan`, false);
     } else {
-      // 2. Search in DATABASE (Loaded Items)
-      const existing = items.find(i => i.barcode === code || i.id.toString() === code);
-
-      if (existing) {
-        // Add New Row with Data
-        setBulkItems(prev => [...prev, {
-          name: existing.name,
-          brand: existing.brand || "",
-          category: existing.category || "",
-          location: existing.location || "",
-          size: existing.size || "",
-          unit: existing.unit || "pcs",
-          unitQty: "satuan",
-          isiPerPack: existing.unit === 'pack' ? "10" : "1",
-          priceType: "per_satuan",
-          minStock: existing.minStock?.toString() || "0",
-          qty: "1",
-          harga: "", // Requires API update to fetch last price
-          supplierId: 0,
-          supplierName: "",
-          barcode: code
-        }]);
-        showToast(`Item "${existing.name}" ditambahkan`, false);
-      } else {
-        // 3. New Unknown Item
-        setBulkItems(prev => [...prev, {
-          name: "",
-          brand: "",
-          category: "",
-          location: "",
-          size: "",
-          unit: "pcs",
-          unitQty: "satuan",
-          isiPerPack: "",
-          priceType: "per_satuan",
-          minStock: "0",
-          qty: "1", // Default to 1 even for new items
-          harga: "",
-          supplierId: 0,
-          supplierName: "",
-          barcode: code
-        }]);
-        showToast(`Item baru (Barcode: ${code}) ditambahkan`, false);
-      }
+      // New Item - Fill Barcode Only
+      setBulkItems(prev => [...prev, {
+        name: "",
+        brand: "",
+        category: "",
+        location: "",
+        size: "",
+        unit: "pcs",
+        unitQty: "satuan",
+        isiPerPack: "",
+        priceType: "per_satuan",
+        minStock: "0",
+        qty: "1",
+        harga: "",
+        supplierId: 0,
+        supplierName: "",
+        barcode: code // Fill Barcode
+      }]);
+      showToast(`Item baru (Barcode: ${code}) ditambahkan`, false);
     }
     setBulkBarcode("");
   };
@@ -1158,6 +1160,17 @@ function AdminItemsContent() {
 
                               {/* Section 1: ID */}
                               <div className="col-span-4 space-y-3">
+                                {/* Barcode Field (New) */}
+                                <div>
+                                  <label className="lg:hidden text-[10px] font-bold text-gray-400 uppercase mb-1 block">Barcode / SKU</label>
+                                  <input
+                                    className="w-full h-9 bg-slate-50 border border-gray-200 rounded-lg px-3 text-xs font-mono font-bold text-slate-600 focus:bg-white focus:border-navy/20 focus:outline-none"
+                                    placeholder="Barcode"
+                                    value={row.barcode || ""}
+                                    onChange={e => { const n = [...bulkItems]; n[idx].barcode = e.target.value; setBulkItems(n); }}
+                                  />
+                                </div>
+
                                 <div>
                                   <label className="lg:hidden text-[10px] font-bold text-gray-400 uppercase mb-1 block">Nama Produk</label>
                                   <input
@@ -1435,21 +1448,20 @@ function AdminItemsContent() {
                   {stockForm.mode === 'baru' && (
                     <div>
                       <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Supplier</label>
-                      <div className="relative">
-                        <input
-                          className="w-full h-11 bg-white border border-navy/10 rounded-xl px-4 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gold/20"
-                          placeholder="Cari supplier..." value={stockSupplierQuery} onChange={e => setStockSupplierQuery(e.target.value)}
+                      <div className="relative z-20">
+                        <SmartSupplierInput
+                          value={selectedStockSupplier.name || stockSupplierQuery}
+                          onChange={(val) => {
+                            // Allow typing new supplier
+                            setStockSupplierQuery(val);
+                            setSelectedStockSupplier(prev => ({ ...prev, name: val }));
+                          }}
+                          onSelect={(id, name) => {
+                            setSelectedStockSupplier({ id, name });
+                            setStockSupplierQuery(name);
+                          }}
+                          placeholder="Cari atau ketik nama supplier..."
                         />
-                      </div>
-                      <div className="flex gap-2 overflow-x-auto pb-2 mt-2 custom-scrollbar">
-                        {stockSuppliers.slice(0, 4).map(s => (
-                          <button key={s.id} onClick={() => {
-                            setSelectedStockSupplier({ id: s.id, name: s.name });
-                            setStockSupplierQuery(s.name);
-                          }} className={`whitespace-nowrap px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedStockSupplier.id === s.id ? 'bg-navy border-navy text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                            {s.name}
-                          </button>
-                        ))}
                       </div>
                     </div>
                   )}
