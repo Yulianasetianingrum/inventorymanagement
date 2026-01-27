@@ -453,48 +453,75 @@ function AdminItemsContent() {
       }
     } else {
       // BULK LOGIC
+      // BULK LOGIC
       if (!bulkSelectedSupplier.id && !bulkSelectedSupplier.name) return showToast("Pilih supplier atau ketik nama baru untuk batch ini", true);
 
-      const validItems = bulkItems.filter(r => r.name && r.brand && r.qty > 0);
-      if (validItems.length === 0) return showToast("Isi minimal 1 item lengkap", true);
+      // Fix: Relax validation (Brand optional)
+      const validItems = bulkItems.filter(r => r.name && Number(r.qty) > 0);
+      if (validItems.length === 0) return showToast("Isi minimal 1 item (Nama & Qty wajib)", true);
 
-      try {
-        // Loop creation (Simplified adaptation of Reference logic)
-        for (const row of validItems) {
+      let successCount = 0;
+      let failCount = 0;
+      const errors: string[] = [];
+
+      showToast("Memproses data...", false);
+
+      // Loop Process with Error Handling per Item
+      for (const row of validItems) {
+        try {
           // 1. Create/Find Item
           const itemPayload = {
-            name: row.name, brand: row.brand, category: row.category,
-            location: row.location, size: row.size, unit: row.unit,
-            minStock: Number(row.minStock)
+            name: row.name,
+            brand: row.brand || "-", // Default dash if empty
+            category: row.category || "-",
+            location: row.location || "-",
+            size: row.size || "-",
+            unit: row.unit || "pcs",
+            minStock: Number(row.minStock) || 0
           };
+
           const created = await fetchJson("/api/admin/items", { method: "POST", body: JSON.stringify(itemPayload) });
+          // Handle both new creation and existing item return formats
           const newId = created.data?.id || created.id;
 
+          if (!newId) throw new Error(`Gagal membuat item ${row.name}`);
+
           // 2. Stock In
-          if (newId) {
-            await fetchJson(`/api/admin/items/${newId}/stock-in`, {
-              method: "POST",
-              body: JSON.stringify({
-                date: new Date().toISOString().split("T")[0],
-                qty: Number(row.qty),
-                unitQty: row.unitQty,
-                isiPerPack: row.unitQty === "pack" ? Number(row.isiPerPack) : undefined,
-                harga: Number(row.harga),
-                priceType: row.priceType,
-                mode: "baru",
-                supplierId: bulkSelectedSupplier.id,
-                supplierName: bulkSelectedSupplier.name
-              })
-            });
-          }
+          await fetchJson(`/api/admin/items/${newId}/stock-in`, {
+            method: "POST",
+            body: JSON.stringify({
+              date: new Date().toISOString().split("T")[0],
+              qty: Number(row.qty),
+              unitQty: row.unitQty || "satuan",
+              isiPerPack: row.unitQty === "pack" ? Number(row.isiPerPack) : undefined,
+              harga: Number(row.harga) || 0,
+              priceType: row.priceType || "per_satuan",
+              mode: "baru",
+              supplierId: bulkSelectedSupplier.id,
+              supplierName: bulkSelectedSupplier.name
+            })
+          });
+
+          successCount++;
+        } catch (err: any) {
+          console.error(err);
+          failCount++;
+          errors.push(`${row.name}: ${err.message}`);
         }
-        showToast(`Berhasil memproses ${validItems.length} item`);
-        setItemFormOpen(false);
-        setBulkItems([{ name: "", brand: "", category: "", location: "", size: "", unit: "pcs", unitQty: "satuan", isiPerPack: "", priceType: "per_satuan", minStock: "0", qty: "", harga: "", supplierId: 0, supplierName: "" }]);
-        loadItems();
-      } catch (e: any) {
-        showToast("Gagal memproses bulk items: " + e.message, true);
       }
+
+      // Summary Report
+      if (failCount > 0) {
+        showToast(`Selesai: ${successCount} berhasil, ${failCount} gagal. Cek console untuk detail.`, true);
+        console.warn("Bulk Errors:", errors);
+      } else {
+        showToast(`Berhasil menyimpan ${successCount} item.`);
+        setItemFormOpen(false);
+        // Reset form
+        setBulkItems([{ name: "", brand: "", category: "", location: "", size: "", unit: "pcs", unitQty: "satuan", isiPerPack: "", priceType: "per_satuan", minStock: "0", qty: "", harga: "", supplierId: 0, supplierName: "" }]);
+      }
+
+      loadItems();
     }
   };
 
