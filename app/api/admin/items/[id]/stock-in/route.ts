@@ -60,7 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const newSupplier = await prisma.supplier.create({
           data: {
             namaToko: supplierName,
-            keperluanItems: "", // Will be updated below
+            keperluanItems: "-", // Constraint fix: Must not be empty
             alamat: "-"
           }
         });
