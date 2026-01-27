@@ -1178,10 +1178,10 @@ function AdminItemsContent() {
                                 <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Kategori</th>
                                 <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Lokasi</th>
                                 <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20">Qty</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16">Unit</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20">Jenis</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-28">Harga</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16">Min</th>
+                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16">Satuan</th>
+                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Mode Beli</th>
+                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-28">Harga Beli</th>
+                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16">Alert</th>
                                 <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-10"></th>
                               </tr>
                             </thead>
