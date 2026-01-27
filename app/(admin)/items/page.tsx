@@ -472,6 +472,7 @@ function AdminItemsContent() {
           // 1. Create/Find Item
           const itemPayload = {
             name: row.name,
+            barcode: row.barcode, // Fix: Include barcode
             brand: row.brand || "-", // Default dash if empty
             category: row.category || "-",
             location: row.location || "-",
