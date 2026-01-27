@@ -59,9 +59,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         // Create new supplier
         const newSupplier = await prisma.supplier.create({
           data: {
-            namaToko: supplierName,
-            keperluanItems: "-", // Constraint fix: Must not be empty
-            alamat: "-"
+            namaToko: supplierName.trim() || "Supplier Baru",
+            keperluanItems: "General Supply", // Safer length for constraints
+            alamat: "Alamat belum diisi"
           }
         });
         finalSupplierId = newSupplier.id;
