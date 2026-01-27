@@ -35,7 +35,7 @@ export async function GET(req: Request) {
             const itemValue = item.batches.reduce((acc, b) => acc + (b.qtyRemaining * b.unitCost), BigInt(0));
             totalValue += itemValue;
 
-            if (item.stockTotal <= item.minStock) lowStockCount++;
+            if ((item.stockNew + item.stockUsed) <= item.minStock) lowStockCount++;
 
             return {
                 id: item.id,
