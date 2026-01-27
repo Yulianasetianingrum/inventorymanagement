@@ -325,19 +325,48 @@ export default function AuditPage() {
                               <div className="w-2 h-2 rounded-full bg-success" />
                               <span className="text-xs font-bold text-navy/60">{r.cheapest.supplier?.namaToko}</span>
                             </div>
+
+                            {/* Price War Section */}
+                            {r.options && r.options.length > 1 && (
+                              <div className="mt-6">
+                                <span className="text-[9px] font-black text-navy/30 uppercase tracking-widest block mb-2">Kompetitor (Price War)</span>
+                                <div className="space-y-2">
+                                  {r.options.slice(1, 4).map((opt: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between items-center text-xs">
+                                      <span className="font-medium text-navy/60 truncate max-w-[120px]">{opt.supplier?.namaToko}</span>
+                                      <div className="flex flex-col items-end">
+                                        <span className="font-bold text-navy/40">Rp {opt.price.toLocaleString()}</span>
+                                        {r.cheapest.price > 0 ? (
+                                          <span className="text-[8px] font-bold text-red-400">+{((opt.price - r.cheapest.price) / r.cheapest.price * 100).toFixed(0)}%</span>
+                                        ) : (
+                                          <span className="text-[8px] font-bold text-navy/20">-</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {r.options.length > 4 && (
+                                    <div className="text-[9px] font-bold text-navy/20 italic pt-1 text-center">+ {r.options.length - 4} lainnya</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-2 gap-3">
                             <a
                               href={`https://wa.me/${r.cheapest.supplier?.noTelp?.replace(/\D/g, '')}`}
                               target="_blank"
+                              rel="noopener noreferrer"
                               className="h-11 bg-[#25d366] text-white rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:brightness-105 transition-all shadow-lg shadow-green-500/20"
                             >
                               Message WA
                             </a>
-                            <button className="h-11 bg-navy text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-navy-light transition-all">
-                              Cek Katalog
-                            </button>
+                            <Link
+                              href={`/supplier/${r.cheapest.supplier?.id}`}
+                              className="h-11 bg-navy text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-navy-light transition-all flex items-center justify-center text-center"
+                            >
+                              Detail Supplier
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -381,9 +410,20 @@ export default function AuditPage() {
                               </td>
                               <td className="px-6 py-5 font-bold text-navy">{b.item.name}</td>
                               <td className="px-6 py-5">
-                                <span className="text-[11px] font-black text-navy/60 uppercase tracking-widest px-3 py-1 bg-navy/5 rounded-full">
-                                  {b.supplier?.namaToko}
-                                </span>
+                                {b.supplier?.noTelp ? (
+                                  <a
+                                    href={`https://wa.me/${b.supplier.noTelp.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-[#25d366] text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:brightness-105 transition-all shadow-sm flex items-center justify-center w-max"
+                                  >
+                                    PESAN
+                                  </a>
+                                ) : (
+                                  <span className="text-[11px] font-black text-navy/60 uppercase tracking-widest px-3 py-1 bg-navy/5 rounded-full inline-block">
+                                    {b.supplier?.namaToko || "Tanpa Vendor"}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-6 py-5 font-black text-navy">{Number(b.qtyInBase)} <span className="opacity-30 text-[10px]">UNIT</span></td>
                               <td className="px-6 py-5 text-right font-black text-base tracking-tighter text-navy flex flex-col">
@@ -406,7 +446,22 @@ export default function AuditPage() {
                           </div>
                           <div>
                             <div className="font-bold text-navy text-sm">{b.item.name}</div>
-                            <span className="text-[10px] font-bold text-navy/60 uppercase bg-navy/5 px-2 py-0.5 rounded-full mt-1 inline-block">{b.supplier?.namaToko}</span>
+                            <div className="mt-1">
+                              {b.supplier?.noTelp ? (
+                                <a
+                                  href={`https://wa.me/${b.supplier.noTelp.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-[#25d366] text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:brightness-105 transition-all shadow-sm inline-flex items-center"
+                                >
+                                  PESAN
+                                </a>
+                              ) : (
+                                <span className="text-[10px] font-bold text-navy/60 uppercase bg-navy/5 px-2 py-0.5 rounded-full inline-block">
+                                  {b.supplier?.namaToko || "Tanpa Vendor"}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="pt-3 border-t border-dashed border-gray-100 flex justify-between items-end">
                             <div>

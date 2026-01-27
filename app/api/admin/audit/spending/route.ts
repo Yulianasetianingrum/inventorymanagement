@@ -12,7 +12,7 @@ export async function GET() {
             orderBy: { date: "desc" },
             include: {
                 item: { select: { name: true, brand: true } },
-                supplier: { select: { namaToko: true, noTelp: true } }
+                supplier: { select: { id: true, namaToko: true, noTelp: true } }
             }
         });
 
@@ -29,17 +29,25 @@ export async function GET() {
             });
         });
 
-        const recommendations = Object.entries(itemPrices).map(([key, data]) => {
-            const [name, brand] = key.split("|");
-            // Sort by price ascending
-            const sorted = data.sort((a, b) => a.price - b.price);
-            return {
-                item: name,
-                brand,
-                cheapest: sorted[0],
-                options: sorted
-            };
-        });
+        const recommendations = Object.entries(itemPrices)
+            .map(([key, data]) => {
+                const [name, brand] = key.split("|");
+
+                // FILTER: Only consider suppliers with valid WA/Phone numbers
+                const actionableOptions = data.filter(d => d.supplier && d.supplier.noTelp && d.supplier.noTelp.length > 5);
+
+                if (actionableOptions.length === 0) return null;
+
+                // Sort by price ascending
+                const sorted = actionableOptions.sort((a, b) => a.price - b.price);
+                return {
+                    item: name,
+                    brand,
+                    cheapest: sorted[0],
+                    options: sorted
+                };
+            })
+            .filter(Boolean); // Remove items with no actionable suppliers
 
         return NextResponse.json({
             data: {

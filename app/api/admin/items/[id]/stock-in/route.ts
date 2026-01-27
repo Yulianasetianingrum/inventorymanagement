@@ -39,8 +39,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const qtyBase = unitQty === "pack" ? qty * isiPerPack : qty;
     const unitCost = mode === "bekas" ? 0 : priceType === "per_pack" ? Math.floor(harga / isiPerPack) : harga;
     if (qtyBase <= 0 || Number.isNaN(qtyBase)) return NextResponse.json({ error: "Qty base tidak valid" }, { status: 400 });
-    if (mode === "baru" && (unitCost <= 0 || Number.isNaN(unitCost)))
-      return NextResponse.json({ error: "Unit cost tidak valid" }, { status: 400 });
+    if (mode === "baru" && (unitCost < 0 || Number.isNaN(unitCost)))
+      return NextResponse.json({ error: "Unit cost tidak valid (negatif)" }, { status: 400 });
 
     const item = await prisma.item.findFirst({ where: { id: itemId, isActive: true } });
     if (!item) return NextResponse.json({ error: "Item tidak ditemukan" }, { status: 404 });

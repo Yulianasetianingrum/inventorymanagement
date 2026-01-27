@@ -4,9 +4,21 @@ import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, PieChart, Pie, Legend } from 'recharts';
 // import styles from "./dashboard.module.css";
 // Styling replaced with Tailwind classes commensurate with standard enterprise theme
+
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
+
+const formatCurrency = (val: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(val);
+};
 
 
 
@@ -37,6 +49,7 @@ const moduleCards: { title: string; desc: string; href: string }[] = [
     desc: "Catat project klien/prospek, kebutuhan, dan kontak WhatsApp untuk follow-up cepat.",
     href: "/projects",
   },
+
   {
     title: "Audit",
     desc: "Audit aktivitas item & audit pengeluaran (cost) untuk pelacakan operasional.",
@@ -47,7 +60,21 @@ const moduleCards: { title: string; desc: string; href: string }[] = [
 
 
 
+
+type AnalysisData = {
+  kpi: {
+    totalItems: number;
+    totalValue: number;
+    lowStockCount: number;
+  };
+  fastMoving: { name: string; stockUsed: number; totalStock: number }[];
+  deadStock: { name: string; value: number; totalStock: number }[];
+  categories: { name: string; count: number }[];
+  slowMovingCount: number;
+};
+
 type LowStockRow = {
+
   id: number;
   name: string;
   stock: number;
@@ -107,6 +134,11 @@ export default function AdminDashboardPage() {
   const [lowStockList, setLowStockList] = useState<LowStockRow[]>([]);
   const [workerPerformance, setWorkerPerformance] = useState<any[]>([]);
   const [loadingKpi, setLoadingKpi] = useState(true);
+
+  // Analytics State
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(true);
+
   const [kpis, setKpis] = useState<{ title: string; value: string; desc: string }[]>([]);
   const [picklistWatch, setPicklistWatch] = useState<{ code: string; project: string; status: string; worker: string }[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
@@ -212,10 +244,20 @@ export default function AdminDashboardPage() {
     const loadKpiData = async () => {
       try {
         setLoadingKpi(true);
-        const [kpiRes, plistRes] = await Promise.all([
+        // Using fetch for existing endpoints (legacy) and fetchJsonSoft for new one
+        const [kpiRes, plistRes, analysisRes] = await Promise.all([
           fetch("/api/admin/audit/kpi?filter=month"),
-          fetch("/api/admin/picklists")
+          fetch("/api/admin/picklists"),
+          fetchJsonSoft("/api/admin/analysis")
         ]);
+
+        // Process Analysis Data
+        if (analysisRes && analysisRes.ok) {
+          if (analysisRes.json.data) {
+            setAnalysisData(analysisRes.json.data);
+          }
+        }
+        setLoadingAnalysis(false);
 
         if (kpiRes.ok) {
           const json = await kpiRes.json();
@@ -229,9 +271,6 @@ export default function AdminDashboardPage() {
             })));
           }
           // Assuming kpis data might also come from this endpoint or another
-          if (json.data?.kpis) {
-            setKpis(json.data.kpis);
-          }
           if (json.data?.recentActivity) {
             // @ts-ignore
             setActivities(json.data.recentActivity);
@@ -260,6 +299,7 @@ export default function AdminDashboardPage() {
         setLoadingKpi(false);
       }
     };
+
     loadKpiData();
   }, []);
 
@@ -302,132 +342,129 @@ export default function AdminDashboardPage() {
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-8 md:space-y-10">
 
-        {/* KPI Section */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Ringkasan Akhir-akhir Ini</h2>
+        {/* KPI Section REMOVED - Redundant with Analysis */}
+
+        {/* Analytics Section (Merged) */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Analisis Inventaris & Kesehatan Stok</h2>
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
-          {kpis.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {kpis.map((kpi) => (
-                <Card key={kpi.title} className="bg-white border border-gray-100 shadow-sm p-5 md:p-6 rounded-xl">
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{kpi.title}</div>
-                  <div className="text-2xl font-black text-navy mb-1">{kpi.value}</div>
-                  <div className="text-xs font-medium text-gray-400">{kpi.desc}</div>
-                </Card>
-              ))}
+          {!analysisData ? (
+            <div className="p-8 text-center text-gray-400 italic bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              {loadingAnalysis ? "Memuat Data Analisis..." : "Gagal memuat data analisis."}
             </div>
           ) : (
-            <Card className="bg-white border border-gray-100 p-8 text-center rounded-xl border-dashed">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Belum ada data KPI terbaru</span>
-            </Card>
-          )}
-        </section>
+            <div className="space-y-8">
+              {/* 1. New KPI Cards for Assets */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 border-none text-white shadow-lg shadow-blue-500/20 rounded-xl">
+                  <div className="p-5">
+                    <div className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Total Nilai Aset</div>
+                    <div className="text-2xl font-black">{formatCurrency(analysisData.kpi.totalValue)}</div>
+                    <div className="text-white/60 text-[10px] mt-1">Estimasi uang mengendap</div>
+                  </div>
+                </Card>
 
-        {/* Analytics Section with Chart */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Performa & Statistik</h2>
-            <div className="h-px flex-1 bg-gray-200"></div>
-          </div>
+                <Card className="bg-white border border-gray-100 shadow-sm rounded-xl p-5">
+                  <div className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total SKU Item</div>
+                  <div className="text-2xl font-black text-navy">{analysisData.kpi.totalItems}</div>
+                  <div className="text-gray-400 text-[10px] mt-1">Jenis barang aktif</div>
+                </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Chart Card */}
-            <Card className="lg:col-span-2 bg-white border border-gray-200 shadow-sm p-4 md:p-6 rounded-xl min-h-[300px] flex flex-col">
-              <div className="flex justify-between items-start mb-6">
-                <Link href="/audit" className="group">
-                  <h3 className="text-xs md:text-sm font-black text-navy uppercase tracking-wide group-hover:text-gold transition-colors flex items-center gap-2">
-                    Traceability Barang
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
-                  </h3>
-                  <p className="text-[10px] md:text-xs text-gray-400">Paling Banyak Digunakan (Bulan Ini)</p>
-                </Link>
+                <Card className={`border border-gray-100 shadow-sm rounded-xl p-5 ${analysisData.kpi.lowStockCount > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+                  <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${analysisData.kpi.lowStockCount > 0 ? 'text-red-400' : 'text-green-600'}`}>Status Alert</div>
+                  <div className={`text-2xl font-black ${analysisData.kpi.lowStockCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {analysisData.kpi.lowStockCount} Item
+                  </div>
+                  <div className={`text-[10px] mt-1 ${analysisData.kpi.lowStockCount > 0 ? 'text-red-400' : 'text-green-600'}`}>
+                    {analysisData.kpi.lowStockCount > 0 ? 'Perlu Restock Segera!' : 'Stok Aman Terkendali'}
+                  </div>
+                </Card>
               </div>
 
-              <div className="flex-1 w-full min-h-[250px]">
-                {loadingKpi ? (
-                  <div className="h-full flex items-center justify-center text-xs font-bold text-gray-300 uppercase tracking-widest animate-pulse">
-                    Menghitung Pemakaian...
+              {/* 2. Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Fast Moving */}
+                <Card className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 h-[350px] flex flex-col">
+                  <h3 className="text-sm font-black text-navy uppercase tracking-wide mb-4 flex items-center gap-2">🔥 Top Fast Moving <span className="text-[10px] font-normal text-gray-400 normal-case">(Berdasarkan pemakaian)</span></h3>
+                  <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={analysisData.fastMoving} layout="vertical" margin={{ left: 0, right: 10 }}>
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} />
+                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                        <Bar dataKey="stockUsed" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                ) : workerPerformance.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={workerPerformance}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                      onClick={(data) => {
-                        if (data && data.activePayload && data.activePayload[0]) {
-                          const payload = data.activePayload[0].payload;
-                          if (payload.id) window.location.href = `/items/${payload.id}`;
-                        }
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#0b1b3a', fontSize: 10, fontWeight: 900 }}
-                        dy={10}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#9ca3af', fontSize: 10 }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: '#f9fafb' }}
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontWeight: 900, color: '#0b1b3a' }}
-                        itemStyle={{ color: '#d4af37' }}
-                      />
-                      <Bar dataKey="tasks" radius={[4, 4, 0, 0]} barSize={40}>
-                        {workerPerformance.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index === 0 ? '#d4af37' : '#0b1b3a'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center flex-col gap-2 text-center">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">📦</div>
-                    <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">Belum ada barang keluar</span>
+                </Card>
+
+                {/* Category Pie */}
+                <Card className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 h-[350px] flex flex-col">
+                  <h3 className="text-sm font-black text-navy uppercase tracking-wide mb-4">📊 Distribusi Kategori</h3>
+                  <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={analysisData.categories}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="count"
+                        >
+                          {analysisData.categories.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                )}
+                </Card>
               </div>
-            </Card>
 
-            {/* Summary Stats */}
-            <Link href="/audit" className="block h-full">
-              <Card className="h-full bg-navy text-white shadow-xl shadow-navy/20 p-6 rounded-xl flex flex-col justify-center relative overflow-hidden group hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 min-h-[200px]">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] translate-x-10 -translate-y-10 group-hover:bg-white/10 transition-colors"></div>
-
-                <div className="relative z-10">
-                  <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1 group-hover:text-white/60 transition-colors">Total Item Keluar</div>
-                  <div className="text-4xl font-black text-white mb-6">
-                    {workerPerformance.reduce((acc, curr) => acc + curr.tasks, 0)} <span className="text-sm font-bold opacity-50">Unit</span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 group-hover:text-white/60">Item Terlaris</div>
-                      <div className="text-lg font-bold text-gold group-hover:text-white transition-colors">
-                        {workerPerformance[0]?.full || <span className="text-xs text-white/30 italic font-normal">Belum ada statistik</span>}
-                      </div>
-                      <div className="text-[10px] text-white/60">
-                        {workerPerformance[0] ? `${workerPerformance[0].tasks} ${workerPerformance[0].unit}` : ""}
-                      </div>
-                    </div>
-
-                    <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 group-hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
-                      Lihat Audit Log →
-                    </div>
+              {/* 3. Dead Stock Table */}
+              <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+                <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-red-50/30">
+                  <div>
+                    <h3 className="text-sm font-black text-red-700 uppercase tracking-wide">💀 Dead Stock Candidates</h3>
+                    <p className="text-[10px] text-red-400 mt-1">Barang bernilai tinggi yang tidak bergerak. Pertimbangkan likuidasi.</p>
                   </div>
                 </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-gray-50 text-gray-400 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="p-4 w-10">#</th>
+                        <th className="p-4">Nama Barang</th>
+                        <th className="p-4 text-center">Stok Ngendap</th>
+                        <th className="p-4 text-right">Nilai Aset</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {analysisData.deadStock.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-red-50/10 transition-colors">
+                          <td className="p-4 text-gray-300 font-bold">{idx + 1}</td>
+                          <td className="p-4 font-bold text-navy">{item.name}</td>
+                          <td className="p-4 text-center text-gray-500 font-mono">{item.totalStock}</td>
+                          <td className="p-4 text-right font-bold text-red-600 font-mono">{formatCurrency(item.value)}</td>
+                        </tr>
+                      ))}
+                      {analysisData.deadStock.length === 0 && (
+                        <tr><td colSpan={4} className="p-6 text-center text-gray-400 italic">Bersih! Tidak ada dead stock signifikan.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
-            </Link>
-          </div>
+
+            </div>
+          )}
         </section>
 
         {/* Main Menu Grid */}
