@@ -17,6 +17,7 @@ export async function saveBase64Image(base64Data: string): Promise<string> {
     let ext = "jpg";
     if (type === "image/png") ext = "png";
     if (type === "image/jpeg") ext = "jpg";
+    if (type === "image/webp") ext = "webp";
     // add more if needed
 
     // 3. Ensure dir exists

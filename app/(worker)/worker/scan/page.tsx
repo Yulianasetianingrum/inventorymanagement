@@ -66,11 +66,34 @@ export default function MaterialWithdrawalPage() {
   };
 
   const updateQty = (id: number, val: number) => {
+    const item = selectedItems.find(i => i.itemId === id);
+    if (!item) return;
+
+    let maxStock = item.stockMode === "baru" ? item.stockNew : item.stockUsed;
+    if (val > maxStock) {
+      alert(`Stok ${item.stockMode} hanya tersedia ${maxStock}`);
+      val = maxStock;
+    }
+    if (val < 1) val = 1;
+
     setSelectedItems(selectedItems.map(i => i.itemId === id ? { ...i, qty: val } : i));
   };
 
   const updateMode = (id: number, mode: "baru" | "bekas") => {
-    setSelectedItems(selectedItems.map(i => i.itemId === id ? { ...i, stockMode: mode } : i));
+    setSelectedItems(selectedItems.map(i => {
+      if (i.itemId === id) {
+        let maxStock = mode === "baru" ? i.stockNew : i.stockUsed;
+        let newQty = i.qty;
+
+        // Auto-adjust qty if it exceeds new mode's stock
+        if (newQty > maxStock) {
+          newQty = maxStock > 0 ? maxStock : 1; // Keep at least 1 but expect validation error on submit if 0
+        }
+
+        return { ...i, stockMode: mode, qty: newQty };
+      }
+      return i;
+    }));
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +130,16 @@ export default function MaterialWithdrawalPage() {
   const handleSubmit = async () => {
     if (!projectId) return alert("Pilih Project tujuan!");
     if (selectedItems.length === 0) return alert("Pilih minimal 1 item!");
+
+    // Final Validation
+    const invalidItems = selectedItems.filter(i => {
+      const max = i.stockMode === "baru" ? i.stockNew : i.stockUsed;
+      return i.qty > max;
+    });
+    if (invalidItems.length > 0) {
+      return alert(`Stok tidak cukup untuk: ${invalidItems.map(i => i.name).join(", ")}`);
+    }
+
     if (images.length === 0) return alert("Foto bukti wajib dilampirkan!");
 
     setSubmitting(true);

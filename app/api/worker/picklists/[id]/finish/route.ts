@@ -72,52 +72,79 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         },
       });
 
-      // 2. Reduce stock for each picked item using FIFO
+      // 2. Handle Stock Updates based on Mode
       for (const line of picklist.lines) {
         const actualPicked = line.pickedQty > 0 ? line.pickedQty : line.reqQty;
-        const selectedMode = lineModes[line.id] || "baru";
+        const selectedMode = lineModes[line.id] || "baru"; // "baru" | "bekas"
 
         if (actualPicked > 0) {
-          // Update the line with raw SQL
+          // Update the line metadata first
           await tx.$executeRaw`
-            UPDATE picklist_lines 
-            SET pickedQty = ${actualPicked}, stockMode = ${selectedMode} 
-            WHERE id = ${line.id}
-          `;
+             UPDATE picklist_lines 
+             SET pickedQty = ${actualPicked}, stockMode = ${selectedMode} 
+             WHERE id = ${line.id}
+           `;
 
-          // FIFO DEDUCTION
-          let remainingToDeduct = actualPicked;
+          if (picklist.mode === "EXTERNAL") {
+            // --- EXTERNAL MODE: ADD STOCK ---
 
-          // Find matches using Raw SQL
-          const batches: any[] = await tx.$queryRaw`
-            SELECT id, qtyRemaining 
-            FROM stock_in_batches 
-            WHERE itemId = ${line.itemId} 
-              AND qtyRemaining > 0 
-              AND note LIKE ${`%mode:${selectedMode}%`}
-            ORDER BY date ASC
-          `;
+            // A. Create a new Stock Batch
+            // Note: We don't have supplier/price info here easily, so we set defaults.
+            // Ideally we should prompt for unitCost, but for now 0 is safe.
+            await tx.stockInBatch.create({
+              data: {
+                itemId: line.itemId,
+                date: new Date(),
+                qtyInBase: actualPicked,     // BigInt compatible if using Prisma types, but here simple number works for create
+                unitCost: 0,
+                qtyRemaining: actualPicked,
+                note: `Restock via Picklist #${picklist.code} (Mode: ${selectedMode})`
+              }
+            });
 
-          for (const batch of batches) {
-            if (remainingToDeduct <= 0) break;
+            // B. Update Item Totals
+            if (selectedMode === "baru") {
+              await tx.$executeRaw`UPDATE items SET stockNew = stockNew + ${actualPicked} WHERE id = ${line.itemId}`;
+            } else {
+              await tx.$executeRaw`UPDATE items SET stockUsed = stockUsed + ${actualPicked} WHERE id = ${line.itemId}`;
+            }
 
-            const qtyInBatch = Number(batch.qtyRemaining);
-            const deduct = Math.min(qtyInBatch, remainingToDeduct);
-
-            await tx.$executeRaw`
-              UPDATE stock_in_batches 
-              SET qtyRemaining = qtyRemaining - ${deduct} 
-              WHERE id = ${batch.id}
-            `;
-
-            remainingToDeduct -= deduct;
-          }
-
-          // Legacy sync: update item table using raw SQL
-          if (selectedMode === "baru") {
-            await tx.$executeRaw`UPDATE items SET stockNew = stockNew - ${actualPicked} WHERE id = ${line.itemId}`;
           } else {
-            await tx.$executeRaw`UPDATE items SET stockUsed = stockUsed - ${actualPicked} WHERE id = ${line.itemId}`;
+            // --- INTERNAL MODE: DEDUCT STOCK (FIFO) ---
+
+            // A. Find matches using Raw SQL
+            const batches: any[] = await tx.$queryRaw`
+               SELECT id, qtyRemaining 
+               FROM stock_in_batches 
+               WHERE itemId = ${line.itemId} 
+                 AND qtyRemaining > 0 
+                 AND note LIKE ${`%mode:${selectedMode}%`}
+               ORDER BY date ASC
+             `;
+
+            let remainingToDeduct = actualPicked;
+
+            for (const batch of batches) {
+              if (remainingToDeduct <= 0) break;
+
+              const qtyInBatch = Number(batch.qtyRemaining);
+              const deduct = Math.min(qtyInBatch, remainingToDeduct);
+
+              await tx.$executeRaw`
+                 UPDATE stock_in_batches 
+                 SET qtyRemaining = qtyRemaining - ${deduct} 
+                 WHERE id = ${batch.id}
+               `;
+
+              remainingToDeduct -= deduct;
+            }
+
+            // B. Legacy sync: update item table
+            if (selectedMode === "baru") {
+              await tx.$executeRaw`UPDATE items SET stockNew = stockNew - ${actualPicked} WHERE id = ${line.itemId}`;
+            } else {
+              await tx.$executeRaw`UPDATE items SET stockUsed = stockUsed - ${actualPicked} WHERE id = ${line.itemId}`;
+            }
           }
         }
       }

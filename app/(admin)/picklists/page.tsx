@@ -20,6 +20,15 @@ export default function PicklistPage() {
   const [showChat, setShowChat] = useState(false);
   const [chatTarget, setChatTarget] = useState<any>(null);
 
+  // Modal & Toast State
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [toast, setToast] = useState({ visible: false, msg: "", error: false });
+
+  const showToast = (msg: string, error = false) => {
+    setToast({ visible: true, msg, error });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+  };
+
   // Form states
   const [title, setTitle] = useState("");
   const [projectId, setProjectId] = useState("");
@@ -105,8 +114,13 @@ export default function PicklistPage() {
     if (!item) return;
 
     // Clamp logic
+    // Clamp logic
     let safeQty = qty;
-    if (safeQty > item.stockTotal) safeQty = item.stockTotal;
+    // Only clamp by stock limits if INTERNAL (taking from warehouse)
+    // If EXTERNAL (purchasing), allows ordering more than current stock
+    if (mode !== "EXTERNAL") {
+      if (safeQty > item.stockTotal) safeQty = item.stockTotal;
+    }
     if (safeQty < 1) safeQty = 1;
 
     setSelectedItems(selectedItems.map(si => si.id === id ? { ...si, reqQty: safeQty } : si));
@@ -114,7 +128,7 @@ export default function PicklistPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (selectedItems.length === 0) return alert("Pilih minimal 1 barang.");
+    if (selectedItems.length === 0) return showToast("Pilih minimal 1 barang.", true);
 
     const body = {
       projectId: isNewProject ? null : projectId,
@@ -140,12 +154,13 @@ export default function PicklistPage() {
         setShowForm(false);
         resetForm();
         fetchData();
+        showToast("Picklist berhasil disimpan ✅");
       } else {
         const err = await res.json();
-        alert("Gagal: " + (err.error || "Server error"));
+        showToast("Gagal: " + (err.error || "Server error"), true);
       }
     } catch (err) {
-      alert("Error processing request");
+      showToast("Error processing request", true);
     }
   }
 
@@ -216,7 +231,7 @@ export default function PicklistPage() {
                     onChange={e => setMode(e.target.value)}
                   >
                     <option value="INTERNAL">Internal (Gudang → Workshop)</option>
-                    <option value="EXTERNAL">External (Supplier → Workshop)</option>
+                    <option value="EXTERNAL">External (Pembelian/Restock Supplier)</option>
                   </select>
                 </div>
 
@@ -540,19 +555,9 @@ export default function PicklistPage() {
                           Edit
                         </button>
                         <button
-                          onClick={async (e) => {
+                          onClick={(e) => {
                             e.stopPropagation();
-                            if (!confirm("Hapus picklist ini? Data tidak bisa dikembalikan.")) return;
-                            try {
-                              const res = await fetch(`/api/admin/picklists/${p.id}`, { method: "DELETE" });
-                              if (res.ok) {
-                                fetchData();
-                              } else {
-                                alert("Gagal menghapus");
-                              }
-                            } catch {
-                              alert("Error deleting");
-                            }
+                            setDeleteTarget(p.id);
                           }}
                           className="mt-2 text-[10px] font-bold text-red-500 hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
                         >
@@ -644,9 +649,7 @@ export default function PicklistPage() {
                         className="text-[10px] font-bold text-danger hover:underline uppercase"
                         onClick={async (e) => {
                           e.stopPropagation();
-                          if (!confirm("Hapus?")) return;
-                          await fetch(`/api/admin/picklists/${p.id}`, { method: "DELETE" });
-                          fetchData();
+                          setDeleteTarget(p.id);
                         }}
                       >
                         Hapus
@@ -657,18 +660,71 @@ export default function PicklistPage() {
               ))}
             </div>
           </div>
-        )}
-      </main>
+        )
+        }
+
+        {/* Confirmation Modal */}
+        {
+          deleteTarget && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-navy/10 animate-in zoom-in-95 duration-200 text-center">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">!</div>
+                <h3 className="text-xl font-black text-navy mb-2">Hapus Penugasan?</h3>
+                <p className="text-sm text-navy/60 font-medium mb-6">
+                  Tindakan ini tidak bisa dibatalkan.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteTarget(null)}
+                    className="flex-1 h-11 bg-slate-100 text-navy/70 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!deleteTarget) return;
+                      try {
+                        const res = await fetch(`/api/admin/picklists/${deleteTarget}`, { method: "DELETE" });
+                        if (res.ok) {
+                          showToast("Picklist berhasil dihapus ✅");
+                          fetchData();
+                        } else {
+                          showToast("Gagal menghapus ❌", true);
+                        }
+                      } catch {
+                        showToast("Error deleting", true);
+                      }
+                      setDeleteTarget(null);
+                    }}
+                    className="flex-1 h-11 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all"
+                  >
+                    Ya, Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        {/* Toast Notification */}
+        <div className={`fixed bottom-6 right-6 z-[100] transition-all duration-300 transform ${toast.visible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className={`px-6 py-4 rounded-2xl shadow-2xl font-bold text-sm flex items-center gap-3 ${toast.error ? 'bg-red-600 text-white' : 'bg-navy text-white'}`}>
+            <span>{toast.msg}</span>
+          </div>
+        </div>
+      </main >
 
       {/* Chat Popup */}
-      {showChat && chatTarget && currentUser && (
-        <ChatPopup
-          isOpen={showChat}
-          onClose={() => setShowChat(false)}
-          targetUser={chatTarget}
-          currentUser={currentUser}
-        />
-      )}
-    </div>
+      {
+        showChat && chatTarget && currentUser && (
+          <ChatPopup
+            isOpen={showChat}
+            onClose={() => setShowChat(false)}
+            targetUser={chatTarget}
+            currentUser={currentUser}
+          />
+        )
+      }
+    </div >
   );
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 export default function WorkerHistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
 
   useEffect(() => {
     fetch("/api/worker/history")
@@ -103,7 +104,14 @@ export default function WorkerHistoryPage() {
                     <div className="text-[10px] text-slate-400 font-medium italic">
                       {new Date(act.timestamp).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
-                    {act.type !== "RETURN" && (
+                    {act.type === "RETURN" ? (
+                      <button
+                        onClick={() => setSelectedActivity(act)}
+                        className="text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline"
+                      >
+                        Lihat Detail →
+                      </button>
+                    ) : (
                       <Link href={`/worker/picklists/${act.id}`} className="text-[10px] font-black text-navy uppercase tracking-widest hover:underline">
                         Lihat Detail →
                       </Link>
@@ -115,6 +123,61 @@ export default function WorkerHistoryPage() {
           </div>
         )}
       </main>
+
+      {/* Detail Modal for Returns */}
+      {selectedActivity && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-navy/60 backdrop-blur-sm" onClick={() => setSelectedActivity(null)} />
+          <div className="bg-white rounded-[32px] w-full max-w-sm max-h-[80vh] overflow-y-auto relative z-10 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Detail Return</div>
+                  <h3 className="text-xl font-black text-navy">{selectedActivity.code}</h3>
+                  <p className="text-xs text-slate-400 font-medium">{new Date(selectedActivity.timestamp).toLocaleString("id-ID")}</p>
+                </div>
+                <button onClick={() => setSelectedActivity(null)} className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold hover:bg-red-50 hover:text-red-500 transition-colors">×</button>
+              </div>
+
+              {/* Items List */}
+              <div className="space-y-3 mb-6">
+                <h4 className="text-[10px] font-black text-navy/40 uppercase tracking-widest">Barang Dikembalikan</h4>
+                {selectedActivity.items && selectedActivity.items.length > 0 ? (
+                  selectedActivity.items.map((it: any, idx: number) => (
+                    <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                      <span className="text-xs font-bold text-navy truncate flex-1 mr-2">{it.name || "Unknown Item"}</span>
+                      <span className="text-xs font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">{it.qty}x</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 italic">Data item tidak tersedia.</p>
+                )}
+              </div>
+
+              {/* Evidence Images */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black text-navy/40 uppercase tracking-widest">Bukti Foto</h4>
+                {(selectedActivity.meta?.imageUrls && selectedActivity.meta.imageUrls.length > 0) ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedActivity.meta.imageUrls.map((url: string, idx: number) => (
+                      <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                        <img src={url} alt={`Bukti ${idx}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">Tidak ada foto.</p>
+                )}
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50 rounded-b-[32px]">
+              <button onClick={() => setSelectedActivity(null)} className="w-full py-3 bg-navy text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-navy-light transition-colors">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

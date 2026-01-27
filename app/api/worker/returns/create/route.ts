@@ -48,7 +48,10 @@ export async function POST(req: Request) {
                 });
 
                 if (!sourceLine) throw new Error(`Source line ${sourceLineId} not found`);
-                const holding = sourceLine.pickedQty - sourceLine.usedQty - sourceLine.returnedQty;
+
+                // Allow returning any item that was picked and not yet returned (ignoring 'used' status)
+                const holding = sourceLine.pickedQty - sourceLine.returnedQty;
+
                 if (qty > holding) throw new Error(`Return quantity exceeds holding balance for item`);
 
                 // 2. Create Batch "Bekas"
@@ -63,7 +66,9 @@ export async function POST(req: Request) {
                     }
                 });
 
-                // 3. Update PicklistLine: increment returnedQty AND decrement usedQty
+                // 3. Update PicklistLine: increment returnedQty AND decrement usedQty (if applicable)
+                // We blindly decrement usedQty. If it goes negative, it implies we returned "New" items as "Used".
+                // This is acceptable as per user instruction to push to "Stok Bekas".
                 await tx.picklistLine.update({
                     where: { id: sourceLineId },
                     data: {

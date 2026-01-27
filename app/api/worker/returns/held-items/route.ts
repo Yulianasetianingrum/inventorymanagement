@@ -46,7 +46,9 @@ export async function GET() {
         // Calculate balance and format for frontend
         const heldItems = lines
             .map(line => {
-                const balance = line.pickedQty - line.usedQty - line.returnedQty;
+                // Modified Logic: Balance is simply what you took minus what you gave back.
+                // We ignore 'usedQty' because 'used' items are exactly what we want to be able to return (as Bekas).
+                const balance = line.pickedQty - line.returnedQty;
                 return {
                     id: line.id, // PicklistLine ID
                     itemId: line.itemId,

@@ -43,6 +43,28 @@ export async function POST(req: Request) {
         });
         const code = `PL-${dateStr}-${String(count + 1).padStart(4, "0")}`;
 
+        // --- VALIDATION: Check Stock Availability ---
+        // Fetch fresh item data
+        const itemIds = items.map((i: any) => i.itemId);
+        const dbItems = await prisma.item.findMany({
+            where: { id: { in: itemIds } }
+        });
+
+        for (const reqItem of items) {
+            const dbItem = dbItems.find(i => i.id === reqItem.itemId);
+            if (!dbItem) continue; // Should catch earlier if critical, but skip for now
+
+            const mode = reqItem.stockMode || "baru";
+            const available = mode === "baru" ? dbItem.stockNew : dbItem.stockUsed;
+
+            if (reqItem.qty > available) {
+                return NextResponse.json({
+                    error: `Stok tidak cukup untuk ${dbItem.name}. Tersedia (${mode}): ${available}, Diminta: ${reqItem.qty}`
+                }, { status: 400 });
+            }
+        }
+        // --------------------------------------------
+
         // Transaction: Create Picklist + Deduct Stock
         await prisma.$transaction(async (tx) => {
             // 0. Ensure column exists (Temporary Fix for sync issues)

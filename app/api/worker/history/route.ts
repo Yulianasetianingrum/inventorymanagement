@@ -71,8 +71,11 @@ export async function GET() {
                 code: `RET-${new Date(r.createdAt).getTime().toString().slice(-6)}`,
                 projectName: "Ad-hoc (Sisa)",
                 itemCount: meta.items?.length || 0,
+                // Include details for frontend modal
+                items: meta.items || [],
                 meta: {
-                    imageUrl: meta.imageUrl
+                    imageUrl: meta.imageUrl,
+                    imageUrls: meta.imageUrls || (meta.imageUrl ? [meta.imageUrl] : [])
                 }
             });
         });
