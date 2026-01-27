@@ -10,6 +10,13 @@ export async function GET() {
 
     try {
         const projects = await prisma.project.findMany({
+            where: {
+                picklists: {
+                    some: {
+                        status: { in: ['READY', 'PICKING'] }
+                    }
+                }
+            },
             orderBy: { createdAt: "desc" },
             select: {
                 id: true,
