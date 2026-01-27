@@ -1163,231 +1163,119 @@ function AdminItemsContent() {
                       </button>
                     </form>
 
-                    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-                      <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        {/* DESKTOP TABLE VIEW */}
-                        <div className="hidden lg:block">
-                          <table className="w-full text-left border-collapse">
-                            <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
-                              <tr>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-10">#</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-32">Barcode</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-64">Nama Barang</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Brand</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20">Ukuran</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Kategori</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Lokasi</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20">Qty</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16">Unit</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20">Jenis</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-28">Harga</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16">Min</th>
-                                <th className="p-2 text-[10px] font-black text-gray-400 uppercase tracking-widest w-10"></th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                              {bulkItems.map((row, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50 transition-colors group">
-                                  <td className="p-2 text-center text-xs font-bold text-gray-300">{idx + 1}</td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 bg-slate-50 border border-transparent hover:border-gray-200 focus:bg-white focus:border-navy/20 rounded px-2 text-xs font-mono font-bold text-slate-600 focus:outline-none transition-all"
-                                      placeholder="Scan..." value={row.barcode || ""}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].barcode = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 bg-white border border-gray-200 focus:border-navy/20 rounded px-2 text-xs font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy/5 transition-all placeholder:text-gray-300"
-                                      placeholder="Nama Produk..." value={row.name}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].name = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-2 text-xs font-semibold focus:outline-none transition-all"
-                                      placeholder="-" value={row.brand}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].brand = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-2 text-xs font-semibold focus:outline-none transition-all"
-                                      placeholder="-" value={row.size}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].size = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-2 text-xs font-semibold focus:outline-none transition-all"
-                                      placeholder="-" value={row.category}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].category = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-2 text-xs font-semibold focus:outline-none transition-all"
-                                      placeholder="Rak..." value={row.location}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].location = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input type="number" className="w-full h-8 bg-blue-50/50 border border-blue-100 text-blue-800 rounded px-2 text-xs font-bold focus:border-blue-300 focus:bg-white focus:outline-none transition-all"
-                                      placeholder="0" value={row.qty}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].qty = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input className="w-full h-8 text-center bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-1 text-xs font-bold uppercase focus:outline-none transition-all"
-                                      value={row.unit}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].unit = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1 relative">
-                                    <select className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-1 text-[10px] font-semibold focus:outline-none cursor-pointer"
-                                      value={row.unitQty || 'satuan'}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].unitQty = e.target.value; n[idx].priceType = e.target.value === 'pack' ? 'per_pack' : 'per_satuan'; setBulkItems(n); }}>
-                                      <option value="satuan">Unit</option>
-                                      <option value="pack">Pack</option>
-                                    </select>
-                                    {row.unitQty === 'pack' && (
-                                      <div className="absolute bottom-full mb-1 left-0 w-[140%] z-50 bg-white shadow-xl border border-navy/10 rounded-xl p-2 animate-in slide-in-from-bottom-2 fade-in duration-200 origin-bottom-left">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-[9px] font-black text-navy/40 uppercase tracking-wider whitespace-nowrap">ISI / PACK:</span>
-                                          <input type="number" className="w-full h-7 text-center text-xs font-black text-navy border border-navy/10 rounded-lg focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none shadow-inner bg-slate-50"
-                                            placeholder="1"
-                                            autoFocus
-                                            value={row.isiPerPack}
-                                            onChange={e => { const n = [...bulkItems]; n[idx].isiPerPack = e.target.value; setBulkItems(n); }} />
-                                        </div>
-                                        <div className="absolute -bottom-1.5 left-4 w-3 h-3 bg-white border-b border-r border-navy/10 rotate-45 transform"></div>
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="p-1">
-                                    <input type="number" className="w-full h-8 bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-2 text-xs font-semibold focus:outline-none transition-all placeholder:text-gray-300"
-                                      placeholder="Rp 0" value={row.harga}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].harga = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1">
-                                    <input type="number" className="w-full h-8 text-center bg-transparent border border-transparent hover:border-gray-200 hover:bg-white focus:bg-white focus:border-navy/20 rounded px-1 text-xs font-semibold text-red-500 focus:text-navy focus:outline-none transition-all placeholder:text-gray-200"
-                                      placeholder="0" value={row.minStock}
-                                      onChange={e => { const n = [...bulkItems]; n[idx].minStock = e.target.value; setBulkItems(n); }} />
-                                  </td>
-                                  <td className="p-1 text-center">
-                                    <button
-                                      onClick={() => { const n = [...bulkItems]; n.splice(idx, 1); setBulkItems(n); }}
-                                      className="w-6 h-6 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-all"
-                                      tabIndex={-1}
-                                    >✕</button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-gray-50/50 p-4">
+                      <div className="max-h-[70vh] overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                        {bulkItems.map((row, idx) => (
+                          <div key={idx} className="group bg-white border border-gray-200 rounded-2xl p-5 relative shadow-sm hover:shadow-md transition-all">
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => { const n = [...bulkItems]; n.splice(idx, 1); setBulkItems(n); }}
+                              className="absolute right-2 top-2 w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition-all shadow-sm z-20"
+                              tabIndex={-1}
+                            >✕</button>
 
-                        {/* MOBILE LIST VIEW (< LG) */}
-                        <div className="lg:hidden space-y-4">
-                          {bulkItems.map((row, idx) => (
-                            <div key={idx} className="group border border-gray-100 rounded-2xl p-4 relative bg-white shadow-sm">
-                              <button
-                                onClick={() => { const n = [...bulkItems]; n.splice(idx, 1); setBulkItems(n); }}
-                                className="absolute right-2 top-2 w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition-all shadow-sm z-20"
-                              >✕</button>
+                            <div className="space-y-4">
+                              {/* Header: Item Number */}
+                              <div className="flex justify-between items-center -mt-1 mb-1">
+                                <span className="bg-navy text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md">Item #{idx + 1}</span>
+                              </div>
 
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="bg-navy text-white text-xs font-bold px-2 py-1 rounded-md">Item #{idx + 1}</span>
-                                </div>
-
-                                {/* Barcode Field (Mobile) */}
-                                <div>
+                              {/* ROW 1: Identity (Barcode & Name) */}
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div className="md:col-span-3">
                                   <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Barcode / SKU</label>
                                   <input
-                                    className="w-full h-9 bg-slate-50 border border-gray-200 rounded-lg px-3 text-xs font-mono font-bold text-slate-600 focus:bg-white focus:border-navy/20 focus:outline-none"
+                                    className="w-full h-10 bg-slate-50 border border-gray-200 rounded-xl px-3 text-xs font-mono font-bold text-slate-600 focus:bg-white focus:border-navy/20 focus:outline-none focus:ring-2 focus:ring-navy/5 transition-all"
                                     placeholder="Barcode"
                                     value={row.barcode || ""}
                                     onChange={e => { const n = [...bulkItems]; n[idx].barcode = e.target.value; setBulkItems(n); }}
                                   />
                                 </div>
-
-                                {/* Name */}
-                                <div>
+                                <div className="md:col-span-9">
                                   <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Nama Produk</label>
                                   <input
-                                    className="w-full h-10 bg-white border border-gray-200 rounded-lg px-3 text-sm font-bold text-navy placeholder:text-gray-300 focus:border-navy/20 focus:outline-none focus:ring-2 focus:ring-navy/5 transition-all"
+                                    className="w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-bold text-navy placeholder:text-gray-300 focus:border-navy/20 focus:outline-none focus:ring-2 focus:ring-navy/5 transition-all"
                                     placeholder="Nama Produk"
                                     value={row.name}
                                     onChange={e => { const n = [...bulkItems]; n[idx].name = e.target.value; setBulkItems(n); }}
                                   />
                                 </div>
+                              </div>
 
-                                {/* DETAILS GRID */}
-                                <div className="grid grid-cols-3 gap-3">
-                                  <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Brand</label>
-                                    <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="-" value={row.brand} onChange={e => { const n = [...bulkItems]; n[idx].brand = e.target.value; setBulkItems(n); }} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Ukuran</label>
-                                    <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="-" value={row.size} onChange={e => { const n = [...bulkItems]; n[idx].size = e.target.value; setBulkItems(n); }} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Kategori</label>
-                                    <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="-" value={row.category} onChange={e => { const n = [...bulkItems]; n[idx].category = e.target.value; setBulkItems(n); }} />
-                                  </div>
+                              {/* ROW 2: Details (Brand, Size, Cat, Loc, Min) */}
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                <div>
+                                  <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Brand</label>
+                                  <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="-" value={row.brand} onChange={e => { const n = [...bulkItems]; n[idx].brand = e.target.value; setBulkItems(n); }} />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Lokasi Rak</label>
-                                    <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="Rak..." value={row.location} onChange={e => { const n = [...bulkItems]; n[idx].location = e.target.value; setBulkItems(n); }} />
-                                  </div>
-                                  <div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Min Stock</label>
-                                    <input type="number" className="w-full h-9 bg-red-50 border-red-100 text-red-600 rounded-lg px-2 text-xs font-bold focus:outline-none focus:bg-white focus:border-red-200" placeholder="0" value={row.minStock} onChange={e => { const n = [...bulkItems]; n[idx].minStock = e.target.value; setBulkItems(n); }} />
-                                  </div>
+                                <div>
+                                  <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Ukuran</label>
+                                  <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="-" value={row.size} onChange={e => { const n = [...bulkItems]; n[idx].size = e.target.value; setBulkItems(n); }} />
                                 </div>
+                                <div>
+                                  <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Kategori</label>
+                                  <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="-" value={row.category} onChange={e => { const n = [...bulkItems]; n[idx].category = e.target.value; setBulkItems(n); }} />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Rak</label>
+                                  <input className="w-full h-9 bg-gray-50 border-gray-200 rounded-lg px-2 text-xs focus:outline-none focus:bg-white focus:border-navy/20" placeholder="Rak..." value={row.location} onChange={e => { const n = [...bulkItems]; n[idx].location = e.target.value; setBulkItems(n); }} />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Min Stock</label>
+                                  <input type="number" className="w-full h-9 bg-red-50 border-red-100 text-red-600 rounded-lg px-2 text-xs font-bold focus:outline-none focus:bg-white focus:border-red-200" placeholder="0" value={row.minStock} onChange={e => { const n = [...bulkItems]; n[idx].minStock = e.target.value; setBulkItems(n); }} />
+                                </div>
+                              </div>
 
-                                {/* STOCK & PRICE GRID */}
-                                <div className="bg-navy/5 rounded-xl p-3 space-y-3">
-                                  <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                      <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Qty</label>
-                                      <input type="number" className="w-full h-9 bg-white border border-navy/10 rounded-lg px-2 text-xs font-black text-navy focus:outline-none focus:ring-1 focus:ring-navy/20" placeholder="0" value={row.qty} onChange={e => { const n = [...bulkItems]; n[idx].qty = e.target.value; setBulkItems(n); }} />
-                                    </div>
-                                    <div>
-                                      <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Satuan</label>
-                                      <input className="w-full h-9 bg-white border border-navy/10 rounded-lg px-2 text-xs font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy/20" placeholder="Pcs" value={row.unit} onChange={e => { const n = [...bulkItems]; n[idx].unit = e.target.value; setBulkItems(n); }} />
-                                    </div>
-                                    <div>
-                                      <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Mode</label>
-                                      <select className="w-full h-9 bg-white border border-navy/10 rounded-lg px-1 text-[10px] font-bold text-navy focus:outline-none focus:ring-1 focus:ring-navy/20"
-                                        value={row.unitQty || 'satuan'}
-                                        onChange={e => { const n = [...bulkItems]; n[idx].unitQty = e.target.value; n[idx].priceType = e.target.value === 'pack' ? 'per_pack' : 'per_satuan'; setBulkItems(n); }}>
-                                        <option value="satuan">Unit</option>
-                                        <option value="pack">Pack</option>
-                                      </select>
-                                    </div>
+                              {/* ROW 3: Financials & Stock */}
+                              <div className="bg-navy/5 rounded-xl p-4 border border-navy/5">
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                  <div className="md:col-span-2">
+                                    <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Qty</label>
+                                    <input type="number" className="w-full h-10 bg-white border border-navy/10 rounded-lg px-2 text-sm font-black text-navy focus:outline-none focus:ring-2 focus:ring-navy/20" placeholder="0" value={row.qty} onChange={e => { const n = [...bulkItems]; n[idx].qty = e.target.value; setBulkItems(n); }} />
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Satuan</label>
+                                    <input className="w-full h-10 bg-white border border-navy/10 rounded-lg px-2 text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20" placeholder="Pcs" value={row.unit} onChange={e => { const n = [...bulkItems]; n[idx].unit = e.target.value; setBulkItems(n); }} />
+                                  </div>
+                                  <div className="md:col-span-3">
+                                    <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Mode Beli</label>
+                                    <select className="w-full h-10 bg-white border border-navy/10 rounded-lg px-2 text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 cursor-pointer"
+                                      value={row.unitQty || 'satuan'}
+                                      onChange={e => { const n = [...bulkItems]; n[idx].unitQty = e.target.value; n[idx].priceType = e.target.value === 'pack' ? 'per_pack' : 'per_satuan'; setBulkItems(n); }}>
+                                      <option value="satuan">Per Unit (Pcs)</option>
+                                      <option value="pack">Per Pack (Dus/Box)</option>
+                                    </select>
                                   </div>
 
-                                  {row.unitQty === 'pack' && (
-                                    <div className="flex items-center gap-3 bg-white border border-navy/10 rounded-lg p-2">
-                                      <span className="text-[10px] font-bold text-navy uppercase shrink-0">Isi Per Pack:</span>
-                                      <input type="number" className="w-full h-6 text-right text-xs font-black text-navy border-none focus:outline-none"
-                                        placeholder="12..."
-                                        value={row.isiPerPack}
-                                        onChange={e => { const n = [...bulkItems]; n[idx].isiPerPack = e.target.value; setBulkItems(n); }} />
-                                    </div>
-                                  )}
+                                  {/* Conditional Pack Size Input */}
+                                  <div className={`md:col-span-2 transition-all duration-300 ${row.unitQty === 'pack' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                    <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Isi Per Pack</label>
+                                    <input type="number" className="w-full h-10 bg-white border border-navy/10 rounded-lg px-2 text-xs font-black text-navy text-center focus:outline-none focus:ring-2 focus:ring-navy/20"
+                                      placeholder="12"
+                                      value={row.isiPerPack}
+                                      disabled={row.unitQty !== 'pack'}
+                                      onChange={e => { const n = [...bulkItems]; n[idx].isiPerPack = e.target.value; setBulkItems(n); }} />
+                                  </div>
 
-                                  <div>
+                                  <div className="md:col-span-3">
                                     <label className="text-[10px] font-bold text-navy/40 uppercase mb-1 block">Harga Beli {row.unitQty === 'pack' ? '(Per Pack)' : '(Per Unit)'}</label>
                                     <div className="relative">
-                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-navy/30 text-xs font-bold">Rp</span>
-                                      <input type="number" className="w-full h-9 bg-white border border-navy/10 rounded-lg pl-8 pr-2 text-xs font-black text-navy focus:outline-none focus:ring-1 focus:ring-navy/20"
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-navy/30 text-xs font-bold">Rp</span>
+                                      <input type="number" className="w-full h-10 bg-white border border-navy/10 rounded-lg pl-8 pr-2 text-sm font-black text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
                                         placeholder="0" value={row.harga}
                                         onChange={e => { const n = [...bulkItems]; n[idx].harga = e.target.value; setBulkItems(n); }} />
                                     </div>
                                   </div>
                                 </div>
-
                               </div>
                             </div>
-                          ))}
-
-                          <div className="p-3 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
-                            <button className="w-full py-3 rounded-xl border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:text-navy hover:border-navy/30 hover:bg-white transition-all uppercase tracking-wide flex items-center justify-center gap-2" onClick={() => setBulkItems([...bulkItems, { name: "", brand: "", category: "", location: "", size: "", unit: "pcs", unitQty: "satuan", isiPerPack: "", priceType: "per_satuan", minStock: "0", qty: "", harga: "", supplierId: 0, supplierName: "" }])}>
-                              <span>+</span> Tambah Baris Baru
-                            </button>
                           </div>
+                        ))}
+
+                        <div className="p-4 bg-white/50 border-2 border-dashed border-gray-300 rounded-2xl hover:border-navy/30 hover:bg-white transition-all cursor-pointer group" onClick={() => setBulkItems([...bulkItems, { name: "", brand: "", category: "", location: "", size: "", unit: "pcs", unitQty: "satuan", isiPerPack: "", priceType: "per_satuan", minStock: "0", qty: "", harga: "", supplierId: 0, supplierName: "" }])}>
+                          <button className="w-full py-4 text-xs font-black text-gray-400 group-hover:text-navy uppercase tracking-widest flex items-center justify-center gap-2">
+                            <span className="text-lg leading-none">+</span> Tambah Baris Baru
+                          </button>
                         </div>
                       </div>
                     </div>
