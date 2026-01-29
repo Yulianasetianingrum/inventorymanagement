@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { HistoryPopup } from "./HistoryPopup";
@@ -8,15 +8,35 @@ import { HistoryPopup } from "./HistoryPopup";
 function AuditPageInner() {
   const [activeTab, setActiveTab] = useState("KPI"); // KPI, ITEMS, SPENDING
   const [filter, setFilter] = useState("month"); // week, month, year
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [benchmarkSearch, setBenchmarkSearch] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const searchParams = useSearchParams();
 
+  const frequentItems = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    const byItem = new Map<string, { name: string; brand?: string; unit?: string; total: number; count: number }>();
+    for (const row of data) {
+      const name = row?.item?.name || "Unknown";
+      const brand = row?.item?.brand || "";
+      const unit = row?.item?.unit || "";
+      const key = `${name}||${brand}`;
+      const used = Number(row?.usedQty ?? row?.pickedQty ?? 0);
+      const entry = byItem.get(key) || { name, brand, unit, total: 0, count: 0 };
+      entry.total += Number.isFinite(used) ? used : 0;
+      entry.count += 1;
+      byItem.set(key, entry);
+    }
+    return Array.from(byItem.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+  }, [data]);
+
   useEffect(() => {
     fetchData();
-  }, [activeTab, filter]);
+  }, [activeTab, filter, dateRange.start, dateRange.end]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -33,7 +53,12 @@ function AuditPageInner() {
       if (activeTab === "ITEMS") endpoint = "/api/admin/audit/items";
       if (activeTab === "SPENDING") endpoint = "/api/admin/audit/spending";
 
-      const res = await fetch(`${endpoint}?filter=${filter}`);
+      const params = new URLSearchParams();
+      if (dateRange.start) params.set("start", dateRange.start);
+      if (dateRange.end) params.set("end", dateRange.end);
+      if (!dateRange.start && !dateRange.end) params.set("filter", filter);
+
+      const res = await fetch(`${endpoint}?${params.toString()}`);
       const json = await res.json();
 
       if (!res.ok) throw new Error(json.error || "Gagal memuat data");
@@ -85,7 +110,10 @@ function AuditPageInner() {
             {['week', 'month', 'year'].map((f) => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => {
+                  setFilter(f);
+                  setDateRange({ start: "", end: "" });
+                }}
                 className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${filter === f ? 'bg-navy text-white shadow-md' : 'text-gray-400 hover:text-navy hover:bg-gray-50'
                   }`}
               >
@@ -93,6 +121,37 @@ function AuditPageInner() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Calendar Range Filter */}
+        <div className="flex flex-wrap items-end gap-3 mb-8">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Mulai</label>
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+              className="h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold text-navy bg-white"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Sampai</label>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+              className="h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold text-navy bg-white"
+            />
+          </div>
+          {(dateRange.start || dateRange.end) && (
+            <button
+              type="button"
+              onClick={() => setDateRange({ start: "", end: "" })}
+              className="h-9 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-200 hover:text-navy hover:border-gray-300 transition-colors"
+            >
+              Reset
+            </button>
+          )}
         </div>
 
         {/* Navigation Tabs */}
@@ -189,7 +248,47 @@ function AuditPageInner() {
             )}
 
             {activeTab === "ITEMS" && (
-              <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+              <div className="space-y-8">
+                {/* Frequent Items */}
+                <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 bg-navy/5 flex items-center justify-between">
+                    <h3 className="text-sm font-black text-navy uppercase tracking-widest">Barang yg sering di pakai</h3>
+                    <span className="text-[9px] font-bold text-navy/40 uppercase tracking-widest">Top 10</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-gray-50 text-gray-400 font-bold uppercase tracking-wider">
+                        <tr>
+                          <th className="px-6 py-3 w-10">#</th>
+                          <th className="px-6 py-3">Nama Barang</th>
+                          <th className="px-6 py-3">Brand</th>
+                          <th className="px-6 py-3 text-center">Frekuensi</th>
+                          <th className="px-6 py-3 text-right">Total Pemakaian</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {frequentItems.map((it, idx) => (
+                          <tr key={`${it.name}-${it.brand}-${idx}`} className="hover:bg-off-white/50 transition-colors">
+                            <td className="px-6 py-4 text-gray-300 font-bold">{idx + 1}</td>
+                            <td className="px-6 py-4 font-bold text-navy">{it.name}</td>
+                            <td className="px-6 py-4 text-gray-500 font-bold uppercase text-[10px] tracking-widest">{it.brand || "-"}</td>
+                            <td className="px-6 py-4 text-center text-gray-500 font-mono">{it.count}x</td>
+                            <td className="px-6 py-4 text-right font-black text-navy">
+                              {it.total} <span className="text-[10px] font-bold text-navy/40 uppercase">{it.unit || ""}</span>
+                            </td>
+                          </tr>
+                        ))}
+                        {frequentItems.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-8 text-center text-gray-400 italic">Belum ada pemakaian tercatat.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-sm">

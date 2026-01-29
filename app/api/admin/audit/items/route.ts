@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
     const session = await getSession();
@@ -8,16 +9,32 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const filter = url.searchParams.get("filter") || "month";
+    const startParam = url.searchParams.get("start");
+    const endParam = url.searchParams.get("end");
 
     let dateLimit = new Date();
-    if (filter === "week") dateLimit.setDate(dateLimit.getDate() - 7);
+    let endDate: Date | null = null;
+    if (startParam) {
+        const parsed = new Date(startParam);
+        if (!Number.isNaN(parsed.getTime())) dateLimit = parsed;
+    } else if (filter === "week") dateLimit.setDate(dateLimit.getDate() - 7);
     else if (filter === "year") dateLimit.setFullYear(dateLimit.getFullYear() - 1);
     else dateLimit.setMonth(dateLimit.getMonth() - 1);
+
+    if (endParam) {
+        const parsed = new Date(endParam);
+        if (!Number.isNaN(parsed.getTime())) {
+            parsed.setHours(23, 59, 59, 999);
+            endDate = parsed;
+        }
+    }
 
     try {
         await prisma.$executeRawUnsafe("ALTER TABLE picklist_lines ADD COLUMN IF NOT EXISTS stockMode VARCHAR(191) NOT NULL DEFAULT 'baru'").catch(() => { });
 
         // Fetch using raw SQL to bypass Prisma Client sync issues with 'stockMode' field
+        const endDateClause = endDate ? Prisma.sql`AND COALESCE(p.deliveredAt, p.pickedAt) <= ${endDate}` : Prisma.empty;
+
         const lines: any[] = await prisma.$queryRaw`
             SELECT 
                 pl.*,
@@ -34,6 +51,7 @@ export async function GET(req: Request) {
             LEFT JOIN user u ON p.assigneeId = u.id
             WHERE p.status IN ('PICKED', 'DELIVERED')
               AND COALESCE(p.deliveredAt, p.pickedAt) >= ${dateLimit}
+              ${endDateClause}
               AND pl.pickedQty > 0
             ORDER BY COALESCE(p.deliveredAt, p.pickedAt) DESC
         `;

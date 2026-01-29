@@ -2,15 +2,41 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 
-export async function GET() {
+export async function GET(req: Request) {
     const session = await getSession();
     if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
+        const { searchParams } = new URL(req.url);
+        const startParam = searchParams.get("start");
+        const endParam = searchParams.get("end");
+
+        let startDate: Date | null = null;
+        let endDate: Date | null = null;
+        if (startParam) {
+            const parsed = new Date(startParam);
+            if (!Number.isNaN(parsed.getTime())) startDate = parsed;
+        }
+        if (endParam) {
+            const parsed = new Date(endParam);
+            if (!Number.isNaN(parsed.getTime())) {
+                parsed.setHours(23, 59, 59, 999);
+                endDate = parsed;
+            }
+        }
+
         // 1. Only include "baru" (pembelian/tambah stok) batches for financial audit
         const batches = await prisma.stockInBatch.findMany({
             where: {
-                note: { startsWith: "mode:baru" }
+                note: { startsWith: "mode:baru" },
+                ...(startDate || endDate
+                    ? {
+                        date: {
+                            ...(startDate ? { gte: startDate } : {}),
+                            ...(endDate ? { lte: endDate } : {})
+                        }
+                    }
+                    : {})
             },
             orderBy: { date: "desc" },
             include: {

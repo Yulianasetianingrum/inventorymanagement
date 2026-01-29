@@ -452,7 +452,14 @@ export default function AdminDashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {analysisData.deadStock.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-red-50/10 transition-colors">
+                        <tr
+                          key={idx}
+                          className="hover:bg-red-50/10 transition-colors cursor-pointer"
+                          onClick={() => {
+                            const q = encodeURIComponent(String(item?.name ?? ""));
+                            window.location.href = `/picklists?item=${q}`;
+                          }}
+                        >
                           <td className="p-4 text-gray-300 font-bold">{idx + 1}</td>
                           <td className="p-4 font-bold text-navy">{item.name}</td>
                           <td className="p-4 text-center text-gray-500 font-mono">{item.totalStock}</td>

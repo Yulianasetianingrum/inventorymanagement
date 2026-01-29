@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
     const session = await getSession();
@@ -8,11 +9,25 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get("filter") || "month"; // week, month, year
+    const startParam = searchParams.get("start");
+    const endParam = searchParams.get("end");
 
     let startDate = new Date();
-    if (filter === "week") startDate.setDate(startDate.getDate() - 7);
+    let endDate: Date | null = null;
+    if (startParam) {
+        const parsed = new Date(startParam);
+        if (!Number.isNaN(parsed.getTime())) startDate = parsed;
+    } else if (filter === "week") startDate.setDate(startDate.getDate() - 7);
     else if (filter === "month") startDate.setMonth(startDate.getMonth() - 1);
     else startDate.setFullYear(startDate.getFullYear() - 1);
+
+    if (endParam) {
+        const parsed = new Date(endParam);
+        if (!Number.isNaN(parsed.getTime())) {
+            parsed.setHours(23, 59, 59, 999);
+            endDate = parsed;
+        }
+    }
 
     try {
         // 1. Worker Performance (Picklists completed)
@@ -27,10 +42,19 @@ export async function GET(req: Request) {
                         assignedPicklists: {
                             where: {
                                 status: { in: ["PICKED", "DELIVERED"] },
-                                OR: [
-                                    { pickedAt: { gte: startDate } },
-                                    { deliveredAt: { gte: startDate } }
-                                ]
+                                ...(endDate
+                                    ? {
+                                        OR: [
+                                            { pickedAt: { gte: startDate, lte: endDate } },
+                                            { deliveredAt: { gte: startDate, lte: endDate } }
+                                        ]
+                                    }
+                                    : {
+                                        OR: [
+                                            { pickedAt: { gte: startDate } },
+                                            { deliveredAt: { gte: startDate } }
+                                        ]
+                                    })
                             }
                         }
                     }
@@ -49,7 +73,7 @@ export async function GET(req: Request) {
                     select: {
                         createdPicklists: {
                             where: {
-                                createdAt: { gte: startDate }
+                                createdAt: endDate ? { gte: startDate, lte: endDate } : { gte: startDate }
                             }
                         }
                     }
@@ -61,6 +85,8 @@ export async function GET(req: Request) {
         await prisma.$executeRawUnsafe("ALTER TABLE picklist_lines ADD COLUMN IF NOT EXISTS stockMode VARCHAR(191) NOT NULL DEFAULT 'baru'").catch(() => { });
 
         // 3. Top Used Items (Traceability) - Using Raw SQL to bypass Prisma Client sync lag
+        const endDateClause = endDate ? Prisma.sql`AND p.deliveredAt <= ${endDate}` : Prisma.empty;
+
         const topItemsRaw: any[] = await prisma.$queryRaw`
             SELECT 
                 pl.itemId, 
@@ -70,6 +96,7 @@ export async function GET(req: Request) {
             WHERE pl.stockMode = 'baru' 
               AND p.status = 'DELIVERED'
               AND p.deliveredAt >= ${startDate}
+              ${endDateClause}
             GROUP BY pl.itemId
             ORDER BY usedQtySum DESC
             LIMIT 5
@@ -171,7 +198,10 @@ export async function GET(req: Request) {
             where: {
                 action: {
                     in: ["CREATE_PICKLIST", "STOCK_ADJUSTMENT", "DELETE_ITEM", "CREATE_USER", "DELETE_USER"]
-                }
+                },
+                ...(endDate
+                    ? { createdAt: { gte: startDate, lte: endDate } }
+                    : { createdAt: { gte: startDate } })
             },
             include: {
                 user: {

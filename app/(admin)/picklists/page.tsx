@@ -62,6 +62,16 @@ export default function PicklistPage() {
       .catch(() => fetchData());
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const item = params.get("item");
+    if (item) {
+      setShowForm(true);
+      setSearchItem(item);
+    }
+  }, []);
+
   async function fetchData() {
     setLoading(true);
     try {
