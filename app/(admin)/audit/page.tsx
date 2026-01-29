@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { HistoryPopup } from "./HistoryPopup";
 
-
-export default function AuditPage() {
+function AuditPageInner() {
   const [activeTab, setActiveTab] = useState("KPI"); // KPI, ITEMS, SPENDING
   const [filter, setFilter] = useState("month"); // week, month, year
   const [benchmarkSearch, setBenchmarkSearch] = useState("");
@@ -511,5 +510,13 @@ export default function AuditPage() {
         targetUser={selectedUser}
       />
     </div>
+  );
+}
+
+export default function AuditPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <AuditPageInner />
+    </Suspense>
   );
 }
