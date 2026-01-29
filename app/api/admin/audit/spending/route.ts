@@ -7,8 +7,11 @@ export async function GET() {
     if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
-        // 1. Get all stock batches for total spending
+        // 1. Only include "baru" (pembelian/tambah stok) batches for financial audit
         const batches = await prisma.stockInBatch.findMany({
+            where: {
+                note: { startsWith: "mode:baru" }
+            },
             orderBy: { date: "desc" },
             include: {
                 item: { select: { name: true, brand: true } },

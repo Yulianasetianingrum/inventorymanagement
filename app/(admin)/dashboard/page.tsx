@@ -389,7 +389,8 @@ export default function AdminDashboardPage() {
               {/* 2. Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Fast Moving */}
-                <Card className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 h-[350px] flex flex-col">
+                <Link href="/audit?tab=ITEMS" className="contents">
+                  <Card className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 h-[350px] flex flex-col cursor-pointer hover:border-gold/50 hover:shadow-md transition-all">
                   <h3 className="text-sm font-black text-navy uppercase tracking-wide mb-4 flex items-center gap-2">🔥 Top Fast Moving <span className="text-[10px] font-normal text-gray-400 normal-case">(Berdasarkan pemakaian)</span></h3>
                   <div className="flex-1 w-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
@@ -401,7 +402,8 @@ export default function AdminDashboardPage() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                </Card>
+                  </Card>
+                </Link>
 
                 {/* Category Pie */}
                 <Card className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 h-[350px] flex flex-col">
@@ -568,11 +570,11 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        {/* Recent Activity */}
+        {/* Audit */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Log Aktivitas</h2>
+              <h2 className="text-base md:text-lg font-black text-navy uppercase tracking-wide">Audit</h2>
             </div>
             <Link href="/audit" className="text-[10px] font-bold text-gold hover:text-gold-dark uppercase tracking-widest transition-colors">
               Audit Lengkap →
@@ -639,7 +641,7 @@ export default function AdminDashboardPage() {
                 })}
               </ul>
             ) : (
-              <div className="text-center py-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Belum ada aktivitas tercatat</div>
+              <div className="text-center py-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Belum ada audit tercatat</div>
             )}
           </Card>
         </section>
@@ -671,4 +673,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-

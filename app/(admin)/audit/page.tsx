@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { HistoryPopup } from "./HistoryPopup";
 
@@ -12,10 +13,18 @@ export default function AuditPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     fetchData();
   }, [activeTab, filter]);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "KPI" || tab === "ITEMS" || tab === "SPENDING") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   async function fetchData() {
     setData(null);
