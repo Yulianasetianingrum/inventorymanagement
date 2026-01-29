@@ -438,7 +438,7 @@ function AuditPageInner() {
 
                             <div className="mt-4 flex items-center gap-2 bg-off-white p-3 rounded-xl ring-1 ring-inset ring-navy/5">
                               <div className="w-2 h-2 rounded-full bg-success" />
-                              <span className="text-xs font-bold text-navy/60">{r.cheapest.supplier?.namaToko}</span>
+                              <span className="text-xs font-bold text-navy/60">Supplier termurah</span>
                             </div>
 
                             {/* Price War Section */}
@@ -448,7 +448,7 @@ function AuditPageInner() {
                                 <div className="space-y-2">
                                   {r.options.slice(1, 4).map((opt: any, idx: number) => (
                                     <div key={idx} className="flex justify-between items-center text-xs">
-                                      <span className="font-medium text-navy/60 truncate max-w-[120px]">{opt.supplier?.namaToko}</span>
+                                      <span className="font-medium text-navy/60 truncate max-w-[120px]">Vendor {idx + 2}</span>
                                       <div className="flex flex-col items-end">
                                         <span className="font-bold text-navy/40">Rp {opt.price.toLocaleString()}</span>
                                         {r.cheapest.price > 0 ? (
