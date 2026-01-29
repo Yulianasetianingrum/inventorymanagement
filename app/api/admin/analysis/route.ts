@@ -78,8 +78,19 @@ export async function GET(req: Request) {
             .slice(0, 10);
 
         // Dead: Zero Consumption & Has Stock (and created a while ago? simplified for now)
-        const deadStock = itemPerformance
-            .filter(i => (consumptionMap.get(i.id) || 0) === 0 && i.totalStock > 0)
+        const deadStockRaw = itemPerformance
+            .filter(i => (consumptionMap.get(i.id) || 0) === 0 && i.totalStock > 0);
+
+        // Deduplicate by item name (case-insensitive) and keep the most expensive entry
+        const deadStockByName = new Map<string, typeof deadStockRaw[number]>();
+        for (const item of deadStockRaw) {
+            const key = String(item.name || "").trim().toLowerCase();
+            if (!key) continue;
+            const existing = deadStockByName.get(key);
+            if (!existing || item.value > existing.value) deadStockByName.set(key, item);
+        }
+
+        const deadStock = Array.from(deadStockByName.values())
             .sort((a, b) => b.value - a.value) // Most expensive dead stock first
             .slice(0, 10);
 

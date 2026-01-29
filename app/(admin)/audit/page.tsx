@@ -375,6 +375,7 @@ function AuditPageInner() {
                     <div className="py-10 text-center text-gray-400 text-xs font-bold italic">Tidak ada data.</div>
                   )}
                 </div>
+                </div>
               </div>
             )}
 

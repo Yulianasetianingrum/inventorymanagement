@@ -55,6 +55,29 @@ export async function GET(req: Request) {
     select: { id: true, namaToko: true, keperluanItems: true, noTelp: true, mapsUrl: true, alamat: true },
   });
 
+  const priceBySupplier = new Map<number, { price: number; date: Date }>();
+  if (itemId) {
+    const batches = await prisma.stockInBatch.findMany({
+      where: {
+        itemId: Number(itemId) || 0,
+        supplierId: { not: null },
+        unitCost: { gt: 0 },
+        note: { startsWith: "mode:baru" }
+      },
+      select: { supplierId: true, unitCost: true, date: true }
+    });
+
+    for (const b of batches) {
+      if (!b.supplierId) continue;
+      const price = Number(b.unitCost);
+      if (!Number.isFinite(price) || price <= 0) continue;
+      const existing = priceBySupplier.get(b.supplierId);
+      if (!existing || price < existing.price) {
+        priceBySupplier.set(b.supplierId, { price, date: b.date });
+      }
+    }
+  }
+
   const enriched = suppliers.map((s) => ({
     id: s.id,
     name: s.namaToko,
@@ -62,6 +85,8 @@ export async function GET(req: Request) {
     keywords: parseKeperluan(s.keperluanItems),
     mapsUrl: s.mapsUrl,
     address: s.alamat,
+    lastPrice: priceBySupplier.get(s.id)?.price ?? null,
+    lastPriceAt: priceBySupplier.get(s.id)?.date ?? null
   }));
 
   const tokens = (q || item?.name || "")

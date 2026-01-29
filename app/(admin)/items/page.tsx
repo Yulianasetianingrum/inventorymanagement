@@ -314,6 +314,13 @@ function AdminItemsContent() {
   const [stockSuppliers, setStockSuppliers] = useState<SupplierRow[]>([]);
   const [stockSupplierQuery, setStockSupplierQuery] = useState("");
   const [selectedStockSupplier, setSelectedStockSupplier] = useState<{ id: number | null; name: string | null }>({ id: null, name: null });
+  const [autoSupplierApplied, setAutoSupplierApplied] = useState(false);
+  const cheapestSupplier = useMemo(() => {
+    const list = stockSuppliers
+      .filter((s) => typeof s.lastPrice === "number" && (s.lastPrice as number) > 0)
+      .sort((a, b) => (a.lastPrice as number) - (b.lastPrice as number));
+    return list[0] || null;
+  }, [stockSuppliers]);
 
   const showToast = (msg: string, error = false) => {
     setToast({ msg, error, visible: true });
@@ -369,17 +376,35 @@ function AdminItemsContent() {
       const res = await fetch(`/api/admin/suppliers/recommend?${params.toString()}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       const list = Array.isArray(data?.recommended) ? data.recommended : Array.isArray(data?.all) ? data.all : [];
-      setStockSuppliers(list.map((s: any) => ({
+      const mapped = list.map((s: any) => ({
         id: Number(s.id),
         name: String(s.name || s.namaToko || ""),
         waNumber: s.waNumber || "",
         keywords: [],
-        address: s.address
-      })));
+        address: s.address,
+        lastPrice: Number.isFinite(Number(s.lastPrice)) ? Number(s.lastPrice) : null,
+        lastPriceAt: s.lastPriceAt || null
+      }));
+      setStockSuppliers(mapped);
+
+      // Auto-fill supplier & price for low/empty/priority items (only once per modal open)
+      if (!autoSupplierApplied && item.statusRefill !== "Aman" && stockForm.mode === "baru") {
+        const cheapest = mapped
+          .filter((s) => typeof s.lastPrice === "number" && (s.lastPrice as number) > 0)
+          .sort((a, b) => (a.lastPrice as number) - (b.lastPrice as number))[0];
+        if (cheapest) {
+          setSelectedStockSupplier({ id: cheapest.id, name: cheapest.name });
+          setStockSupplierQuery(cheapest.name);
+          if (!stockForm.harga) {
+            setStockForm((prev) => ({ ...prev, harga: String(cheapest.lastPrice) }));
+          }
+          setAutoSupplierApplied(true);
+        }
+      }
     } catch (e) {
       console.error("Failed load suppliers", e);
     }
-  }, []);
+  }, [autoSupplierApplied, stockForm.harga, stockForm.mode]);
 
   useEffect(() => {
     if (!stockModalOpen || !selectedItem) return;
@@ -634,6 +659,8 @@ function AdminItemsContent() {
           setSelectedItem(itemData);
           setStockModalOpen(true); // Open stock modal instead of edit form
           setStockSupplierQuery(""); // Fix: Don't pre-fill supplier with item name
+          setSelectedStockSupplier({ id: null, name: null });
+          setAutoSupplierApplied(false);
 
           showToast(`Item terdaftar: ${d.name}. Mode Tambah Stok aktif.`, false);
           return; // Stop here, don't open item form
@@ -950,6 +977,8 @@ function AdminItemsContent() {
               setSelectedItem(actionMenu.item);
               setStockModalOpen(true);
               setStockSupplierQuery("");
+              setSelectedStockSupplier({ id: null, name: null });
+              setAutoSupplierApplied(false);
               setActionMenu(null);
             }}><span className="text-gold text-sm">✚</span> Tambah Stok</button>
             <button className="w-full text-left px-4 py-3 rounded-lg text-xs font-bold text-navy hover:bg-navy/5 transition-colors flex items-center gap-3" onClick={() => {
@@ -1475,6 +1504,27 @@ function AdminItemsContent() {
                   {stockForm.mode === 'baru' && (
                     <div>
                       <label className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1.5 block">Supplier</label>
+                      {cheapestSupplier && (
+                        <div className="mb-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedStockSupplier({ id: cheapestSupplier.id, name: cheapestSupplier.name });
+                              setStockSupplierQuery(cheapestSupplier.name);
+                              if (!stockForm.harga) {
+                                setStockForm((prev) => ({ ...prev, harga: String(cheapestSupplier.lastPrice || "") }));
+                              }
+                              setAutoSupplierApplied(true);
+                            }}
+                            className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-gold/40 bg-gold/10 text-navy text-[10px] font-black uppercase tracking-widest hover:bg-gold/20 transition-colors"
+                          >
+                            <span>Rekomendasi Termurah</span>
+                            <span className="text-[11px] font-bold normal-case tracking-normal">
+                              {cheapestSupplier.name} • Rp {Number(cheapestSupplier.lastPrice || 0).toLocaleString("id-ID")}
+                            </span>
+                          </button>
+                        </div>
+                      )}
                       <div className="relative z-20">
                         <SmartSupplierInput
                           value={selectedStockSupplier.name || stockSupplierQuery}
