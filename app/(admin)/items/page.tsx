@@ -376,7 +376,7 @@ function AdminItemsContent() {
       const res = await fetch(`/api/admin/suppliers/recommend?${params.toString()}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       const list = Array.isArray(data?.recommended) ? data.recommended : Array.isArray(data?.all) ? data.all : [];
-      const mapped = list.map((s: any) => ({
+      const mapped: SupplierRow[] = list.map((s: any) => ({
         id: Number(s.id),
         name: String(s.name || s.namaToko || ""),
         waNumber: s.waNumber || "",
@@ -390,8 +390,8 @@ function AdminItemsContent() {
       // Auto-fill supplier & price for low/empty/priority items (only once per modal open)
       if (!autoSupplierApplied && item.statusRefill !== "Aman" && stockForm.mode === "baru") {
         const cheapest = mapped
-          .filter((s) => typeof s.lastPrice === "number" && (s.lastPrice as number) > 0)
-          .sort((a, b) => (a.lastPrice as number) - (b.lastPrice as number))[0];
+          .filter((s: SupplierRow) => typeof s.lastPrice === "number" && (s.lastPrice as number) > 0)
+          .sort((a: SupplierRow, b: SupplierRow) => (a.lastPrice as number) - (b.lastPrice as number))[0];
         if (cheapest) {
           setSelectedStockSupplier({ id: cheapest.id, name: cheapest.name });
           setStockSupplierQuery(cheapest.name);
