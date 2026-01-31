@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -29,9 +30,7 @@ export default function MaterialWithdrawalPage() {
     ]).then(([projData, itemData]) => {
       setProjects(projData.data || []);
       setItems(itemData.data || []);
-      if ((projData.data || []).length === 0) {
-        router.replace("/worker/home");
-      }
+      // If no active project, keep user on this page and show guidance.
     });
   }, []);
 
@@ -201,6 +200,19 @@ export default function MaterialWithdrawalPage() {
       </header>
 
       <main className="px-4 md:px-8 -mt-6 relative z-20 space-y-6 max-w-4xl mx-auto">
+        {!hasActiveProject && (
+          <div className="bg-white p-6 rounded-[24px] shadow-lg border border-amber-200 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[10px] font-black text-amber-700 uppercase tracking-widest">
+              Info
+            </div>
+            <div className="mt-3 text-sm font-black text-navy">Projek sudah melewati tgl target selesai</div>
+            <div className="text-[10px] text-slate-500 mt-1">Silakan pesan & inbox Admin untuk dibuatkan picklist baru.</div>
+            <Link href="/worker/chat" className="mt-4 inline-flex items-center justify-center h-10 px-4 rounded-xl bg-navy text-white text-[10px] font-black uppercase tracking-widest">
+              Buka Pesan Admin
+            </Link>
+          </div>
+        )}
+
         {/* Project Select */}
         <div className="bg-white p-5 rounded-[24px] shadow-lg border border-slate-100 relative z-30">
           <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Project Tujuan</label>

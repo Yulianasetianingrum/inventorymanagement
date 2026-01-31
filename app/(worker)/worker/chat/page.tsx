@@ -7,11 +7,14 @@ import Link from "next/link";
 export default function WorkerChatPage() {
     const [me, setMe] = useState<{ id: string; name: string } | null>(null);
     const [messages, setMessages] = useState<any[]>([]);
+    const [admins, setAdmins] = useState<any[]>([]);
+    const [selectedAdminId, setSelectedAdminId] = useState("");
     const [newMessage, setNewMessage] = useState("");
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchMe();
+        fetchAdmins();
     }, []);
 
     useEffect(() => {
@@ -32,6 +35,20 @@ export default function WorkerChatPage() {
             if (res.ok) {
                 const json = await res.json();
                 setMe(json.data);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function fetchAdmins() {
+        try {
+            const res = await fetch("/api/worker/admins");
+            if (res.ok) {
+                const json = await res.json();
+                const list = json.data || [];
+                setAdmins(list);
+                if (list.length > 0) setSelectedAdminId(list[0].id);
             }
         } catch (err) {
             console.error(err);
@@ -79,18 +96,11 @@ export default function WorkerChatPage() {
         // Actually, to keep it simple: I will fetch admins on load.
 
         if (!targetId) {
-            // Fallback: This simple chat assumes the worker is replying.
-            // If empty, we can't send easily without a target.
-            // I'll leave it as "Reply Only" for now or fetch an admin.
-            // Let's try to fetch a default admin.
-            const adminRes = await fetch("/api/admin/users?role=ADMIN");
-            // Workers can't access /api/admin/users technically... middleware blocks it?
-            // Let's check middleware.
-            // If blocked, we might be stuck.
-            // Safe bet: The Admin initiates. System is "Contact Worker".
-            // Worker only replies.
-            alert("Belum ada pesan dari Admin untuk dibalas.");
-            return;
+            if (!selectedAdminId) {
+                alert("Pilih Admin terlebih dahulu.");
+                return;
+            }
+            targetId = selectedAdminId;
         }
 
         const tempMsg = {
@@ -129,6 +139,18 @@ export default function WorkerChatPage() {
                         <h1 className="text-xl md:text-2xl font-black text-white">Pesan & Inbox</h1>
                         <p className="text-white/60 text-[10px] md:text-xs font-medium">Hubungan langsung dengan Admin</p>
                     </div>
+                    <div className="hidden md:flex items-center gap-2">
+                        <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">Pilih Admin</span>
+                        <select
+                            className="h-9 bg-white/10 text-white text-xs font-bold rounded-xl px-3 border border-white/10"
+                            value={selectedAdminId}
+                            onChange={e => setSelectedAdminId(e.target.value)}
+                        >
+                            {admins.map((a: any) => (
+                                <option key={a.id} value={a.id}>{a.name} ({a.employeeId})</option>
+                            ))}
+                        </select>
+                    </div>
                     <Link href="/worker/home" className="text-white/60 hover:text-white bg-white/10 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold transition-colors">
                         &larr; Home
                     </Link>
@@ -145,6 +167,17 @@ export default function WorkerChatPage() {
                                 <div className="text-5xl mb-4">📭</div>
                                 <h3 className="text-navy font-black text-lg">Belum Ada Pesan</h3>
                                 <p className="text-xs text-slate-500 max-w-[200px] mb-4">Pesan dari Admin akan muncul di sini.</p>
+                                {admins.length > 0 && (
+                                    <select
+                                        className="mb-3 h-10 bg-white border border-slate-200 rounded-xl px-3 text-xs font-bold text-navy"
+                                        value={selectedAdminId}
+                                        onChange={e => setSelectedAdminId(e.target.value)}
+                                    >
+                                        {admins.map((a: any) => (
+                                            <option key={a.id} value={a.id}>{a.name} ({a.employeeId})</option>
+                                        ))}
+                                    </select>
+                                )}
                                 <Button
                                     onClick={() => handleSend({ preventDefault: () => { } } as React.FormEvent)}
                                     disabled={false} // Allow trying to start chat

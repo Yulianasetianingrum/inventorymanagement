@@ -19,6 +19,8 @@ export default function PicklistPage() {
   // Chat State
   const [showChat, setShowChat] = useState(false);
   const [chatTarget, setChatTarget] = useState<any>(null);
+  const [unreadWorkers, setUnreadWorkers] = useState<any[]>([]);
+  const [showInbox, setShowInbox] = useState(false);
 
   // Modal & Toast State
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -60,6 +62,22 @@ export default function PicklistPage() {
     fetch("/api/admin/picklists/auto-close")
       .then(() => fetchData())
       .catch(() => fetchData());
+  }, []);
+
+  useEffect(() => {
+    let interval: any;
+    const loadUnread = async () => {
+      try {
+        const res = await fetch("/api/admin/messages/unread");
+        const json = await res.json();
+        if (res.ok) setUnreadWorkers(json.data || []);
+      } catch {
+        // ignore
+      }
+    };
+    loadUnread();
+    interval = setInterval(loadUnread, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -116,6 +134,12 @@ export default function PicklistPage() {
     if (selectedItems.find(si => si.id === item.id)) return;
     setSelectedItems([...selectedItems, { ...item, reqQty: 1 }]);
     setSearchItem("");
+  }
+
+  function openChatWith(worker: any) {
+    setChatTarget(worker);
+    setShowChat(true);
+    setShowInbox(false);
   }
 
   function removeItem(id: number) {
@@ -754,6 +778,50 @@ export default function PicklistPage() {
           </div>
         </div>
       </main >
+
+      {/* Floating Inbox */}
+      <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end gap-3">
+        {showInbox && (
+          <div className="w-72 bg-white rounded-2xl shadow-2xl border border-navy/10 overflow-hidden">
+            <div className="bg-navy text-white px-4 py-3 text-xs font-black uppercase tracking-widest flex items-center justify-between">
+              <span>Inbox Worker</span>
+              <button onClick={() => setShowInbox(false)} className="text-white/60 hover:text-white">✕</button>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              {unreadWorkers.length === 0 ? (
+                <div className="p-4 text-center text-[10px] text-slate-400">Tidak ada pesan baru.</div>
+              ) : (
+                unreadWorkers.map((w: any) => (
+                  <button
+                    key={w.id}
+                    onClick={() => openChatWith(w)}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0"
+                  >
+                    <div className="text-xs font-black text-navy">{w.name}</div>
+                    <div className="text-[9px] text-slate-500">ID: {w.employeeId}</div>
+                    <div className="mt-1 inline-flex items-center text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                      {w.count} pesan baru
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowInbox(v => !v)}
+          className="relative w-14 h-14 rounded-full bg-navy text-white shadow-2xl shadow-navy/30 flex items-center justify-center hover:scale-105 transition-transform"
+          title="Inbox"
+        >
+          ✉
+          {unreadWorkers.length > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-5 px-1 rounded-full bg-red-600 text-white text-[10px] font-black flex items-center justify-center">
+              {unreadWorkers.reduce((sum, w) => sum + (w.count || 0), 0)}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Chat Popup */}
       {
