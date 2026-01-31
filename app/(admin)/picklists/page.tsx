@@ -341,7 +341,7 @@ export default function PicklistPage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-black text-navy uppercase tracking-widest">Target Selesai</label>
+                  <label className="text-xs font-black text-navy uppercase tracking-widest">Target Projek Selesai</label>
                   <input
                     type="datetime-local"
                     className="w-full h-11 bg-off-white border border-navy/5 rounded-xl px-4 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 transition-all"

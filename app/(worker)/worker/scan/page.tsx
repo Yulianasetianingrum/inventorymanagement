@@ -18,6 +18,8 @@ export default function MaterialWithdrawalPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const hasActiveProject = projects.length > 0;
+  const canPick = hasActiveProject && Boolean(projectId);
 
   useEffect(() => {
     // Fetch Projects & Items for lookup
@@ -45,6 +47,7 @@ export default function MaterialWithdrawalPage() {
   }, [searchTerm, items]);
 
   const addItem = (item: any) => {
+    if (!canPick) return;
     if (selectedItems.find(i => i.itemId === item.id)) return;
     setSelectedItems([...selectedItems, {
       itemId: item.id,
@@ -96,6 +99,10 @@ export default function MaterialWithdrawalPage() {
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canPick) {
+      alert("Project aktif belum dipilih. Tidak bisa upload bukti.");
+      return;
+    }
     const files = e.target.files;
     if (files && files.length > 0) {
       if (images.length + files.length > 50) {
@@ -127,6 +134,7 @@ export default function MaterialWithdrawalPage() {
   };
 
   const handleSubmit = async () => {
+    if (!hasActiveProject) return alert("Tidak ada project aktif di picklist.");
     if (!projectId) return alert("Pilih Project tujuan!");
     if (selectedItems.length === 0) return alert("Pilih minimal 1 item!");
 
@@ -195,9 +203,10 @@ export default function MaterialWithdrawalPage() {
           <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Project Tujuan</label>
           <div className="relative">
             <select
-              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 appearance-none"
+              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
               value={projectId}
               onChange={e => setProjectId(e.target.value)}
+              disabled={!hasActiveProject}
             >
               <option value="">-- Pilih Project --</option>
               {projects.map(p => (
@@ -206,6 +215,11 @@ export default function MaterialWithdrawalPage() {
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-navy/40">▼</div>
           </div>
+          {!hasActiveProject && (
+            <div className="mt-3 text-[10px] font-bold text-red-600">
+              Tidak ada project aktif di picklist. Upload foto dan konfirmasi dinonaktifkan.
+            </div>
+          )}
         </div>
 
         {/* Item Selector */}
@@ -213,10 +227,11 @@ export default function MaterialWithdrawalPage() {
           <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Cari Barang</label>
           <div className="relative">
             <input
-              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 pl-11 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-slate-400"
-              placeholder="Ketikan nama barang..."
+              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 pl-11 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder={hasActiveProject ? "Ketikan nama barang..." : "Tidak ada project aktif"}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              disabled={!canPick}
             />
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg grayscale">🔍</span>
             {searchTerm && (
@@ -347,11 +362,14 @@ export default function MaterialWithdrawalPage() {
                 multiple
                 capture="environment"
                 onChange={handleImageChange}
-                className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                disabled={!canPick}
+                className="absolute inset-0 opacity-0 cursor-pointer z-20 disabled:cursor-not-allowed"
               />
-              <div className="w-full h-24 md:h-32 rounded-3xl border-2 border-dashed border-navy/10 flex flex-col items-center justify-center bg-slate-50 group-hover:bg-navy/5 transition-all">
+              <div className={`w-full h-24 md:h-32 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center transition-all ${canPick ? "border-navy/10 bg-slate-50 group-hover:bg-navy/5" : "border-slate-200 bg-slate-100 opacity-60"}`}>
                 <div className="text-3xl mb-2">📸</div>
-                <div className="text-xs md:text-sm font-black text-navy/60 uppercase tracking-widest">Tambah Foto (Max 50)</div>
+                <div className="text-xs md:text-sm font-black text-navy/60 uppercase tracking-widest">
+                  {canPick ? "Tambah Foto (Max 50)" : "Pilih project aktif dulu"}
+                </div>
               </div>
             </label>
           )}
@@ -361,7 +379,7 @@ export default function MaterialWithdrawalPage() {
         <div className="pt-4 pb-20">
           <button
             onClick={handleSubmit}
-            disabled={submitting || images.length === 0}
+            disabled={submitting || images.length === 0 || !canPick}
             className="w-full h-16 md:h-20 bg-navy hover:bg-navy-light text-white font-black text-sm md:text-lg rounded-[24px] shadow-2xl shadow-navy/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {submitting ? (

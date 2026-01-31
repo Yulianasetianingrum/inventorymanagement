@@ -12,8 +12,9 @@ export async function GET() {
         const user = await prisma.user.findUnique({ where: { employeeId: session.employeeId } });
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        // Fetch all picklist lines assigned to this user where they have picked items
-        // but haven't fully used or returned them.
+        const now = new Date();
+
+        // Fetch picklist lines assigned to this user with picked items
         const lines = await prisma.picklistLine.findMany({
             where: {
                 picklist: { assigneeId: user.id },
@@ -35,6 +36,7 @@ export async function GET() {
                         id: true,
                         title: true,
                         code: true,
+                        neededAt: true,
                         project: {
                             select: { namaProjek: true }
                         }
@@ -43,29 +45,46 @@ export async function GET() {
             }
         });
 
-        // Calculate balance and format for frontend
-        const heldItems = lines
-            .map(line => {
-                // Modified Logic: Balance is simply what you took minus what you gave back.
-                // We ignore 'usedQty' because 'used' items are exactly what we want to be able to return (as Bekas).
-                const balance = line.pickedQty - line.returnedQty;
-                return {
-                    id: line.id, // PicklistLine ID
-                    itemId: line.itemId,
-                    name: line.item.name,
-                    brand: line.item.brand,
-                    size: line.item.size,
-                    unit: line.item.unit,
-                    stockUsed: line.item.stockUsed, // For legacy display if needed
-                    balance,
-                    projectName: line.picklist.project?.namaProjek || "Self-Service / Other",
-                    picklistCode: line.picklist.code,
-                    picklistTitle: line.picklist.title
-                };
-            })
-            .filter(item => item.balance > 0);
+        // Calculate balance and group by picklist
+        const grouped: Record<string, any> = {};
+        for (const line of lines) {
+            const balance = line.pickedQty - line.returnedQty;
+            if (balance <= 0) continue;
 
-        return NextResponse.json({ data: heldItems });
+            const neededAt = line.picklist.neededAt;
+            if (neededAt && neededAt < now) continue; // deadline passed, no return
+
+            const picklistId = line.picklist.id;
+            if (!grouped[picklistId]) {
+                grouped[picklistId] = {
+                    picklistId,
+                    picklistCode: line.picklist.code,
+                    picklistTitle: line.picklist.title,
+                    neededAt,
+                    projectName: line.picklist.project?.namaProjek || "Self-Service / Other",
+                    items: []
+                };
+            }
+
+            grouped[picklistId].items.push({
+                id: line.id, // PicklistLine ID
+                itemId: line.itemId,
+                name: line.item.name,
+                brand: line.item.brand,
+                size: line.item.size,
+                unit: line.item.unit,
+                stockUsed: line.item.stockUsed,
+                balance
+            });
+        }
+
+        const data = Object.values(grouped).sort((a: any, b: any) => {
+            const aTime = a.neededAt ? new Date(a.neededAt).getTime() : 0;
+            const bTime = b.neededAt ? new Date(b.neededAt).getTime() : 0;
+            return aTime - bTime;
+        });
+
+        return NextResponse.json({ data });
     } catch (error: any) {
         console.error("[HELD_ITEMS_API]", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

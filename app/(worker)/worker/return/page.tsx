@@ -1,91 +1,54 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 function ReturnContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const prefillItemName = searchParams.get("itemName");
-
-  const [items, setItems] = useState<any[]>([]);
+  const [picklists, setPicklists] = useState<any[]>([]);
 
   // Form State
+  const [selectedPicklistId, setSelectedPicklistId] = useState("");
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-
-  // Search State
-  const [searchTerm, setSearchTerm] = useState(prefillItemName || "");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const hasActiveItems = picklists.length > 0;
+  const canReturn = hasActiveItems && Boolean(selectedPicklistId);
 
   useEffect(() => {
     // Fetch items currently held by worker
     fetch("/api/worker/returns/held-items")
       .then(r => r.json())
       .then(d => {
-        const heldItems = d.data || [];
-        setItems(heldItems);
-
-        // Auto-select if prefill matches
-        if (prefillItemName) {
-          const match = heldItems.find((i: any) => i.name === prefillItemName);
-          if (match) {
-            // We need to wait a tick or just call passing the match
-            // But we can't call addItem easily here due to closure/dep array complexity 
-            // So we'll just set it directly if not already present
-            setSelectedItems(prev => {
-              if (prev.find(p => p.sourceLineId === match.id)) return prev;
-              return [...prev, {
-                sourceLineId: match.id,
-                itemId: match.itemId,
-                name: match.name,
-                brand: match.brand,
-                size: match.size,
-                qty: 1,
-                unit: match.unit,
-                maxQty: match.balance,
-                projectName: match.projectName
-              }];
-            });
-            setSearchTerm(""); // Clear search after auto-add
-          } else {
-            // If specific match not found, keep search term to show results
-            setSearchTerm(prefillItemName);
-          }
+        const data = d.data || [];
+        setPicklists(data);
+        if (data.length === 0) {
+          alert("Tidak ada barang yang dipegang. Return tidak bisa diakses.");
+          router.replace("/worker/home");
         }
       });
-  }, [prefillItemName]);
+  }, [router]);
 
-  useEffect(() => {
-    if (!searchTerm) {
-      setSearchResults([]);
+  const handlePicklistChange = (picklistId: string) => {
+    setSelectedPicklistId(picklistId);
+    const picklist = picklists.find((p: any) => p.picklistId === picklistId);
+    if (!picklist) {
+      setSelectedItems([]);
       return;
     }
-    const lower = searchTerm.toLowerCase();
-    const results = items.filter(i =>
-      i.name.toLowerCase().includes(lower) ||
-      i.brand?.toLowerCase().includes(lower) ||
-      i.projectName?.toLowerCase().includes(lower)
-    ).slice(0, 15);
-    setSearchResults(results);
-  }, [searchTerm, items]);
-
-  const addItem = (item: any) => {
-    if (selectedItems.find(i => i.sourceLineId === item.id)) return;
-    setSelectedItems([...selectedItems, {
+    const items = (picklist.items || []).map((item: any) => ({
       sourceLineId: item.id,
       itemId: item.itemId,
       name: item.name,
       brand: item.brand,
       size: item.size,
-      qty: 1,
+      qty: item.balance,
       unit: item.unit,
       maxQty: item.balance,
-      projectName: item.projectName
-    }]);
-    setSearchTerm("");
+      projectName: picklist.projectName
+    }));
+    setSelectedItems(items);
   };
 
   const removeItem = (id: string) => {
@@ -103,6 +66,10 @@ function ReturnContent() {
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canReturn) {
+      alert("Pilih picklist yang masih berlaku terlebih dahulu.");
+      return;
+    }
     const files = e.target.files;
     if (files && files.length > 0) {
       if (images.length + files.length > 50) {
@@ -133,6 +100,7 @@ function ReturnContent() {
   };
 
   const handleSubmit = async () => {
+    if (!canReturn) return alert("Pilih picklist yang masih berlaku terlebih dahulu.");
     if (selectedItems.length === 0) return alert("Pilih minimal 1 item!");
     if (images.length === 0) return alert("Foto bukti pengembalian wajib!");
 
@@ -190,55 +158,34 @@ function ReturnContent() {
 
       <main className="px-4 md:px-8 -mt-6 relative z-20 space-y-6 max-w-4xl mx-auto">
 
-        {/* Item Selector */}
+        {/* Picklist Selector */}
         <div className="bg-white p-5 rounded-[24px] shadow-lg border border-slate-100 relative z-30">
-          <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Cari Barang Dipegang</label>
+          <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Picklist (Deadline masih berlaku)</label>
           <div className="relative">
-            <input
-              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 pl-11 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-amber-600/20 placeholder:text-slate-400"
-              placeholder="Cari item atau project..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg grayscale">🔍</span>
-            {searchTerm && (
-              <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-amber-600 font-bold text-lg w-8 h-8 flex items-center justify-center">×</button>
-            )}
+            <select
+              className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-amber-600/20 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+              value={selectedPicklistId}
+              onChange={e => handlePicklistChange(e.target.value)}
+              disabled={!hasActiveItems}
+            >
+              <option value="">-- Pilih Picklist --</option>
+              {picklists.map((p: any) => {
+                const dateStr = p.neededAt ? new Date(p.neededAt).toLocaleDateString("id-ID") : "-";
+                return (
+                  <option key={p.picklistId} value={p.picklistId}>
+                    {p.picklistCode} - {p.projectName} (DL: {dateStr})
+                  </option>
+                );
+              })}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-navy/40">▼</div>
           </div>
-
-          {searchTerm && (
-            <div className="absolute top-[88px] left-0 w-full bg-white shadow-2xl rounded-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-              {searchResults.length > 0 ? (
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-2">
-                  {searchResults.map(item => (
-                    <div
-                      key={item.id}
-                      onClick={() => addItem(item)}
-                      className="p-3 md:p-4 hover:bg-amber-50 rounded-xl cursor-pointer flex justify-between items-center group transition-colors mb-1 last:mb-0"
-                    >
-                      <div>
-                        <div className="font-bold text-navy text-xs md:text-sm group-hover:text-amber-700">{item.name}</div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{item.brand} • {item.size}</div>
-                        <div className="text-[9px] font-bold text-amber-600 mt-1 uppercase">📍 {item.projectName}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-amber-600 font-black text-xs md:text-sm">{item.balance} <span className="text-[9px] opacity-60 uppercase">{item.unit}</span></div>
-                        <div className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">DI TANGAN</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center">
-                  <div className="text-3xl mb-2">🤷‍♂️</div>
-                  <div className="text-sm font-bold text-navy">Item tidak ditemukan</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Pastikan nama barang benar</div>
-                </div>
-              )}
+          {!hasActiveItems && (
+            <div className="mt-3 text-[10px] font-bold text-red-600">
+              Tidak ada barang yang dipegang. Return tidak bisa diakses.
             </div>
           )}
         </div>
-
         {/* Selected Items List */}
         {selectedItems.length > 0 && (
           <div className="space-y-4">
@@ -306,11 +253,14 @@ function ReturnContent() {
                 multiple
                 capture="environment"
                 onChange={handleImageChange}
-                className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                className="absolute inset-0 opacity-0 cursor-pointer z-20 disabled:cursor-not-allowed"
+                disabled={!canReturn}
               />
-              <div className="w-full h-24 md:h-32 rounded-3xl border-2 border-dashed border-amber-900/10 flex flex-col items-center justify-center bg-slate-50 group-hover:bg-amber-50 transition-all">
+              <div className={`w-full h-24 md:h-32 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center transition-all ${canReturn ? "border-amber-900/10 bg-slate-50 group-hover:bg-amber-50" : "border-slate-200 bg-slate-100 opacity-60"}`}>
                 <div className="text-3xl mb-2">📸</div>
-                <div className="text-xs md:text-sm font-black text-navy/60 uppercase tracking-widest">Tambah Foto Bukti</div>
+                <div className="text-xs md:text-sm font-black text-navy/60 uppercase tracking-widest">
+                  {canReturn ? "Tambah Foto Bukti" : "Pilih picklist dulu"}
+                </div>
               </div>
             </label>
           )}
@@ -320,7 +270,7 @@ function ReturnContent() {
         <div className="pt-4 pb-20">
           <Button
             onClick={handleSubmit}
-            disabled={submitting || images.length === 0}
+            disabled={submitting || images.length === 0 || !canReturn}
             className="w-full h-16 md:h-20 bg-amber-600 hover:bg-amber-700 text-white font-black text-sm md:text-lg rounded-[24px] shadow-2xl shadow-amber-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
           >
             {submitting ? "MEMPROSES..." : `KONFIRMASI RETURN (${images.length} FOTO)`}
@@ -339,3 +289,5 @@ export default function AdHocReturnPage() {
     </Suspense>
   );
 }
+
+

@@ -44,10 +44,21 @@ export async function POST(req: Request) {
                 // 1. Validate Balance on Source Line
                 const sourceLine = await tx.picklistLine.findUnique({
                     where: { id: sourceLineId },
-                    select: { pickedQty: true, usedQty: true, returnedQty: true }
+                    select: {
+                        pickedQty: true,
+                        usedQty: true,
+                        returnedQty: true,
+                        picklist: { select: { neededAt: true, assigneeId: true } }
+                    }
                 });
 
                 if (!sourceLine) throw new Error(`Source line ${sourceLineId} not found`);
+                if (sourceLine.picklist?.assigneeId !== user.id) {
+                    throw new Error("Picklist tidak sesuai dengan user");
+                }
+                if (sourceLine.picklist?.neededAt && sourceLine.picklist.neededAt < new Date()) {
+                    throw new Error("Deadline picklist sudah lewat. Tidak bisa return.");
+                }
 
                 // Allow returning any item that was picked and not yet returned (ignoring 'used' status)
                 const holding = sourceLine.pickedQty - sourceLine.returnedQty;

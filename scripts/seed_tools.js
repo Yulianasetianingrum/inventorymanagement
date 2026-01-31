@@ -32,7 +32,9 @@ const excelDates = [
   "2026-01-21", "2026-01-24", "2026-01-26",
 ];
 
-function qtyUnder10() {
+function qtyForTool(tool) {
+  // Heavy tools (power tools) must be < 3
+  if (tool.category === "Power Tools") return Math.floor(Math.random() * 2) + 1; // 1..2
   return Math.floor(Math.random() * 8) + 1; // 1..8
 }
 
@@ -46,7 +48,7 @@ async function main() {
     const excelDate = excelDates[i % excelDates.length];
     const batchDate = new Date(`2026-01-${27 + (i % 3)}`);
     const supplier = suppliers[Math.floor(Math.random() * suppliers.length)];
-    const qty = qtyUnder10();
+    const qty = qtyForTool(t);
 
     const rate = rates[t.currency];
     if (!rate) throw new Error(`Missing rate for ${t.currency}`);
