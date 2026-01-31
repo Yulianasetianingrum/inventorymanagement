@@ -51,7 +51,7 @@ export async function GET() {
             }
         });
 
-        // Calculate balance and group by picklist
+        // Calculate balance and group by project
         const grouped: Record<string, any> = {};
         for (const line of lines) {
             const balance = line.pickedQty - line.returnedQty;
@@ -64,34 +64,34 @@ export async function GET() {
                 if (neededAt < now) continue; // deadline passed, no return
             }
 
-            const picklistId = line.picklist.id;
-            if (!grouped[picklistId]) {
-                grouped[picklistId] = {
-                    picklistId,
-                    picklistCode: line.picklist.code,
-                    picklistTitle: line.picklist.title,
-                    neededAt,
+            const projectId = line.picklist.projectId || "self-service";
+            if (!grouped[projectId]) {
+                grouped[projectId] = {
+                    projectId,
                     projectName: line.picklist.project?.namaProjek || "Self-Service / Other",
                     items: []
                 };
             }
 
-            grouped[picklistId].items.push({
-                id: line.id, // PicklistLine ID
-                itemId: line.itemId,
-                name: line.item.name,
-                brand: line.item.brand,
-                size: line.item.size,
-                unit: line.item.unit,
-                stockUsed: line.item.stockUsed,
-                balance
+            grouped[projectId].items.push({
+                    id: line.id, // PicklistLine ID
+                    itemId: line.itemId,
+                    name: line.item.name,
+                    brand: line.item.brand,
+                    size: line.item.size,
+                    unit: line.item.unit,
+                    stockUsed: line.item.stockUsed,
+                    balance,
+                    picklistCode: line.picklist.code,
+                    picklistTitle: line.picklist.title,
+                    neededAt
             });
         }
 
         const data = Object.values(grouped).sort((a: any, b: any) => {
-            const aTime = a.neededAt ? new Date(a.neededAt).getTime() : 0;
-            const bTime = b.neededAt ? new Date(b.neededAt).getTime() : 0;
-            return aTime - bTime;
+            const aName = String(a.projectName || "");
+            const bName = String(b.projectName || "");
+            return aName.localeCompare(bName, "id-ID");
         });
 
         return NextResponse.json({ data });

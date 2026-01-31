@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 
 function ReturnContent() {
   const router = useRouter();
-  const [picklists, setPicklists] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
 
   // Form State
-  const [selectedPicklistId, setSelectedPicklistId] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const hasActiveItems = picklists.length > 0;
-  const canReturn = hasActiveItems && Boolean(selectedPicklistId);
+  const hasActiveItems = projects.length > 0;
+  const canReturn = hasActiveItems && Boolean(selectedProjectId);
 
   useEffect(() => {
     // Fetch items currently held by worker
@@ -23,19 +23,19 @@ function ReturnContent() {
       .then(r => r.json())
       .then(d => {
         const data = d.data || [];
-        setPicklists(data);
+        setProjects(data);
         // If no held items, keep user on this page and show guidance.
       });
   }, [router]);
 
-  const handlePicklistChange = (picklistId: string) => {
-    setSelectedPicklistId(picklistId);
-    const picklist = picklists.find((p: any) => p.picklistId === picklistId);
-    if (!picklist) {
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    const project = projects.find((p: any) => p.projectId === projectId);
+    if (!project) {
       setSelectedItems([]);
       return;
     }
-    const items = (picklist.items || []).map((item: any) => ({
+    const items = (project.items || []).map((item: any) => ({
       sourceLineId: item.id,
       itemId: item.itemId,
       name: item.name,
@@ -44,7 +44,7 @@ function ReturnContent() {
       qty: item.balance,
       unit: item.unit,
       maxQty: item.balance,
-      projectName: picklist.projectName
+      projectName: project.projectName
     }));
     setSelectedItems(items);
   };
@@ -65,7 +65,7 @@ function ReturnContent() {
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canReturn) {
-      alert("Pilih picklist yang masih berlaku terlebih dahulu.");
+      alert("Pilih project terlebih dahulu.");
       return;
     }
     const files = e.target.files;
@@ -98,7 +98,7 @@ function ReturnContent() {
   };
 
   const handleSubmit = async () => {
-    if (!canReturn) return alert("Pilih picklist yang masih berlaku terlebih dahulu.");
+    if (!canReturn) return alert("Pilih project terlebih dahulu.");
     if (selectedItems.length === 0) return alert("Pilih minimal 1 item!");
     if (images.length === 0) return alert("Foto bukti pengembalian wajib!");
 
@@ -169,22 +169,21 @@ function ReturnContent() {
           </div>
         )}
 
-        {/* Picklist Selector */}
+        {/* Project Selector */}
         <div className="bg-white p-5 rounded-[24px] shadow-lg border border-slate-100 relative z-30">
-          <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Picklist (Deadline masih berlaku)</label>
+          <label className="block text-[10px] md:text-xs font-black text-navy/40 uppercase tracking-widest mb-2">Project (Barang dipegang)</label>
           <div className="relative">
             <select
               className="w-full h-12 md:h-14 bg-slate-50 rounded-xl px-4 text-xs md:text-sm font-bold text-navy focus:outline-none focus:ring-2 focus:ring-amber-600/20 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-              value={selectedPicklistId}
-              onChange={e => handlePicklistChange(e.target.value)}
+              value={selectedProjectId}
+              onChange={e => handleProjectChange(e.target.value)}
               disabled={!hasActiveItems}
             >
-              <option value="">-- Pilih Picklist --</option>
-              {picklists.map((p: any) => {
-                const dateStr = p.neededAt ? new Date(p.neededAt).toLocaleDateString("id-ID") : "-";
+              <option value="">-- Pilih Project --</option>
+              {projects.map((p: any) => {
                 return (
-                  <option key={p.picklistId} value={p.picklistId}>
-                    {p.picklistCode} - {p.projectName} (DL: {dateStr})
+                  <option key={p.projectId} value={p.projectId}>
+                    {p.projectName}
                   </option>
                 );
               })}

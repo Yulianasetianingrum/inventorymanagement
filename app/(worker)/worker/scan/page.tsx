@@ -394,7 +394,7 @@ export default function MaterialWithdrawalPage() {
         <div className="pt-4 pb-20">
           <button
             onClick={handleSubmit}
-            disabled={submitting || images.length === 0 || !canPick}
+            disabled={submitting || images.length === 0 || selectedItems.length === 0 || !projectId || !canPick}
             className="w-full h-16 md:h-20 bg-navy hover:bg-navy-light text-white font-black text-sm md:text-lg rounded-[24px] shadow-2xl shadow-navy/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {submitting ? (
