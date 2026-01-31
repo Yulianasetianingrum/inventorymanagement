@@ -143,12 +143,18 @@ export default function PicklistPage() {
     e.preventDefault();
     if (selectedItems.length === 0) return showToast("Pilih minimal 1 barang.", true);
 
+    const toUtcIso = (value: string) => {
+      if (!value) return null;
+      const d = new Date(value);
+      return d.toISOString();
+    };
+
     const body = {
       projectId: isNewProject ? null : projectId,
       newProject: isNewProject ? newProject : null,
       title,
       mode,
-      neededAt,
+      neededAt: toUtcIso(neededAt),
       assigneeId,
       notes,
       items: selectedItems.map(si => ({ itemId: si.id, reqQty: si.reqQty }))
@@ -547,7 +553,13 @@ export default function PicklistPage() {
                             setProjectSearch(p.project?.namaProjek || "");
                             setMode(p.mode);
                             setAssigneeId(p.assigneeId || "");
-                            setNeededAt(p.neededAt ? new Date(p.neededAt).toISOString().slice(0, 16) : "");
+                            if (p.neededAt) {
+                              const d = new Date(p.neededAt);
+                              d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                              setNeededAt(d.toISOString().slice(0, 16));
+                            } else {
+                              setNeededAt("");
+                            }
                             setNotes(p.notes || "");
 
                             // Fetch full details to get lines
@@ -643,7 +655,13 @@ export default function PicklistPage() {
                           setProjectSearch(p.project?.namaProjek || "");
                           setMode(p.mode);
                           setAssigneeId(p.assigneeId || "");
-                          setNeededAt(p.neededAt ? new Date(p.neededAt).toISOString().slice(0, 16) : "");
+                          if (p.neededAt) {
+                            const d = new Date(p.neededAt);
+                            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                            setNeededAt(d.toISOString().slice(0, 16));
+                          } else {
+                            setNeededAt("");
+                          }
                           setNotes(p.notes || "");
 
                           const res = await fetch(`/api/admin/picklists/${p.id}`);
