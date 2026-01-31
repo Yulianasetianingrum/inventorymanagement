@@ -31,7 +31,9 @@ async function main() {
             }
         }
 
-        const totalBaruSafe = Math.max(0, totalBaru);\n        const stockUsed = Math.min(Math.max(0, totalBekas), totalBaruSafe);\n        const stockNew = Math.max(0, totalBaruSafe - stockUsed);
+        const totalBaruSafe = Math.max(0, totalBaru);
+        const stockUsed = Math.min(Math.max(0, totalBekas), totalBaruSafe);
+        const stockNew = Math.max(0, totalBaruSafe - stockUsed);
 
         // 3. Update tabel items
         await prisma.item.update({
