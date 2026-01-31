@@ -21,6 +21,9 @@ export default function PicklistPage() {
   const [chatTarget, setChatTarget] = useState<any>(null);
   const [unreadWorkers, setUnreadWorkers] = useState<any[]>([]);
   const [showInbox, setShowInbox] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailData, setDetailData] = useState<any>(null);
 
   // Modal & Toast State
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -29,6 +32,13 @@ export default function PicklistPage() {
   const showToast = (msg: string, error = false) => {
     setToast({ visible: true, msg, error });
     setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+  };
+
+  const formatDateTime = (value?: string) => {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
   };
 
   // Form states
@@ -130,6 +140,17 @@ export default function PicklistPage() {
     ).slice(0, 20);
   }, [items, searchItem]);
 
+  const evidenceItems = useMemo(() => {
+    if (!detailData) return [];
+    if (Array.isArray(detailData.evidence) && detailData.evidence.length > 0) {
+      return detailData.evidence;
+    }
+    const legacy: any[] = [];
+    if (detailData.pickingImage) legacy.push({ type: "PICKING", imageUrl: detailData.pickingImage });
+    if (detailData.returnImage) legacy.push({ type: "RETURN", imageUrl: detailData.returnImage });
+    return legacy;
+  }, [detailData]);
+
   function addItem(item: any) {
     if (selectedItems.find(si => si.id === item.id)) return;
     setSelectedItems([...selectedItems, { ...item, reqQty: 1 }]);
@@ -140,6 +161,21 @@ export default function PicklistPage() {
     setChatTarget(worker);
     setShowChat(true);
     setShowInbox(false);
+  }
+
+  async function openDetail(id: string) {
+    setShowDetail(true);
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/admin/picklists/${id}`);
+      const json = await res.json();
+      if (res.ok) setDetailData(json.data);
+      else setDetailData(null);
+    } catch {
+      setDetailData(null);
+    } finally {
+      setDetailLoading(false);
+    }
   }
 
   function removeItem(id: number) {
@@ -498,7 +534,11 @@ export default function PicklistPage() {
                 </thead>
                 <tbody>
                   {picklists.map(p => (
-                    <tr key={p.id} className="border-b border-navy/5 last:border-0 hover:bg-off-white/50 transition-colors group">
+                    <tr
+                      key={p.id}
+                      onClick={() => openDetail(p.id)}
+                      className="border-b border-navy/5 last:border-0 hover:bg-off-white/50 transition-colors group cursor-pointer"
+                    >
                       <td className="px-6 py-5">
                         <div className="font-black text-navy leading-none mb-1 group-hover:text-gold transition-colors">{p.code}</div>
                         <div className="text-[10px] font-semibold text-navy/50">{p.title}</div>
@@ -529,12 +569,12 @@ export default function PicklistPage() {
                                   <span>WA</span>
                                 </a>
                               )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setChatTarget(p.assignee);
-                                  setShowChat(true);
-                                }}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setChatTarget(p.assignee);
+                                    setShowChat(true);
+                                  }}
                                 className="px-2 py-1 bg-navy/10 hover:bg-navy/20 text-navy text-[9px] font-black rounded uppercase tracking-wider flex items-center gap-1 transition-colors"
                               >
                                 💬 Chat
@@ -635,7 +675,11 @@ export default function PicklistPage() {
             {/* Mobile Card View */}
             <div className="md:hidden">
               {picklists.map(p => (
-                <div key={p.id} className="p-4 border-b border-navy/5 last:border-0 hover:bg-off-white/50 transition-colors">
+                <div
+                  key={p.id}
+                  onClick={() => openDetail(p.id)}
+                  className="p-4 border-b border-navy/5 last:border-0 hover:bg-off-white/50 transition-colors cursor-pointer"
+                >
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -778,6 +822,95 @@ export default function PicklistPage() {
           </div>
         </div>
       </main >
+
+      {/* Detail Modal */}
+      {showDetail && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-navy/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl border border-navy/10 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest">Detail Picklist</div>
+                <div className="text-xl font-black text-navy">{detailData?.code || "..."}</div>
+                <div className="text-[11px] text-navy/50 font-semibold">{detailData?.title}</div>
+              </div>
+              <button onClick={() => setShowDetail(false)} className="text-navy/40 hover:text-navy">✕</button>
+            </div>
+
+            {detailLoading ? (
+              <div className="py-10 text-center text-sm text-navy/50">Memuat detail...</div>
+            ) : detailData ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</div>
+                    <div className="text-sm font-black text-navy">{detailData.status}</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Target Projek Selesai</div>
+                    <div className="text-sm font-black text-navy">{formatDateTime(detailData.neededAt)}</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Diselesaikan</div>
+                    <div className="text-sm font-black text-navy">{formatDateTime(detailData.deliveredAt || detailData.pickedAt)}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-white rounded-xl border border-slate-100 p-3">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignee</div>
+                    <div className="text-sm font-bold text-navy">{detailData.assignee?.name || "-"}</div>
+                    <div className="text-[10px] text-slate-400">{detailData.assignee?.employeeId || "-"}</div>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-100 p-3">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Project</div>
+                    <div className="text-sm font-bold text-navy">{detailData.project?.namaProjek || "-"}</div>
+                    <div className="text-[10px] text-slate-400">{detailData.project?.namaKlien || "-"}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-black text-navy uppercase tracking-widest mb-2">Bukti Foto</div>
+                  {evidenceItems.length === 0 ? (
+                    <div className="text-[11px] text-slate-400">Belum ada bukti foto.</div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {evidenceItems.map((ev: any) => (
+                        <a
+                          key={ev.id || ev.imageUrl}
+                          href={ev.imageUrl}
+                          target="_blank"
+                          className="group relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50"
+                        >
+                          <img src={ev.imageUrl} alt={ev.type || "Evidence"} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <div className="absolute bottom-2 left-2 bg-white/80 text-[9px] font-black text-navy px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            {ev.type || "Bukti"}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {detailData.events?.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-black text-navy uppercase tracking-widest mb-2">Jejak Aktivitas</div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {detailData.events.map((ev: any) => (
+                        <div key={ev.id} className="flex items-center justify-between text-[11px] bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+                          <div className="font-bold text-navy">{ev.eventType}</div>
+                          <div className="text-slate-400">{formatDateTime(ev.createdAt)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="py-10 text-center text-sm text-red-500">Gagal memuat detail.</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Floating Inbox */}
       <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end gap-3">

@@ -22,7 +22,6 @@ type PicklistCard = {
 export default function WorkerHome() {
   const [me, setMe] = useState<{ employeeId: string; name: string } | null>(null);
   const [active, setActive] = useState<PicklistCard[]>([]);
-  const [handoverNeeded, setHandoverNeeded] = useState<PicklistCard[]>([]);
   const [todoCount, setTodoCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -56,8 +55,7 @@ export default function WorkerHome() {
           setActive(activeTasks.slice(0, 3));
           setTodoCount(activeTasks.length);
 
-          // Handover needed (PICKED)
-          setHandoverNeeded(data.filter((d: PicklistCard) => d.status === "PICKED"));
+          // PICKED items are considered completed and should not show in home
         }
 
         if (unreadRes.ok) {
@@ -179,7 +177,7 @@ export default function WorkerHome() {
                       <h3 className="font-bold text-navy text-lg leading-tight truncate">{p.title}</h3>
                       {p.project && <div className="text-xs text-slate-500 font-medium mt-1 truncate">{p.project.namaKlien}</div>}
                       <div className="text-[10px] font-black text-amber-600 mt-2 uppercase tracking-widest">
-                        Target Projek Selesai: {formatTargetDate(p.neededAt)}
+                        Tenggat projek akan berakhir pada: {formatTargetDate(p.neededAt)}
                       </div>
                     </div>
                     <span className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide ${p.status === 'READY' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
@@ -205,7 +203,7 @@ export default function WorkerHome() {
                     href={`/worker/picklists/${p.id}`}
                     className="w-full bg-navy hover:bg-navy/90 text-white font-black rounded-2xl h-14 shadow-lg shadow-navy/20 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm uppercase tracking-widest"
                   >
-                    {p.status === "READY" ? "Mulai Ambil" : "Lanjutkan"}
+                    {p.status === "READY" ? "Mulai Ambil" : "Selesai"}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                   </Link>
                 </div>
@@ -220,31 +218,7 @@ export default function WorkerHome() {
           )}
         </section>
 
-        {/* Handover Needed Section */}
-        {handoverNeeded.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4 px-1">
-              <h2 className="text-navy font-black text-lg md:text-xl">Menunggu Serah Terima</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {handoverNeeded.map((p) => (
-                <div key={p.id} className="bg-white p-5 rounded-[24px] shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center justify-between group">
-                  <div className="min-w-0 mr-4">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{p.code}</span>
-                    <div className="font-bold text-navy truncate">{p.title}</div>
-                  </div>
-                  <Link
-                    href={`/worker/handover/${p.id}`}
-                    className="shrink-0 bg-purple-600 hover:bg-purple-700 text-white px-5 h-12 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95"
-                  >
-                    Proses
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* PICKED items are treated as completed and hidden from home */}
 
         {/* Quick Actions Grid */}
         <section>
