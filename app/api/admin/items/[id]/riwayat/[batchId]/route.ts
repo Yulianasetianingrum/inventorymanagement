@@ -1,3 +1,4 @@
+//C:\inventorymanagement\app\api\admin\items\[id]\riwayat\[batchId]\route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { readJsonOrForm } from "@/lib/validators";

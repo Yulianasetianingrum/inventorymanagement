@@ -80,6 +80,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     SELECT 
       pl.id,
       pl.pickedQty,
+      pl.returnedQty,
       pl.stockMode,
       p.code as picklistCode,
       COALESCE(p.deliveredAt, p.pickedAt) as usedAt,
@@ -97,6 +98,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     id: r.id,
     usedAt: r.usedAt,
     pickedQty: Number(r.pickedQty || 0),
+    returnedQty: Number(r.returnedQty || 0),
     stockMode: r.stockMode === "bekas" ? "bekas" : "baru",
     picklistCode: r.picklistCode,
     assigneeName: r.assigneeName,

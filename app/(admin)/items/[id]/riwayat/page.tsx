@@ -36,6 +36,7 @@ type UsageRow = {
   id: number;
   usedAt: string;
   pickedQty: number;
+  returnedQty: number;
   stockMode: "baru" | "bekas";
   picklistCode?: string | null;
   assigneeName?: string | null;
@@ -341,26 +342,35 @@ export default function ItemRiwayatPage() {
                     <th>Worker</th>
                     <th>Picklist</th>
                     <th>Mode</th>
+                    <th>Status</th>
                     <th>Qty</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {usageHistory.map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.usedAt ? new Date(u.usedAt).toLocaleDateString("id-ID") : "-"}</td>
-                      <td>{u.assigneeName || "-"}</td>
-                      <td>{u.picklistCode || "-"}</td>
-                      <td>
-                        <span className={`${styles.modeBadge} ${u.stockMode === "bekas" ? styles.modeBekas : styles.modeBaru}`}>
-                          {u.stockMode === "bekas" ? "Bekas" : "Baru"}
-                        </span>
-                      </td>
-                      <td>{u.pickedQty} {unitLabel}</td>
-                    </tr>
-                  ))}
+                  {usageHistory.map((u) => {
+                    const returned = Number(u.returnedQty || 0);
+                    const usedQty = Math.max(0, Number(u.pickedQty || 0) - returned);
+                    const statusLabel = returned > 0 ? "Dikembalikan" : "Terpakai";
+                    return (
+                      <tr key={u.id}>
+                        <td>{u.usedAt ? new Date(u.usedAt).toLocaleDateString("id-ID") : "-"}</td>
+                        <td>{u.assigneeName || "-"}</td>
+                        <td>{u.picklistCode || "-"}</td>
+                        <td>
+                          <span className={`${styles.modeBadge} ${u.stockMode === "bekas" ? styles.modeBekas : styles.modeBaru}`}>
+                            {u.stockMode === "bekas" ? "Bekas" : "Baru"}
+                          </span>
+                        </td>
+                        <td>{statusLabel}</td>
+                        <td>
+                          {returned > 0 ? `${returned} ${unitLabel}` : `${usedQty} ${unitLabel}`}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {!loading && usageHistory.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: "center", color: "var(--muted)" }}>
+                      <td colSpan={6} style={{ textAlign: "center", color: "var(--muted)" }}>
                         Belum ada pemakaian tercatat.
                       </td>
                     </tr>
