@@ -106,6 +106,21 @@ export default function ItemRiwayatPage() {
     }, 0);
   }, [batches]);
 
+  const stockSummary = useMemo(() => {
+    let totalBaru = 0;
+    let totalBekas = 0;
+    for (const b of batches) {
+      const qty = Number(b.qtyRemaining || 0);
+      if (b.mode === "bekas") totalBekas += qty;
+      else totalBaru += qty;
+    }
+    return {
+      totalBaru,
+      totalBekas,
+      stokBaruSisa: Math.max(0, totalBaru - totalBekas)
+    };
+  }, [batches]);
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -207,6 +222,21 @@ export default function ItemRiwayatPage() {
 
           <Card className={styles.tableCard}>
 
+            <div className="grid grid-cols-2 gap-4 p-4 md:p-6 border-b border-slate-100 bg-slate-50">
+              <div className="bg-white rounded-xl p-4 border border-slate-100">
+                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Qty Baru (Sisa)</div>
+                <div className="text-2xl font-black text-navy">{stockSummary.stokBaruSisa} {unitLabel}</div>
+                <div className="text-[10px] text-slate-400 mt-1">Total Baru: {stockSummary.totalBaru}</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-100">
+                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Qty Bekas</div>
+                <div className="text-2xl font-black text-amber-600">{stockSummary.totalBekas} {unitLabel}</div>
+                {stockSummary.totalBekas > stockSummary.totalBaru && (
+                  <div className="text-[10px] text-red-500 font-bold mt-1">Bekas melebihi total baru</div>
+                )}
+              </div>
+            </div>
+
             <div className={styles.tableContainer}>
               <table className={styles.listTable}>
                 <thead>
@@ -224,7 +254,7 @@ export default function ItemRiwayatPage() {
                 </thead>
                 <tbody>
                   {batches.map((b) => {
-                    const qtyBaru = b.mode === "baru" ? b.qtyInBase : null;
+                    const qtyBaru = b.mode === "baru" ? b.qtyRemaining : null;
                     const qtyBekas = b.mode === "bekas" ? b.qtyRemaining : 0;
                     const nilaiRow = b.mode === "bekas" ? 0 : b.total;
                     return (

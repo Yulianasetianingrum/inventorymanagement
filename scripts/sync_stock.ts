@@ -31,16 +31,19 @@ async function main() {
             }
         }
 
+        const stockNew = Math.max(0, totalBaru - totalBekas);
+        const stockUsed = Math.max(0, totalBekas);
+
         // 3. Update tabel items
         await prisma.item.update({
             where: { id: item.id },
             data: {
-                stockNew: totalBaru,
-                stockUsed: totalBekas
+                stockNew,
+                stockUsed
             }
         });
 
-        console.log(`✅ ${item.name}: Updated (Baru: ${totalBaru}, Bekas: ${totalBekas})`);
+        console.log(`? ${item.name}: Updated (Baru: ${stockNew}, Bekas: ${stockUsed})`);    console.log(`✅ ${item.name}: Updated (Baru: ${totalBaru}, Bekas: ${totalBekas})`);
     }
 
     console.log("\n✨ Sinkronisasi selesai!");
@@ -54,3 +57,4 @@ main()
     .finally(async () => {
         await prisma.$disconnect();
     });
+
