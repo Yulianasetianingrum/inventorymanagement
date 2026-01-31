@@ -42,6 +42,7 @@ export async function GET() {
                         title: true,
                         code: true,
                         neededAt: true,
+                        createdById: true,
                         project: {
                             select: { namaProjek: true }
                         }

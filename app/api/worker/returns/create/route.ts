@@ -48,7 +48,7 @@ export async function POST(req: Request) {
                         pickedQty: true,
                         usedQty: true,
                         returnedQty: true,
-                        picklist: { select: { neededAt: true, assigneeId: true } }
+                        picklist: { select: { neededAt: true, assigneeId: true, createdById: true } }
                     }
                 });
 
