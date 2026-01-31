@@ -88,9 +88,10 @@ export async function GET(req: Request) {
   const enriched = items
     .map((it) => {
       const agg = aggregate[it.id] ?? { val: 0, sumBaru: 0, sumBekas: 0 };
-      // Bekas dianggap hasil konversi dari stok baru
-      const stockUsed = Math.max(0, agg.sumBekas);
-      const stockNew = Math.max(0, agg.sumBaru - agg.sumBekas);
+      // Bekas dianggap hasil konversi dari stok baru (tidak boleh melebihi total baru)
+      const totalBaru = Math.max(0, agg.sumBaru);
+      const stockUsed = Math.min(Math.max(0, agg.sumBekas), totalBaru);
+      const stockNew = Math.max(0, totalBaru - stockUsed);
       const stockTotal = stockNew + stockUsed;
       const statusRefill = computeStatus(stockTotal, it.minStock ?? 0);
       return {

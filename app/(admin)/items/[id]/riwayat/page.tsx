@@ -114,10 +114,12 @@ export default function ItemRiwayatPage() {
       if (b.mode === "bekas") totalBekas += qty;
       else totalBaru += qty;
     }
+    const totalBaruSafe = Math.max(0, totalBaru);
+    const totalBekasSafe = Math.min(Math.max(0, totalBekas), totalBaruSafe);
     return {
-      totalBaru,
-      totalBekas,
-      stokBaruSisa: Math.max(0, totalBaru - totalBekas)
+      totalBaru: totalBaruSafe,
+      totalBekas: totalBekasSafe,
+      stokBaruSisa: Math.max(0, totalBaruSafe - totalBekasSafe)
     };
   }, [batches]);
 
@@ -231,9 +233,6 @@ export default function ItemRiwayatPage() {
               <div className="bg-white rounded-xl p-4 border border-slate-100">
                 <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Qty Bekas</div>
                 <div className="text-2xl font-black text-amber-600">{stockSummary.totalBekas} {unitLabel}</div>
-                {stockSummary.totalBekas > stockSummary.totalBaru && (
-                  <div className="text-[10px] text-red-500 font-bold mt-1">Bekas melebihi total baru</div>
-                )}
               </div>
             </div>
 
