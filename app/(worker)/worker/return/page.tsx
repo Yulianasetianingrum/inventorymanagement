@@ -24,7 +24,6 @@ function ReturnContent() {
         const data = d.data || [];
         setPicklists(data);
         if (data.length === 0) {
-          alert("Tidak ada barang yang dipegang. Return tidak bisa diakses.");
           router.replace("/worker/home");
         }
       });

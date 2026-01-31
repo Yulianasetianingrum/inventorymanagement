@@ -9,11 +9,13 @@ export async function GET() {
     }
 
     try {
+        const now = new Date();
         const projects = await prisma.project.findMany({
             where: {
                 picklists: {
                     some: {
-                        status: { in: ['READY', 'PICKING', 'PICKED'] }
+                        status: { in: ['READY', 'PICKING', 'PICKED'] },
+                        neededAt: { gte: now }
                     }
                 }
             },

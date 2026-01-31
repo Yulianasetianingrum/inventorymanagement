@@ -29,6 +29,9 @@ export default function MaterialWithdrawalPage() {
     ]).then(([projData, itemData]) => {
       setProjects(projData.data || []);
       setItems(itemData.data || []);
+      if ((projData.data || []).length === 0) {
+        router.replace("/worker/home");
+      }
     });
   }, []);
 

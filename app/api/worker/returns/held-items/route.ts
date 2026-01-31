@@ -52,7 +52,8 @@ export async function GET() {
             if (balance <= 0) continue;
 
             const neededAt = line.picklist.neededAt;
-            if (neededAt && neededAt < now) continue; // deadline passed, no return
+            if (!neededAt) continue; // no deadline = not eligible for return
+            if (neededAt < now) continue; // deadline passed, no return
 
             const picklistId = line.picklist.id;
             if (!grouped[picklistId]) {
