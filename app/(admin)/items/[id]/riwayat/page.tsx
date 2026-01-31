@@ -110,16 +110,13 @@ export default function ItemRiwayatPage() {
     let totalBaru = 0;
     let totalBekas = 0;
     for (const b of batches) {
-      const qty = Number(b.qtyRemaining || 0);
+      const qty = Number(b.qtyInBase || 0);
       if (b.mode === "bekas") totalBekas += qty;
       else totalBaru += qty;
     }
-    const totalBaruSafe = Math.max(0, totalBaru);
-    const totalBekasSafe = Math.min(Math.max(0, totalBekas), totalBaruSafe);
     return {
-      totalBaru: totalBaruSafe,
-      totalBekas: totalBekasSafe,
-      stokBaruSisa: Math.max(0, totalBaruSafe - totalBekasSafe)
+      totalBaru: Math.max(0, totalBaru),
+      totalBekas: Math.max(0, totalBekas)
     };
   }, [batches]);
 
@@ -226,12 +223,11 @@ export default function ItemRiwayatPage() {
 
             <div className="grid grid-cols-2 gap-4 p-4 md:p-6 border-b border-slate-100 bg-slate-50">
               <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Qty Baru (Sisa)</div>
-                <div className="text-2xl font-black text-navy">{stockSummary.stokBaruSisa} {unitLabel}</div>
-                <div className="text-[10px] text-slate-400 mt-1">Total Baru: {stockSummary.totalBaru}</div>
+                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Total Qty Baru (Riwayat)</div>
+                <div className="text-2xl font-black text-navy">{stockSummary.totalBaru} {unitLabel}</div>
               </div>
               <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Qty Bekas</div>
+                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Total Qty Bekas (Riwayat)</div>
                 <div className="text-2xl font-black text-amber-600">{stockSummary.totalBekas} {unitLabel}</div>
               </div>
             </div>
@@ -253,8 +249,8 @@ export default function ItemRiwayatPage() {
                 </thead>
                 <tbody>
                   {batches.map((b) => {
-                    const qtyBaru = b.mode === "baru" ? b.qtyRemaining : null;
-                    const qtyBekas = b.mode === "bekas" ? b.qtyRemaining : 0;
+                    const qtyBaru = b.mode === "baru" ? b.qtyInBase : null;
+                    const qtyBekas = b.mode === "bekas" ? b.qtyInBase : 0;
                     const nilaiRow = b.mode === "bekas" ? 0 : b.total;
                     return (
                       <tr key={b.id}>
@@ -327,8 +323,8 @@ export default function ItemRiwayatPage() {
                       <div className={styles.statValue}>{isBekas ? "-" : formatCurrency(b.unitCost)}</div>
                     </div>
                     <div>
-                      <div className={styles.statLabel}>{isBekas ? "Qty bekas" : "Qty tersisa"}</div>
-                      <div className={styles.statValue}>{isBekas ? qtyBekas : b.qtyRemaining} {unitLabel}</div>
+                      <div className={styles.statLabel}>{isBekas ? "Qty bekas" : "Qty baru"}</div>
+                      <div className={styles.statValue}>{isBekas ? qtyBekas : (qtyBaru ?? 0)} {unitLabel}</div>
                     </div>
                   </div>
                   <div className={styles.cardActions}>
