@@ -826,7 +826,7 @@ export default function PicklistPage() {
       {/* Detail Modal */}
       {showDetail && (
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-navy/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl p-6 max-w-3xl w-full mx-4 shadow-2xl border border-navy/10 animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl border border-navy/10 animate-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest">Detail Picklist</div>
@@ -839,7 +839,7 @@ export default function PicklistPage() {
             {detailLoading ? (
               <div className="py-10 text-center text-sm text-navy/50">Memuat detail...</div>
             ) : detailData ? (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
                     <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</div>
@@ -879,7 +879,7 @@ export default function PicklistPage() {
                           key={ev.id || ev.imageUrl}
                           href={ev.imageUrl}
                           target="_blank"
-                          className="group relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50"
+                          className="group relative aspect-square rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm"
                         >
                           <img src={ev.imageUrl} alt={ev.type || "Evidence"} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           <div className="absolute bottom-2 left-2 bg-white/80 text-[9px] font-black text-navy px-2 py-0.5 rounded-full uppercase tracking-wider">
