@@ -256,17 +256,6 @@ export default function ItemRiwayatPage() {
 
           <Card className={styles.tableCard}>
 
-            <div className="grid grid-cols-2 gap-4 p-4 md:p-6 border-b border-slate-100 bg-slate-50">
-              <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Total Qty Baru (Riwayat)</div>
-                <div className="text-2xl font-black text-navy">{stockSummary.totalBaru} {unitLabel}</div>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <div className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-1">Total Qty Bekas (Riwayat)</div>
-                <div className="text-2xl font-black text-amber-600">{stockSummary.totalBekas} {unitLabel}</div>
-              </div>
-            </div>
-
             <div className={styles.tableContainer}>
               <table className={styles.listTable}>
                 <thead>
