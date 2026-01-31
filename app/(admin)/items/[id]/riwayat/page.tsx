@@ -120,6 +120,21 @@ export default function ItemRiwayatPage() {
     };
   }, [batches]);
 
+  const isStockInvalid = stockSummary.totalBekas > stockSummary.totalBaru;
+
+  const computeTotalsWithOverride = (override: { id: number; qtyInBase: number; mode: "baru" | "bekas" }) => {
+    let totalBaru = 0;
+    let totalBekas = 0;
+    for (const b of batches) {
+      const isOverride = b.id === override.id;
+      const qty = Number(isOverride ? override.qtyInBase : b.qtyInBase || 0);
+      const mode = isOverride ? override.mode : b.mode;
+      if (mode === "bekas") totalBekas += qty;
+      else totalBaru += qty;
+    }
+    return { totalBaru, totalBekas };
+  };
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,6 +163,10 @@ export default function ItemRiwayatPage() {
     if (!isBekas && (unitCost <= 0 || Number.isNaN(unitCost))) return toast("Unit cost tidak valid", true);
     if (qtyRemaining < 0 || Number.isNaN(qtyRemaining)) return toast("Qty remaining tidak valid", true);
     if (qtyRemaining > qtyInBase) return toast("Qty remaining tidak boleh melebihi qty masuk", true);
+    const nextTotals = computeTotalsWithOverride({ id: editTarget.id, qtyInBase, mode: editForm.mode });
+    if (nextTotals.totalBekas > nextTotals.totalBaru) {
+      return toast("Qty bekas tidak boleh melebihi qty baru (total riwayat)", true);
+    }
     try {
       setActionLoading(true);
       await fetchJson(`/api/admin/items/${itemId}/riwayat/${editTarget.id}`, {
@@ -218,6 +237,11 @@ export default function ItemRiwayatPage() {
           </div>
 
           {error ? <Card className={styles.errorCard}>{error}</Card> : null}
+          {isStockInvalid ? (
+            <Card className={styles.errorCard}>
+              Total qty bekas melebihi total qty baru. Mohon koreksi riwayat.
+            </Card>
+          ) : null}
 
           <Card className={styles.tableCard}>
 
