@@ -32,6 +32,14 @@ type ItemInfo = {
   unit: string;
 };
 type SupplierHistory = { id: number; name: string | null }[];
+type UsageRow = {
+  id: number;
+  usedAt: string;
+  pickedQty: number;
+  stockMode: "baru" | "bekas";
+  picklistCode?: string | null;
+  assigneeName?: string | null;
+};
 
 const fetchJson = async (url: string, options?: RequestInit) => {
   const res = await fetch(url, { ...options, headers: { "Content-Type": "application/json" } });
@@ -59,6 +67,7 @@ export default function ItemRiwayatPage() {
   const [editTarget, setEditTarget] = useState<Batch | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Batch | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [usageHistory, setUsageHistory] = useState<UsageRow[]>([]);
   const [editForm, setEditForm] = useState({
     date: "",
     qtyInBase: "",
@@ -80,6 +89,7 @@ export default function ItemRiwayatPage() {
       setBatches(data.data ?? []);
       setItem(data.item ?? null);
       setSupplierHistory(data.supplierHistory ?? []);
+      setUsageHistory(data.usageHistory ?? []);
     } catch (e: any) {
       setError(e?.message ?? "Gagal memuat riwayat");
     } finally {
@@ -310,6 +320,48 @@ export default function ItemRiwayatPage() {
                     <tr>
                       <td colSpan={9} style={{ textAlign: "center", color: "var(--muted)" }}>
                         Tidak ada riwayat.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <Card className={styles.tableCard}>
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+              <h3 className="text-sm font-black text-navy uppercase tracking-widest">Riwayat Pemakaian (Detail)</h3>
+              <span className="text-[9px] font-bold text-navy/40 uppercase tracking-widest">Picklist</span>
+            </div>
+            <div className={styles.tableContainer}>
+              <table className={styles.listTable}>
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Worker</th>
+                    <th>Picklist</th>
+                    <th>Mode</th>
+                    <th>Qty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usageHistory.map((u) => (
+                    <tr key={u.id}>
+                      <td>{u.usedAt ? new Date(u.usedAt).toLocaleDateString("id-ID") : "-"}</td>
+                      <td>{u.assigneeName || "-"}</td>
+                      <td>{u.picklistCode || "-"}</td>
+                      <td>
+                        <span className={`${styles.modeBadge} ${u.stockMode === "bekas" ? styles.modeBekas : styles.modeBaru}`}>
+                          {u.stockMode === "bekas" ? "Bekas" : "Baru"}
+                        </span>
+                      </td>
+                      <td>{u.pickedQty} {unitLabel}</td>
+                    </tr>
+                  ))}
+                  {!loading && usageHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: "center", color: "var(--muted)" }}>
+                        Belum ada pemakaian tercatat.
                       </td>
                     </tr>
                   ) : null}

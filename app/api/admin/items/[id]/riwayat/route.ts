@@ -74,5 +74,33 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     .sort((a, b) => b.lastDate - a.lastDate)
     .map((s) => ({ id: s.id, name: s.name, phone: s.phone }));
 
-  return NextResponse.json({ data: enriched, item, supplierHistory: supplierHistoryList });
+  await prisma.$executeRawUnsafe("ALTER TABLE picklist_lines ADD COLUMN IF NOT EXISTS stockMode VARCHAR(191) NOT NULL DEFAULT 'baru'").catch(() => { });
+
+  const usageRaw: any[] = await prisma.$queryRaw`
+    SELECT 
+      pl.id,
+      pl.pickedQty,
+      pl.stockMode,
+      p.code as picklistCode,
+      COALESCE(p.deliveredAt, p.pickedAt) as usedAt,
+      u.name as assigneeName
+    FROM picklist_lines pl
+    JOIN picklists p ON pl.picklistId = p.id
+    LEFT JOIN user u ON p.assigneeId = u.id
+    WHERE pl.itemId = ${itemId}
+      AND p.status IN ('PICKED', 'DELIVERED')
+      AND pl.pickedQty > 0
+    ORDER BY COALESCE(p.deliveredAt, p.pickedAt) DESC
+  `;
+
+  const usageHistory = usageRaw.map((r) => ({
+    id: r.id,
+    usedAt: r.usedAt,
+    pickedQty: Number(r.pickedQty || 0),
+    stockMode: r.stockMode === "bekas" ? "bekas" : "baru",
+    picklistCode: r.picklistCode,
+    assigneeName: r.assigneeName,
+  }));
+
+  return NextResponse.json({ data: enriched, item, supplierHistory: supplierHistoryList, usageHistory });
 }
