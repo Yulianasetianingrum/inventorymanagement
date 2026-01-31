@@ -72,6 +72,13 @@ export default function WorkerHome() {
     load();
   }, []);
 
+  const formatTargetDate = (value?: string) => {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+  };
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/worker/login";
@@ -171,6 +178,9 @@ export default function WorkerHome() {
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">{p.code}</span>
                       <h3 className="font-bold text-navy text-lg leading-tight truncate">{p.title}</h3>
                       {p.project && <div className="text-xs text-slate-500 font-medium mt-1 truncate">{p.project.namaKlien}</div>}
+                      <div className="text-[10px] font-black text-amber-600 mt-2 uppercase tracking-widest">
+                        Target Projek Selesai: {formatTargetDate(p.neededAt)}
+                      </div>
                     </div>
                     <span className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide ${p.status === 'READY' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
                       {p.status}
