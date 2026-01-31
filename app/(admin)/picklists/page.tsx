@@ -904,6 +904,28 @@ export default function PicklistPage() {
                     </div>
                   </div>
                 )}
+
+                {detailData.lines?.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-black text-navy uppercase tracking-widest mb-2">Barang (Diambil / Return)</div>
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {detailData.lines.map((l: any) => (
+                        <div key={l.id} className="flex items-center justify-between text-[11px] bg-white border border-slate-100 rounded-lg px-3 py-2">
+                          <div className="min-w-0">
+                            <div className="font-bold text-navy truncate">{l.item?.name || "-"}</div>
+                            <div className="text-[9px] text-slate-400 uppercase tracking-widest">{l.item?.brand} • {l.item?.size}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[9px] text-slate-400 uppercase tracking-widest">Diambil</div>
+                            <div className="font-black text-navy">{l.pickedQty ?? l.reqQty} {l.item?.unit || ""}</div>
+                            <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">Return</div>
+                            <div className="font-black text-amber-700">{l.returnedQty || 0} {l.item?.unit || ""}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="py-10 text-center text-sm text-red-500">Gagal memuat detail.</div>

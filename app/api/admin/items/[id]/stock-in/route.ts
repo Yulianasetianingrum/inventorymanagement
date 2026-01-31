@@ -101,8 +101,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
     }
 
-    if (mode === "bekas" && (item.stockNew ?? 0) < qtyBase) {
-      return NextResponse.json({ error: "Stok baru tidak cukup untuk dipindah ke bekas" }, { status: 400 });
+    if (mode === "bekas") {
+      const lines = await prisma.picklistLine.findMany({
+        where: {
+          itemId,
+          pickedQty: { gt: 0 }
+        },
+        select: { pickedQty: true, returnedQty: true }
+      });
+      const outstanding = lines.reduce((sum, l) => sum + Math.max(0, Number(l.pickedQty) - Number(l.returnedQty)), 0);
+      if (qtyBase > outstanding) {
+        return NextResponse.json({ error: `Qty bekas melebihi tanggungan (${outstanding}).` }, { status: 400 });
+      }
     }
 
     const noteStored = composeNote(mode, note);
@@ -123,7 +133,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         where: { id: itemId },
         data:
           mode === "bekas"
-            ? { stockUsed: { increment: qtyBase }, stockNew: { decrement: qtyBase } }
+            ? { stockUsed: { increment: qtyBase } }
             : { stockNew: { increment: qtyBase } },
       }),
       prisma.auditLog.create({

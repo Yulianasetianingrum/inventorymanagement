@@ -76,7 +76,8 @@ export async function GET(req: Request) {
                     options: sorted
                 };
             })
-            .filter(Boolean); // Remove items with no actionable suppliers
+            .filter(Boolean) // Remove items with no actionable suppliers
+            .sort((a: any, b: any) => (a.cheapest?.price || 0) - (b.cheapest?.price || 0)); // Cheapest to priciest
 
         return NextResponse.json({
             data: {
