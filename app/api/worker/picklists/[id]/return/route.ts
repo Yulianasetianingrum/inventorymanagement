@@ -82,24 +82,47 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
                 // If something returned AND worker wants it back in stock
                 if (inputLine.returnedQty > 0 && inputLine.addToStock !== false) {
-                    // 1. Create a "bekas" batch in StockInBatch table
-                    await tx.stockInBatch.create({
-                        data: {
-                            itemId: dbLine.itemId,
-                            date: new Date(),
-                            qtyInBase: inputLine.returnedQty,
-                            qtyRemaining: inputLine.returnedQty,
-                            unitCost: 0, // Returned items have 0 acquisition cost for valuation
-                            note: `mode:bekas||Returned from Picklist ${picklist.code}`
-                        }
-                    });
+                    const mode = dbLine.stockMode === "bekas" ? "bekas" : "baru";
+                    const qtyReturned = inputLine.returnedQty;
 
-                    // 2. Legacy sync: increment stockUsed on item
+                    if (mode === "bekas") {
+                        // Return to existing "bekas" batch (no new row)
+                        const latestBekas: any[] = await tx.$queryRaw`
+                            SELECT id 
+                            FROM stock_in_batches 
+                            WHERE itemId = ${dbLine.itemId}
+                              AND note LIKE ${"%mode:bekas%"}
+                            ORDER BY date DESC, createdAt DESC
+                            LIMIT 1
+                        `;
+                        const target = latestBekas[0];
+                        if (target?.id) {
+                            await tx.$executeRaw`
+                                UPDATE stock_in_batches
+                                SET qtyRemaining = qtyRemaining + ${qtyReturned}
+                                WHERE id = ${target.id}
+                            `;
+                        }
+                    } else {
+                        // Return from "baru" becomes "bekas" stock (new batch)
+                        await tx.stockInBatch.create({
+                            data: {
+                                itemId: dbLine.itemId,
+                                date: new Date(),
+                                qtyInBase: qtyReturned,
+                                qtyRemaining: qtyReturned,
+                                unitCost: 0,
+                                note: `mode:bekas||Returned from Picklist ${picklist.code}`
+                            }
+                        });
+                    }
+
+                    // Legacy sync: increment stockUsed on item
                     await tx.item.update({
                         where: { id: dbLine.itemId },
                         data: {
                             stockUsed: {
-                                increment: inputLine.returnedQty
+                                increment: qtyReturned
                             }
                         }
                     });

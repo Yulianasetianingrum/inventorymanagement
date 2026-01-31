@@ -48,6 +48,7 @@ export async function POST(req: Request) {
                         pickedQty: true,
                         usedQty: true,
                         returnedQty: true,
+                        stockMode: true,
                         picklist: { select: { neededAt: true, assigneeId: true, createdById: true } }
                     }
                 });
@@ -68,17 +69,38 @@ export async function POST(req: Request) {
 
                 if (qty > holding) throw new Error(`Return quantity exceeds holding balance for item`);
 
-                // 2. Create Batch "Bekas"
-                await tx.stockInBatch.create({
-                    data: {
-                        itemId: line.itemId,
-                        date: new Date(),
-                        qtyInBase: qty,
-                        qtyRemaining: qty,
-                        unitCost: 0, // Used items have 0 cost for stock value
-                        note: `mode:bekas||Ad-hoc Return from source line ${sourceLineId} by ${user.name}`
+                const mode = sourceLine.stockMode === "bekas" ? "bekas" : "baru";
+                if (mode === "bekas") {
+                    // Return to existing "bekas" batch (no new row)
+                    const latestBekas: any[] = await tx.$queryRaw`
+                        SELECT id 
+                        FROM stock_in_batches 
+                        WHERE itemId = ${line.itemId}
+                          AND note LIKE ${"%mode:bekas%"}
+                        ORDER BY date DESC, createdAt DESC
+                        LIMIT 1
+                    `;
+                    const target = latestBekas[0];
+                    if (target?.id) {
+                        await tx.$executeRaw`
+                            UPDATE stock_in_batches
+                            SET qtyRemaining = qtyRemaining + ${qty}
+                            WHERE id = ${target.id}
+                        `;
                     }
-                });
+                } else {
+                    // Return from "baru" becomes "bekas" stock (new batch)
+                    await tx.stockInBatch.create({
+                        data: {
+                            itemId: line.itemId,
+                            date: new Date(),
+                            qtyInBase: qty,
+                            qtyRemaining: qty,
+                            unitCost: 0,
+                            note: `mode:bekas||Ad-hoc Return from source line ${sourceLineId} by ${user.name}`
+                        }
+                    });
+                }
 
                 // 3. Update PicklistLine: increment returnedQty AND decrement usedQty (if applicable)
                 // We blindly decrement usedQty. If it goes negative, it implies we returned "New" items as "Used".
