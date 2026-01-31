@@ -1,4 +1,3 @@
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -6,11 +5,9 @@ const prisma = new PrismaClient();
 async function main() {
     console.log("🔄 Sinkronisasi stok dari batches ke tabel items...");
 
-    // 1. Ambil semua item
     const items = await prisma.item.findMany();
 
     for (const item of items) {
-        // 2. Ambil semua batch untuk item ini
         const batches = await prisma.stockInBatch.findMany({
             where: { itemId: item.id }
         });
@@ -22,20 +19,16 @@ async function main() {
             const qty = Number(b.qtyRemaining);
             const note = b.note ?? "";
 
-            // Logika penentuan baru/bekas sesuai API original
             if (note.includes("mode:bekas")) {
                 totalBekas += qty;
             } else {
-                // Default dianggap baru jika tidak ada note bekas
                 totalBaru += qty;
             }
         }
 
-        const totalBaruSafe = Math.max(0, totalBaru);
-        const stockUsed = Math.min(Math.max(0, totalBekas), totalBaruSafe);
-        const stockNew = Math.max(0, totalBaruSafe - stockUsed);
+        const stockNew = Math.max(0, totalBaru);
+        const stockUsed = Math.max(0, totalBekas);
 
-        // 3. Update tabel items
         await prisma.item.update({
             where: { id: item.id },
             data: {
@@ -44,7 +37,7 @@ async function main() {
             }
         });
 
-        console.log(`? ${item.name}: Updated (Baru: ${stockNew}, Bekas: ${stockUsed})`);    console.log(`✅ ${item.name}: Updated (Baru: ${totalBaru}, Bekas: ${totalBekas})`);
+        console.log(`✅ ${item.name}: Updated (Baru: ${stockNew}, Bekas: ${stockUsed})`);
     }
 
     console.log("\n✨ Sinkronisasi selesai!");
@@ -58,5 +51,3 @@ main()
     .finally(async () => {
         await prisma.$disconnect();
     });
-
-
