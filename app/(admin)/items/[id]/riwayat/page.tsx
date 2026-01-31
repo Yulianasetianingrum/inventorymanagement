@@ -213,7 +213,7 @@ export default function ItemRiwayatPage() {
                   <tr>
                     <th>Tanggal</th>
                     <th>Mode</th>
-                    <th>Qty Baru (Sisa) ({unitLabel})</th>
+                    <th>Qty Baru ({unitLabel})</th>
                     <th>Qty Bekas ({unitLabel})</th>
                     <th>Unit Cost</th>
                     <th>Nilai</th>
@@ -224,7 +224,7 @@ export default function ItemRiwayatPage() {
                 </thead>
                 <tbody>
                   {batches.map((b) => {
-                    const qtyBaru = b.mode === "baru" ? b.qtyRemaining : null;
+                    const qtyBaru = b.mode === "baru" ? b.qtyInBase : null;
                     const qtyBekas = b.mode === "bekas" ? b.qtyRemaining : 0;
                     const nilaiRow = b.mode === "bekas" ? 0 : b.total;
                     return (
@@ -286,7 +286,7 @@ export default function ItemRiwayatPage() {
                         </span>
                       </div>
                       <div className={styles.cardMeta}>
-                        {isBekas ? `Qty bekas: ${qtyBekas} ${unitLabel}` : `Qty baru (sisa): ${qtyBaru ?? 0} ${unitLabel}`}
+                        {isBekas ? `Qty bekas: ${qtyBekas} ${unitLabel}` : `Qty baru: ${qtyBaru ?? 0} ${unitLabel}`}
                       </div>
                       <div className={styles.cardMeta}>Supplier: {b.supplierName || "-"}</div>
                     </div>
