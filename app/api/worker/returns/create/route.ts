@@ -57,7 +57,10 @@ export async function POST(req: Request) {
                     throw new Error("Picklist tidak sesuai dengan user");
                 }
                 if (sourceLine.picklist?.neededAt && sourceLine.picklist.neededAt < new Date()) {
-                    throw new Error("Deadline picklist sudah lewat. Tidak bisa return.");
+                    const isSelfScan = sourceLine.picklist?.assigneeId === user.id && sourceLine.picklist?.createdById === user.id;
+                    if (!isSelfScan) {
+                        throw new Error("Deadline picklist sudah lewat. Tidak bisa return.");
+                    }
                 }
 
                 // Allow returning any item that was picked and not yet returned (ignoring 'used' status)

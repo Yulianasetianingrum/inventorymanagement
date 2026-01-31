@@ -607,48 +607,50 @@ export default function PicklistPage() {
                       <td className="px-6 py-5 text-right">
                         <div className="text-[11px] font-bold text-navy/40">{new Date(p.updatedAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                         <div className="text-[9px] font-medium text-navy/20 uppercase tracking-tighter">{new Date(p.updatedAt).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}</div>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            // Logic to pre-fill form
-                            setEditingId(p.id);
-                            setTitle(p.title);
-                            setProjectId(p.projectId || "");
-                            setProjectSearch(p.project?.namaProjek || "");
-                            setMode(p.mode);
-                            setAssigneeId(p.assigneeId || "");
-                            if (p.neededAt) {
-                              const d = new Date(p.neededAt);
-                              d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                              setNeededAt(d.toISOString().slice(0, 16));
-                            } else {
-                              setNeededAt("");
-                            }
-                            setNotes(p.notes || "");
+                        {(!p.neededAt || new Date(p.neededAt) > new Date()) && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              // Logic to pre-fill form
+                              setEditingId(p.id);
+                              setTitle(p.title);
+                              setProjectId(p.projectId || "");
+                              setProjectSearch(p.project?.namaProjek || "");
+                              setMode(p.mode);
+                              setAssigneeId(p.assigneeId || "");
+                              if (p.neededAt) {
+                                const d = new Date(p.neededAt);
+                                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                                setNeededAt(d.toISOString().slice(0, 16));
+                              } else {
+                                setNeededAt("");
+                              }
+                              setNotes(p.notes || "");
 
-                            // Fetch full details to get lines
-                            const res = await fetch(`/api/admin/picklists/${p.id}`);
-                            const json = await res.json();
-                            if (json.data && json.data.lines) {
-                              setSelectedItems(json.data.lines.map((l: any) => ({
-                                id: l.item.id,
-                                name: l.item.name,
-                                brand: l.item.brand,
-                                unit: l.item.unit,
-                                stockTotal: l.item.stockNew + l.item.stockUsed, // Approx
-                                stockNew: l.item.stockNew,
-                                stockUsed: l.item.stockUsed,
-                                reqQty: l.reqQty
-                              })));
-                            }
+                              // Fetch full details to get lines
+                              const res = await fetch(`/api/admin/picklists/${p.id}`);
+                              const json = await res.json();
+                              if (json.data && json.data.lines) {
+                                setSelectedItems(json.data.lines.map((l: any) => ({
+                                  id: l.item.id,
+                                  name: l.item.name,
+                                  brand: l.item.brand,
+                                  unit: l.item.unit,
+                                  stockTotal: l.item.stockNew + l.item.stockUsed, // Approx
+                                  stockNew: l.item.stockNew,
+                                  stockUsed: l.item.stockUsed,
+                                  reqQty: l.reqQty
+                                })));
+                              }
 
-                            setShowForm(true);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className="mt-2 mr-3 text-[10px] font-bold text-navy hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          edit
-                        </button>
+                              setShowForm(true);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="mt-2 mr-3 text-[10px] font-bold text-navy hover:underline uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            edit
+                          </button>
+                        )}
                         {p.status !== 'PICKED' && p.status !== 'DELIVERED' && (
                           <button
                             onClick={(e) => {
@@ -713,45 +715,47 @@ export default function PicklistPage() {
                       <span className="text-[10px] font-bold text-navy/70">{p.assignee?.name}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        className="text-[10px] font-bold text-navy hover:underline uppercase"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setEditingId(p.id);
-                          setTitle(p.title);
-                          setProjectId(p.projectId || "");
-                          setProjectSearch(p.project?.namaProjek || "");
-                          setMode(p.mode);
-                          setAssigneeId(p.assigneeId || "");
-                          if (p.neededAt) {
-                            const d = new Date(p.neededAt);
-                            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                            setNeededAt(d.toISOString().slice(0, 16));
-                          } else {
-                            setNeededAt("");
-                          }
-                          setNotes(p.notes || "");
+                      {(!p.neededAt || new Date(p.neededAt) > new Date()) && (
+                        <button
+                          className="text-[10px] font-bold text-navy hover:underline uppercase"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setEditingId(p.id);
+                            setTitle(p.title);
+                            setProjectId(p.projectId || "");
+                            setProjectSearch(p.project?.namaProjek || "");
+                            setMode(p.mode);
+                            setAssigneeId(p.assigneeId || "");
+                            if (p.neededAt) {
+                              const d = new Date(p.neededAt);
+                              d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                              setNeededAt(d.toISOString().slice(0, 16));
+                            } else {
+                              setNeededAt("");
+                            }
+                            setNotes(p.notes || "");
 
-                          const res = await fetch(`/api/admin/picklists/${p.id}`);
-                          const json = await res.json();
-                          if (json.data && json.data.lines) {
-                            setSelectedItems(json.data.lines.map((l: any) => ({
-                              id: l.item.id,
-                              name: l.item.name,
-                              brand: l.item.brand,
-                              unit: l.item.unit,
-                              stockTotal: l.item.stockNew + l.item.stockUsed,
-                              stockNew: l.item.stockNew,
-                              stockUsed: l.item.stockUsed,
-                              reqQty: l.reqQty
-                            })));
-                          }
-                          setShowForm(true);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                      >
-                        Edit
-                      </button>
+                            const res = await fetch(`/api/admin/picklists/${p.id}`);
+                            const json = await res.json();
+                            if (json.data && json.data.lines) {
+                              setSelectedItems(json.data.lines.map((l: any) => ({
+                                id: l.item.id,
+                                name: l.item.name,
+                                brand: l.item.brand,
+                                unit: l.item.unit,
+                                stockTotal: l.item.stockNew + l.item.stockUsed,
+                                stockNew: l.item.stockNew,
+                                stockUsed: l.item.stockUsed,
+                                reqQty: l.reqQty
+                              })));
+                            }
+                            setShowForm(true);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
                       {p.status !== 'PICKED' && p.status !== 'DELIVERED' && (
                         <button
                           className="text-[10px] font-bold text-danger hover:underline uppercase"

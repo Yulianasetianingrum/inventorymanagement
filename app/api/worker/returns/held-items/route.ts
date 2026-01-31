@@ -17,7 +17,12 @@ export async function GET() {
         // Fetch picklist lines assigned to this user with picked items
         const lines = await prisma.picklistLine.findMany({
             where: {
-                picklist: { assigneeId: user.id },
+                picklist: {
+                    OR: [
+                        { assigneeId: user.id },
+                        { createdById: user.id }
+                    ]
+                },
                 pickedQty: { gt: 0 }
             },
             include: {
@@ -52,8 +57,11 @@ export async function GET() {
             if (balance <= 0) continue;
 
             const neededAt = line.picklist.neededAt;
-            if (!neededAt) continue; // no deadline = not eligible for return
-            if (neededAt < now) continue; // deadline passed, no return
+            const isSelfScan = line.picklist.createdById === user.id;
+            if (!isSelfScan) {
+                if (!neededAt) continue; // no deadline = not eligible for return
+                if (neededAt < now) continue; // deadline passed, no return
+            }
 
             const picklistId = line.picklist.id;
             if (!grouped[picklistId]) {
